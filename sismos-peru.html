@@ -61,6 +61,8 @@ ul{padding-left:18px;margin:6px 0}li{font-size:13px;color:var(--mut);margin:3px 
 <p class="note" id="qdesc"></p>
 <div class="row"><button class="btn" id="go1">⚡ Liberar sismo</button><button class="btn alt" id="spd1">🐢 Lento</button></div>
 <label>Magnitud (escala de Richter / magnitud de momento Mw)</label><canvas id="cvM1"></canvas>
+<label>Elige la magnitud: <b id="m1v">8,1</b></label><input type="range" id="mag1" min="3" max="9.5" step="0.1" value="8.1">
+<p class="note" id="m1note"></p>
 <div class="stats" id="st1"></div>
 <label>Sismograma registrado en Lima</label>
 <canvas id="sg1"></canvas>
@@ -235,6 +237,7 @@ c.restore();
 
 
 // ---------- magnitud e intensidad ----------
+function fmtX(v){return v>=100?String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g,' '):v.toFixed(v>=10?0:1);}
 function youngs(M,r,H,zt){return Math.exp(0.2418+1.414*M-2.552*Math.log(r+1.7818*Math.exp(0.554*M))+0.00607*H+0.3846*zt);}
 const MQ={M:8.1,R:60,zt:0};
 const mH=()=>MQ.zt?80:30;
@@ -259,21 +262,21 @@ const VP=6.5,VS=3.7,VR=3.4,LIMA=160;
 const QK=[{m:8.1,zt:0,x:100,z:25,d:'<b>Interplaca</b> (en el contacto entre placas, 10–50 km): los más grandes y frecuentes frente a la costa; pueden generar tsunamis. Ej.: Lima 1746, Lima 1974, Pisco 2007 (Mw 8,0).'},
 {m:8.0,zt:1,x:270,z:119,d:'<b>Intraplaca de profundidad intermedia</b> (70–300 km, dentro de la placa de Nazca que se dobla): se sienten en áreas muy amplias y las ondas R son más débiles. Ej.: Loreto 2019 (Mw 8,0, ≈ 110 km de profundidad).'},
 {m:6.5,zt:0,x:330,z:14,d:'<b>Cortical</b> (fallas superficiales dentro de la placa Sudamericana, &lt; 30 km): de menor magnitud, pero muy destructivos cerca de la falla. Ej.: fallas de Huaytapallana (Junín) o de la Cordillera Blanca.'}];
-const T1={type:0,mode:'load',strain:0.55,t:0,spd:22,ph:0};
+const T1={M:8.1,type:0,mode:'load',strain:0.55,t:0,spd:22,ph:0};
 function slabTop(x){return x<0?5+2*Math.exp(x/30):(x<=120?7+0.18*x:28.6+0.55*(x-120));}
 function surfD(x){if(x<0)return slabTop(x);if(x<150)return 7*Math.pow(1-x/150,1.2);return -(0.1+4.6*Math.exp(-(((x-320)/80)**2)));}
 const zd=z=>z<0?z*3:z;
-function lima(){const q=QK[T1.type];const dist=Math.hypot(LIMA-q.x,q.z);const tR0=q.z/VS;return{dist,tP:dist/VP,tS:dist/VS,tR:tR0+Math.abs(LIMA-q.x)/VR,tR0,d:dist,rA:Math.exp(-q.z/60)};}
+function lima(){const q=QK[T1.type];const dist=Math.hypot(LIMA-q.x,q.z);const tR0=q.z/VS;return{dist,tP:dist/VP,tS:dist/VS,tR:tR0+Math.abs(LIMA-q.x)/VR,tR0,d:dist,rA:Math.exp(-q.z/60),k:clamp(Math.pow(10,(T1.M-8)*0.35),0.04,1.5),dm:clamp(Math.pow(10,(T1.M-8)*0.25),0.35,2)};}
 function wave(t,t0,dur,f,amp,ph){if(t<t0)return 0;const u=t-t0;return amp*(1-Math.exp(-u/0.6))*Math.exp(-u/dur)*(Math.sin(2*Math.PI*f*u+ph)+0.6*Math.sin(2*Math.PI*f*1.63*u+ph*2+1));}
-function seis(t,a){const dur=4+a.d/80;return wave(t,a.tP,dur,3,0.22,0)+wave(t,a.tS,dur*1.2,1.4,0.6,1)+wave(t,a.tR,dur*2,0.35,a.rA,2);}
+function seis(t,a){const dur=(4+a.d/80)*(a.dm||1);return (a.k||1)*(wave(t,a.tP,dur,3,0.22,0)+wave(t,a.tS,dur*1.2,1.4,0.6,1)+wave(t,a.tR,dur*2,0.35,a.rA,2));}
 function drawSeis(cv,a,tNow,tEnd){const{c,w,h}=fit(cv,0.3);c.clearRect(0,0,w,h);const L=8,pw=w-16,mid=h*0.55,amp=h*0.32;
 c.strokeStyle='#22303f';c.beginPath();c.moveTo(L,mid);c.lineTo(L+pw,mid);c.stroke();
 const fx=t=>L+t/tEnd*pw;c.font='bold 11px system-ui';
 [['P',a.tP,'#4fc3f7'],['S',a.tS,'#ff7043'],['R',a.tR,'#ffd54f']].forEach(([n,t,col],k)=>{if(t>tNow)return;const x=fx(t);c.strokeStyle=col;c.setLineDash([3,3]);c.beginPath();c.moveTo(x,10);c.lineTo(x,h-14);c.stroke();c.setLineDash([]);c.fillStyle=col;c.textAlign='center';c.fillText(n+' '+t.toFixed(0)+' s',x+(k===2?14:0),10+k*0);});
-c.strokeStyle='#e8eef4';c.lineWidth=1.2;c.beginPath();const tm=Math.min(tNow,tEnd);for(let px=0;px<=pw*tm/tEnd;px++){const t=px/pw*tEnd;const y=mid-amp*seis(t,a)/1.25;px?c.lineTo(L+px,y):c.moveTo(L+px,y);}c.stroke();
+c.strokeStyle='#e8eef4';c.lineWidth=1.2;c.beginPath();const tm=Math.min(tNow,tEnd);for(let px=0;px<=pw*tm/tEnd;px++){const t=px/pw*tEnd;const y=clamp(mid-amp*seis(t,a)/1.25,4,h-14);px?c.lineTo(L+px,y):c.moveTo(L+px,y);}c.stroke();
 c.fillStyle='#93a4b5';c.font='10px system-ui';c.textAlign='left';c.fillText('0 s',L,h-3);c.textAlign='right';c.fillText(tEnd.toFixed(0)+' s',L+pw,h-3);}
 function stats1(){const a=lima(),q=QK[T1.type];$('#st1').innerHTML=[['Profundidad del foco',q.z+' km'],['Distancia a Lima',a.dist.toFixed(0)+' km'],['Llega P / S',a.tP.toFixed(0)+' s / '+a.tS.toFixed(0)+' s'],['Llega R',a.tR.toFixed(0)+' s']].map(s=>`<div class="stat"><span>${s[0]}</span><b>${s[1]}</b></div>`).join('');$('#qdesc').innerHTML=q.d;
-const pg=youngs(q.m,a.dist,q.z,q.zt);drawGauge($('#cvM1'),q.m,`En Lima (≈ ${a.dist.toFixed(0)} km): PGA en roca ≈ ${pg.toFixed(2)} g · intensidad ≈ ${roman(mmi(pg))} (${MMI_T[Math.round(mmi(pg))-1]})`);}
+const pg=youngs(T1.M,a.dist,q.z,q.zt);$('#m1v').textContent=T1.M.toFixed(1)+(Math.abs(T1.M-q.m)<0.05?' (como el ejemplo)':'');const L1=Math.pow(10,-2.44+0.59*T1.M);$('#m1note').innerHTML=`Ruptura ≈ ${L1<10?L1.toFixed(1):L1.toFixed(0)} km de largo · ${Math.abs(T1.M-q.m)<0.05?'misma energía que el':(T1.M>q.m?'≈ '+fmtX(Math.pow(10,1.5*(T1.M-q.m)))+' veces más energía que el':'≈ '+fmtX(Math.pow(10,1.5*(q.m-T1.M)))+' veces menos energía que el')} sismo de ejemplo (M ${q.m.toFixed(1)}).`;drawGauge($('#cvM1'),T1.M,`En Lima (≈ ${a.dist.toFixed(0)} km): PGA en roca ≈ ${pg.toFixed(2)} g · intensidad ≈ ${roman(mmi(pg))} (${MMI_T[Math.round(mmi(pg))-1]})`);}
 function draw1(dt){const{c,w,h}=fit($('#cv1'),0.66);const x0=-120,x1=460,z0=-32,z1=200;const sx=w/(x1-x0),sy=h/(z1-z0);const X=x=>(x-x0)*sx,Y=z=>(zd(z)-z0)*sy;
 const q=QK[T1.type];
 if(T1.mode==='load'){T1.strain=Math.min(1,T1.strain+dt*0.08);T1.ph+=dt;}else{T1.t+=dt*T1.spd;T1.strain=Math.max(0,T1.strain-dt*2);}
@@ -305,10 +308,10 @@ c.textAlign='left';c.fillStyle='#93a4b5';[0,50,100,150].forEach(z=>{c.fillRect(0
 const hx=X(q.x),hy=Y(q.z);c.strokeStyle='rgba(255,255,255,.4)';c.setLineDash([2,3]);c.beginPath();c.moveTo(hx,hy);c.lineTo(hx,Y(surfD(q.x)));c.stroke();c.setLineDash([]);
 // ondas
 if(T1.mode==='quake'){const t=T1.t;c.save();c.beginPath();c.moveTo(X(x0),Y(surfD(x0)));for(let x=x0;x<=x1;x+=4)c.lineTo(X(x),Y(surfD(x)));c.lineTo(w,h);c.lineTo(0,h);c.closePath();c.clip();
-if(T1.type===0){const vr=2.5;const a=Math.max(12,q.x-vr*t),b=Math.min(150,q.x+vr*t);c.strokeStyle='rgba(255,250,200,.95)';c.lineWidth=5;c.beginPath();for(let x=a;x<=b;x+=2)c.lineTo(X(x),Y(slabTop(x)));c.stroke();}
-[[VP,'79,195,247'],[VS,'255,112,67']].forEach(([v,col])=>{for(let k=0;k<4;k++){const r=v*t-k*10;if(r<=0)continue;c.strokeStyle=`rgba(${col},${(0.95-k*0.25)*Math.max(0.15,1-r/600)})`;c.lineWidth=k?1.5:2.5;c.beginPath();c.ellipse(hx,hy,r*sx,r*sy,0,0,7);c.stroke();}});
+if(T1.type===0){const vr=2.5,half=clamp(Math.pow(10,-2.44+0.59*T1.M)/4,4,75);const a=Math.max(12,q.x-half,q.x-vr*t),b=Math.min(150,q.x+half,q.x+vr*t);c.strokeStyle='rgba(255,250,200,.95)';c.lineWidth=clamp(T1.M-3,1.5,6);c.beginPath();for(let x=a;x<=b;x+=2)c.lineTo(X(x),Y(slabTop(x)));c.stroke();}
+[[VP,'79,195,247'],[VS,'255,112,67']].forEach(([v,col])=>{for(let k=0;k<4;k++){const r=v*t-k*10;if(r<=0)continue;const mf=clamp(0.3+0.13*(T1.M-4),0.25,1);c.strokeStyle=`rgba(${col},${mf*(0.95-k*0.25)*Math.max(0.15,1-r/600)})`;c.lineWidth=(k?1.5:2.5)*clamp(0.6+0.15*(T1.M-5),0.5,1.4);c.beginPath();c.ellipse(hx,hy,r*sx,r*sy,0,0,7);c.stroke();}});
 c.restore();
-const a=lima();if(t>a.tR0){const tt=t-a.tR0;[q.x-VR*tt,q.x+VR*tt].forEach(p=>{const amp=8*Math.exp(-tt/150)*a.rA+1;c.strokeStyle='#ffd54f';c.lineWidth=2.2;c.beginPath();for(let x=p-30;x<=p+30;x+=1){const y=Y(surfD(x))-amp*Math.sin((x-p)/3.5)*Math.exp(-(((x-p)/14)**2));x>p-30?c.lineTo(X(x),y):c.moveTo(X(x),y);}c.stroke();});}
+const a=lima();if(t>a.tR0){const tt=t-a.tR0;[q.x-VR*tt,q.x+VR*tt].forEach(p=>{const amp=(8*Math.exp(-tt/150)*a.rA+1)*clamp(Math.pow(10,(T1.M-8)*0.3),0.1,1.5);c.strokeStyle='#ffd54f';c.lineWidth=2.2;c.beginPath();for(let x=p-30;x<=p+30;x+=1){const y=Y(surfD(x))-amp*Math.sin((x-p)/3.5)*Math.exp(-(((x-p)/14)**2));x>p-30?c.lineTo(X(x),y):c.moveTo(X(x),y);}c.stroke();});}
 if(t>a.tR+35){T1.mode='load';}}
 // estrella
 c.fillStyle=T1.mode==='quake'?'#fff59d':'#ffeb3b';c.beginPath();for(let k=0;k<10;k++){const r=k%2?3.5:8,an=k*Math.PI/5-Math.PI/2;c.lineTo(hx+r*Math.cos(an),hy+r*Math.sin(an));}c.fill();
@@ -320,7 +323,8 @@ const by=h-42;c.fillStyle='rgba(0,0,0,.55)';c.fillRect(w-156,by,150,34);c.fillSt
 c.fillStyle='#333';c.fillRect(w-150,by+18,138,9);c.fillStyle=T1.strain>0.9?'#ff5252':'#ff9800';c.fillRect(w-150,by+18,138*T1.strain,9);
 // sismograma
 drawSeis($('#sg1'),a,T1.mode==='quake'?T1.t:0,a.tR+35);}
-document.querySelectorAll('#qtype button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#qtype button').forEach(x=>x.classList.remove('on'));b.classList.add('on');T1.type=+b.dataset.v;T1.mode='load';stats1();});
+document.querySelectorAll('#qtype button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#qtype button').forEach(x=>x.classList.remove('on'));b.classList.add('on');T1.type=+b.dataset.v;T1.mode='load';T1.M=QK[T1.type].m;$('#mag1').value=String(T1.M);stats1();});
+$('#mag1').oninput=e=>{T1.M=+e.target.value;stats1();};
 $('#go1').onclick=()=>{T1.mode='quake';T1.t=0;};
 $('#spd1').onclick=e=>{T1.spd=T1.spd===22?7:22;e.target.textContent=T1.spd===22?'🐢 Lento':'🐇 Normal';};
 
