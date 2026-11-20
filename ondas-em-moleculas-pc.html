@@ -1,0 +1,972 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ondas EM y moléculas (computadora)</title>
+<style>
+:root{
+  --bg:#0b0f17; --panel:#121a26; --panel2:#18222f; --line:#2a3646; --tx:#e9eef5; --mut:#9fb0c3;
+  --focus:#ffd60a; --rot:#2ec4b6; --vib:#ff9f1c; --elec:#e056fd; --ion:#ffd60a; --scat:#4dabf7; --none:#7d8794;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,sans-serif;overflow:hidden}
+body{font-size:clamp(13px,.86vw,17px);display:grid;grid-template-rows:auto minmax(0,1fr) minmax(170px,26vh);height:100vh}
+header{display:flex;align-items:center;gap:1.2em;padding:.45em 1em;background:#0e1520;border-bottom:1px solid var(--line)}
+header h1{font-size:1.25em;margin:0;font-weight:700;letter-spacing:.01em}
+header .sub{color:var(--mut);font-size:.9em}
+header .keys{margin-left:auto;color:var(--mut);font-size:.85em}
+kbd{background:#223044;border:1px solid #33465f;border-radius:.3em;padding:0 .35em;font-family:inherit;color:#fff}
+main{display:grid;grid-template-columns:minmax(0,1fr) 370px;min-height:0}
+#stage{position:relative;min-height:0;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#121c2b 0%,#0b0f17 75%)}
+#sim{position:absolute;inset:0;width:100%;height:100%}
+.card{position:absolute;background:rgba(10,15,24,.78);border:1px solid var(--line);border-radius:.6em;padding:.55em .8em;backdrop-filter:blur(3px)}
+#info{left:.8em;top:.7em;max-width:52%;line-height:1.35}
+#info .big{font-size:1.25em;font-weight:700}
+#info .row{color:var(--mut);font-size:.92em}
+#info .row b{color:var(--tx);font-weight:600}
+.chip{display:inline-block;padding:.05em .55em;border-radius:1em;font-weight:700;color:#0b0f17;font-size:.9em}
+#shares{display:flex;height:.7em;border-radius:.35em;overflow:hidden;margin:.35em 0 .15em;background:#222c3a}
+#shares div{height:100%}
+#legend{font-size:.78em;color:var(--mut)}
+#legend span{margin-right:.7em;white-space:nowrap}
+#legend i{display:inline-block;width:.75em;height:.75em;border-radius:.2em;margin-right:.25em;vertical-align:-.05em}
+#expl{left:.8em;right:.8em;bottom:.7em;font-size:.98em;line-height:1.35}
+#expl .note{color:#ffd9a0;margin-top:.25em}
+#expl .warn{color:#ff8a8a;margin-top:.25em;font-weight:600}
+#scale{right:.8em;top:.7em;font-size:.78em;color:var(--mut);max-width:30%}
+aside{background:var(--panel);border-left:1px solid var(--line);padding:.6em .7em;display:flex;flex-direction:column;gap:.35em;min-height:0;overflow-y:auto}
+.ctrl{background:var(--panel2);border:2px solid transparent;border-radius:.55em;padding:.32em .6em .38em;cursor:pointer;outline:none}
+.ctrl:focus,.ctrl.focus{border-color:var(--focus);box-shadow:0 0 0 .18em rgba(255,214,10,.25)}
+.ctrl .top{display:flex;justify-content:space-between;gap:.6em;align-items:baseline}
+.ctrl .lab{color:var(--mut);font-size:.9em;white-space:nowrap}
+.ctrl .val{font-weight:700;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctrl .barrow{display:flex;align-items:center;gap:.45em;margin-top:.22em;font-size:.72em;color:var(--mut)}
+.ctrl .bar{flex:1;height:.85em;background:#0d141e;border-radius:.45em;position:relative;overflow:hidden;border:1px solid #273447}
+.ctrl .fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#2f6fb0,#5ab0ff)}
+.ctrl .knob{position:absolute;top:-.05em;bottom:-.05em;width:.35em;background:#fff;border-radius:.2em;transform:translateX(-50%)}
+.ctrl.dis{opacity:.45}
+.ctrl .hint{font-size:.72em;color:var(--mut);margin-top:.12em}
+.btns{display:flex;gap:.4em}
+.btns .ctrl{flex:1;text-align:center;font-weight:700;padding:.45em .3em}
+#warn{font-size:.8em;color:#ffcf70;min-height:1.2em;line-height:1.25}
+#spec{width:100%;height:100%;display:block;background:#0a0e15;border-top:1px solid var(--line);cursor:crosshair}
+footer{position:relative;min-height:0}
+#modal{position:fixed;inset:4vh 6vw;background:#0f1622;border:2px solid var(--line);border-radius:.8em;padding:1em 1.4em;overflow:auto;display:none;z-index:10;line-height:1.45;font-size:.95em}
+#modal.open{display:block}
+#modal h2{margin:.1em 0 .4em;font-size:1.3em}
+#modal h3{margin:.8em 0 .2em;font-size:1.05em;color:#9fd3ff}
+#modal ul{margin:.2em 0;padding-left:1.2em}
+#modal .close{position:sticky;top:0;float:right;background:#223044;border:2px solid var(--focus);color:#fff;border-radius:.5em;padding:.3em .8em;font:inherit;font-weight:700;cursor:pointer}
+table.d{border-collapse:collapse;font-size:.88em;margin:.3em 0}
+table.d td,table.d th{border:1px solid #2a3646;padding:.15em .45em;text-align:left}
+table.d th{background:#18222f}
+@media (max-width:900px){
+  body{grid-template-rows:auto auto auto;overflow:auto;height:auto}
+  html,body{overflow:auto}
+  main{grid-template-columns:1fr}
+  #stage{height:60vh}
+  aside{border-left:0}
+  footer{height:32vh}
+  #info{max-width:92%}
+  #scale{display:none}
+}
+
+.ctrl{user-select:none;-webkit-user-select:none}
+header h1 .ver{color:var(--mut);font-weight:500;font-size:.8em}
+header button{background:#18222f;color:var(--tx);border:1px solid var(--line);border-radius:2em;padding:.3em .9em;font:inherit;font-size:.88em;cursor:pointer}
+header button:hover{border-color:var(--focus)}
+header .keys{margin-left:auto}
+.ctrl .bar{height:1.1em;cursor:pointer}
+.ctrl .ar{flex:none;width:26px;height:22px;display:flex;align-items:center;justify-content:center;background:#0d141e;border:1px solid #273447;border-radius:.35em;color:var(--tx);font-size:11px;cursor:pointer;user-select:none}
+.ctrl .ar:hover{border-color:var(--focus)}
+.ctrl .ar:active{background:#223044}
+.btns .ctrl{cursor:pointer}
+.btns .ctrl:hover{border-color:#556a85}
+.kb{background:var(--panel2);border-radius:.55em;padding:.45em .6em;font-size:.8em;color:var(--mut);line-height:1.65;margin-top:.2em}
+.kb .kt{color:var(--tx);font-weight:700;font-size:1.05em;margin-bottom:.15em}
+.kb kbd{font-size:.92em}
+#spec{cursor:crosshair}
+
+#about{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:1em}
+#about.open{display:flex}
+#about .abox{background:#121a26;border:1px solid var(--line);border-radius:.9em;padding:1em 1.2em;max-width:420px;width:100%;line-height:1.45}
+#about h2{margin:.1em 0 .4em;font-size:1.2em}
+#about a{color:#9fd3ff}
+#about .amut{color:var(--mut);font-size:.85em}
+#about button{background:#223044;color:#fff;border:1px solid #33465f;border-radius:.5em;padding:.5em .9em;font:inherit;font-weight:600;cursor:pointer;margin-top:.3em}
+#aboutClose{border-color:var(--focus)!important}
+</style>
+</head>
+<body>
+<header>
+  <h1>Ondas electromagnéticas y moléculas <span class="ver">· versión computadora</span></h1>
+  <span class="sub" id="hdrComp"></span>
+  <span class="keys"><kbd>↑</kbd><kbd>↓</kbd> elegir · <kbd>←</kbd><kbd>→</kbd> ajustar · <kbd>1</kbd>–<kbd>0</kbd> compuesto</span>
+  <button type="button" id="srcBtn">Fuentes</button><button type="button" id="aboutBtn">ⓘ Info</button>
+</header>
+<main>
+  <section id="stage">
+    <canvas id="sim"></canvas>
+    <div class="card" id="info"></div>
+    <div class="card" id="scale">Escala no real: la onda dibujada es simbólica. Una molécula mide ~0,1–0,3 nm; la longitud de onda real se indica en el panel.</div>
+    <div class="card" id="expl"></div>
+  </section>
+  <aside id="panel">
+    <div id="ctrls" style="display:flex;flex-direction:column;gap:.35em"></div>
+    <div id="warn"></div>
+    <div class="kb"><div class="kt">Atajos de teclado y ratón</div>
+      <kbd>↑</kbd> <kbd>↓</kbd> elegir control · <kbd>←</kbd> <kbd>→</kbd> ajustarlo (mantener = acelera)<br>
+      <kbd>+</kbd> <kbd>−</kbd> más / menos energía del fotón (λ)<br>
+      <kbd>RePág</kbd> <kbd>AvPág</kbd> línea o banda famosa<br>
+      <kbd>1</kbd>–<kbd>0</kbd> compuesto · <kbd>R</kbd> valores por defecto<br>
+      <kbd>Espacio</kbd> pausa · <kbd>B</kbd> barrido λ · <kbd>F</kbd> fuentes · <kbd>Esc</kbd> cerrar<br>
+      Ratón: clic o arrastre en las barras y en el espectro; rueda sobre un control o sobre el espectro.
+    </div>
+  </aside>
+</main>
+<footer><canvas id="spec"></canvas></footer>
+<div id="modal" role="dialog" aria-modal="true">
+  <button class="close" id="mclose">Cerrar (Esc)</button>
+  <h2>Fuentes, datos y supuestos</h2>
+  <p>Simulación educativa de cómo la radiación electromagnética interactúa con moléculas según su energía: <b>rotación</b> (microondas e IR lejano), <b>vibración</b> (infrarrojo), <b>transiciones electrónicas</b> (visible–UV), <b>ionización</b> (UV de vacío y rayos X) y <b>dispersión Rayleigh</b>. Las posiciones de bandas, energías de ionización y umbrales son valores experimentales; las secciones eficaces son aproximaciones de orden de magnitud promediadas sobre la estructura de líneas.</p>
+  <h3>Datos por compuesto</h3>
+  <div style="overflow-x:auto"><table class="d" id="dtable"></table></div>
+  <h3>Fuentes</h3>
+  <ul>
+    <li>NIST Chemistry WebBook (SRD 69): frecuencias vibracionales fundamentales, energías de ionización, constantes rotacionales, entalpías de cambio de fase.</li>
+    <li>NIST CCCBDB (SRD 101): geometrías moleculares, momentos dipolares, actividad IR/Raman de modos normales.</li>
+    <li>HITRAN2020 (Gordon et al., JQSRT 277, 2022): intensidades integradas de bandas vibracionales y de líneas rotacionales de H₂O, CO₂, CH₄, CO, NH₃, O₃, O₂.</li>
+    <li>JPL Molecular Spectroscopy Catalog / CDMS: frecuencias de líneas de microondas (H₂O 22,235 y 183,310 GHz; NH₃ inversión ~23,7–25 GHz; O₂ 60 y 118,75 GHz).</li>
+    <li>MPI-Mainz UV/VIS Spectral Atlas (Keller-Rudek et al., ESSD 5, 2013): secciones eficaces UV/visible (bandas de Hartley, Huggins y Chappuis del O₃; Schumann-Runge del O₂; banda B←X del I₂; Ã←X̃ del H₂O y NH₃).</li>
+    <li>ITU-R P.676-13: atenuación atmosférica por O₂ y vapor de agua en microondas (verificación de órdenes de magnitud).</li>
+    <li>Agua líquida: Pope &amp; Fry, Appl. Opt. 36 (1997) (visible); Hale &amp; Querry, Appl. Opt. 12 (1973) y Segelstein (1981) (UV–IR); Kaatze, J. Chem. Eng. Data 34 (1989) y Malmberg &amp; Maryott, J. Res. NBS 56 (1956) (relajación dieléctrica de Debye).</li>
+    <li>NaCl: Palik, Handbook of Optical Constants of Solids (1985) — fonón TO 164 cm⁻¹, ventana de transparencia 0,2–15 µm, banda prohibida ≈ 8,7 eV.</li>
+    <li>Bordes de absorción de rayos X: CXRO / Henke et al., At. Data Nucl. Data Tables 54 (1993); Rayleigh: Bodhaine et al., J. Atmos. Ocean. Tech. 16 (1999).</li>
+  </ul>
+  <h3>Rangos físicos admisibles</h3>
+  <ul>
+    <li><b>λ: 1 nm – 10 m</b> (1,24 keV – 30 MHz). Abarca desde radio hasta rayos X blandos, donde el modelo molecular (no nuclear) es válido.</li>
+    <li><b>Intensidad: 10⁻³ – 10⁹ W/m²</b>. Por encima de ~10⁹–10¹² W/m² aparecen efectos no lineales (absorción multifotónica, plasma) que este modelo lineal no describe.</li>
+    <li><b>Temperatura</b>: limitada por la fase indicada a 1 atm y por la descomposición térmica (p. ej. O₃ se descompone rápidamente sobre ~500 K; CH₄ piroliza sobre ~1000 K; el agua líquida existe entre 273,15 y 373,15 K; el NaCl funde a 1074 K).</li>
+    <li><b>Presión parcial</b>: 10⁻⁶ atm hasta el menor entre 10 atm y la presión de vapor saturado p<sub>sat</sub>(T) (Clausius-Clapeyron con ΔH de NIST). Por encima de p<sub>sat</sub> el gas condensaría. Sobre la temperatura crítica no hay condensación.</li>
+    <li>El gas se considera diluido en un gas inerte a 1 atm total (ensanchamiento por presión de aire); si p &gt; 1 atm, gas puro a p.</li>
+    <li><b>Camino óptico</b>: 1 µm – 10 km.</li>
+  </ul>
+  <h3>Modelo</h3>
+  <ul>
+    <li>Fotón: E = hν = hc/λ. Opacidad τ = α·L, α = σ·n (n = p/kT). Transmisión T = e<sup>−τ</sup>.</li>
+    <li>Rotación de moléculas lineales (CO): líneas J→J+1 en ν = 2B(J+1) con población de Boltzmann; intensidad S = (8π³/3hc)·ν·μ²·(J+1)·e<sup>−E/kT</sup>/Q·(1−e<sup>−hν/kT</sup>). Moléculas no lineales: líneas de microondas tabuladas + envolvente del rotor equivalente.</li>
+    <li>Vibración: bandas con ramas P y R cuya separación crece con √T; sólo absorben los modos que cambian el momento dipolar (regla de selección IR). Los modos simétricos de CO₂, CH₄, O₂, N₂ e I₂ son inactivos en IR (sólo Raman).</li>
+    <li>Electrónicas: bandas gaussianas en energía; si E ≥ energía de disociación aparece fotodisociación.</li>
+    <li>Ionización: continuo sobre la energía de ionización y bordes K/L/M de capas internas (E<sub>k</sub> = hν − E<sub>I</sub>).</li>
+    <li>Calentamiento inicial: dT/dt = I·(1−e<sup>−τ</sup>) / (L·ρ·c<sub>p</sub>), sin pérdidas.</li>
+    <li>La frecuencia de eventos dibujados usa escala logarítmica de la opacidad para que se aprecien procesos débiles; las animaciones de rotación/vibración son lentas a propósito (las reales ocurren en picosegundos y femtosegundos).</li>
+  </ul>
+</div>
+
+<script>
+(function(){
+"use strict";
+/* ===================== Constantes ===================== */
+var C2=1.4388, KB=1.380649e-23, HPL=6.62607015e-34, CL=2.99792458e8, EVJ=1.602176634e-19, RG=8.314462618;
+var LMIN=1e-9, LMAX=10;
+var COL={rot:'#2ec4b6',vib:'#ff9f1c',elec:'#e056fd',ion:'#ffd60a',scat:'#4dabf7',none:'#7d8794'};
+var PNAME={rot:'Rotación',vib:'Vibración',elec:'Excitación electrónica',ion:'Ionización',scat:'Dispersión Rayleigh',none:'Sin interacción'};
+var ATOM={H:{c:'#f2f4f7',r:.30},C:{c:'#8b939e',r:.44},N:{c:'#4a7dff',r:.44},O:{c:'#ff4a3d',r:.42},I:{c:'#a35ad6',r:.72},Na:{c:'#b98cff',r:.42},Cl:{c:'#3fd27a',r:.7}};
+
+/* ===================== Datos de compuestos ===================== */
+var s3=0.629;
+var COMP=[
+{id:'h2o',name:'Agua (vapor)',f:'H₂O(g)',phase:'gas',M:18.015,mu:1.855,Beff:15.5,Bv:14,gam:0.1,
+ T:[220,1500,296],pdef:0.01,Tc:647.1,sat:{T:373.15,p:1,dH:43000},cp:1996,
+ atoms:[['O',0,-0.065,0],['H',-0.757,0.52,0],['H',0.757,0.52,0]],bonds:[[0,1],[0,2]],
+ modes:[{n:'ν₁ estiramiento simétrico O–H',nu:3657.1,S:5e-19,ir:true,v:[[0,-0.066,0],[-0.6,0.46,0],[0.6,0.46,0]]},
+        {n:'ν₂ flexión H–O–H (tijera)',nu:1594.7,S:1.05e-17,ir:true,q:.25,v:[[0,0.1,0],[-0.61,-0.79,0],[0.61,-0.79,0]]},
+        {n:'ν₃ estiramiento asimétrico O–H',nu:3755.9,S:7.0e-18,ir:true,v:[[0.1,0,0],[-0.79,0.61,0],[-0.79,-0.61,0]]}],
+ combos:[{n:'combinación ν₂+ν₃ (1,87 µm)',nu:5331,S:8e-19,m:[1,2]},{n:'combinación ν₁+ν₃ (1,38 µm)',nu:7250,S:7e-19,m:[0,2]},
+         {n:'sobretono 2ν₁+ν₃ (0,94 µm)',nu:10613,S:6e-20,m:[0,2]},{n:'sobretono 3ν₁+ν₃ (0,72 µm)',nu:13831,S:6e-21,m:[0,2]},{n:'sobretono 4ν (0,59 µm)',nu:16899,S:6e-22,m:[0,2]}],
+ rotLines:[{f:22.23508,S:4e-25,E:446.5,n:'línea 6₁₆←5₂₃ a 22,235 GHz (radiometría de vapor)'},{f:183.31009,S:8e-23,E:136.2,n:'línea 3₁₃←2₂₀ a 183,31 GHz (sondeo satelital de humedad)'},
+   {f:325.1529,S:4e-23,E:315.8,n:'línea a 325,15 GHz'},{f:380.1974,S:3.5e-22,E:212.2,n:'línea a 380,20 GHz'},{f:448.0011,S:2.5e-22,E:285.4,n:'línea a 448,00 GHz'},
+   {f:556.936,S:5.1e-20,E:23.8,n:'línea fundamental orto 1₁₀←1₀₁ a 556,94 GHz'},{f:752.0332,S:2.4e-20,E:70.1,n:'línea 2₁₁←2₀₂ a 752,03 GHz'}],
+ elec:[{n:'banda Ã←X̃ (estado repulsivo: H₂O → H + OH)',E:7.45,w:0.9,s:4.8e-18},{n:'banda B̃←X̃ (disociativa)',E:9.7,w:1.0,s:7e-18}],
+ IE:12.621,D:5.1,frag:[2],ion:2e-17,edges:[{el:'O 1s',E:543.1,s:5e-19,n:1}],ray:3.2e-27,
+ note:'Molécula polar (μ = 1,855 D): absorbe fuertemente en microondas, IR lejano e IR.'},
+{id:'h2ol',name:'Agua líquida',f:'H₂O(l)',phase:'liquid',M:18.015,geom:'h2o',T:[273.15,373.15,298.15],Ldef:0.01,cp:4181,rho:997,nmol:3.34e22,
+ table:[[0.1,4e5],[0.12,7e5],[0.15,9e5],[0.16,4e5],[0.165,1.2e5],[0.17,2e4],[0.175,1.5e3],[0.18,50],[0.185,3],[0.19,0.6],[0.2,0.07],[0.25,0.01],[0.3,0.003],[0.35,8e-4],[0.38,1.1e-4],[0.418,4.4e-5],[0.45,9.2e-5],[0.5,2.04e-4],[0.55,5.65e-4],[0.6,2.22e-3],[0.65,3.4e-3],[0.7,6.5e-3],[0.75,0.026],[0.8,0.02],[0.85,0.043],[0.9,0.068],[0.97,0.45],[1.0,0.36],[1.1,0.17],[1.2,1.04],[1.3,1.2],[1.45,28],[1.6,6.7],[1.8,8],[1.94,115],[2.1,25],[2.2,16],[2.4,50],[2.6,150],[2.8,5000],[2.95,11500],[3.1,7000],[3.3,1200],[3.5,340],[4.0,145],[4.5,250],[4.7,310],[5.2,250],[5.8,700],[6.08,2800],[6.5,900],[7,565],[8,543],[10,638],[11,1000],[12,2084],[14,3300],[16,3400],[20,2830],[25,2200],[30,1500],[40,1200],[50,1180],[60,1050],[80,800],[100,650],[150,420],[200,320],[300,220],[500,160],[1000,117]],
+ tags:[[0.1,0.125,'ion','fotoionización del agua líquida (umbral ≈ 10–11 eV)'],[0.125,0.2,'elec','excitación electrónica Ã (disociativa: H₂O → H + OH)'],
+   [0.2,0.7,'vib','sobretonos muy débiles del estiramiento O–H — absorben más el rojo que el azul: por eso el agua es azul',[0,2]],
+   [0.7,2.5,'vib','sobretonos y combinaciones del estiramiento O–H',[0,2]],[2.5,4.0,'vib','estiramiento O–H (ν₁, ν₃) ensanchado por puentes de hidrógeno',[2]],
+   [4.0,5.5,'vib','combinación flexión + libración',[1]],[5.5,7.5,'vib','flexión H–O–H (ν₂)',[1]],
+   [7.5,40,'rot','libración: rotación impedida de cada molécula dentro de la red de puentes de hidrógeno'],
+   [40,1000,'rot','vibraciones intermoleculares de los puentes de H y reorientación rápida'],
+   [1000,1e9,'rot','relajación dieléctrica de Debye: los dipolos intentan girar con el campo, rozan con sus vecinos y disipan calor (principio del horno de microondas)']],
+ note:'Fase líquida a 1 atm (273,15–373,15 K). Los puentes de hidrógeno ensanchan todas las bandas.'},
+{id:'co2',name:'Dióxido de carbono',f:'CO₂',phase:'gas',M:44.01,mu:0,B:0.3902,gam:0.07,T:[150,1500,296],pdef:1,Tc:304.1,sat:{T:194.7,p:1,dH:26100},cp:844,
+ atoms:[['O',-1.16,0,0],['C',0,0,0],['O',1.16,0,0]],bonds:[[0,1],[1,2]],
+ modes:[{n:'ν₁ estiramiento simétrico',nu:1333,ir:false,v:[[-1,0,0],[0,0,0],[1,0,0]]},
+        {n:'ν₂ flexión',nu:667.4,S:7.9e-18,ir:true,q:.35,v:[[0,-0.4,0],[0,1.07,0],[0,-0.4,0]]},
+        {n:'ν₃ estiramiento asimétrico',nu:2349.1,S:9.5e-17,ir:true,v:[[0.4,0,0],[-1.07,0,0],[0.4,0,0]]}],
+ combos:[{n:'banda caliente 00⁰1←10⁰0 (línea del láser de CO₂, 10,6 µm)',nu:960.96,S:2e-22,m:[2]},{n:'banda caliente 00⁰1←02⁰0 (9,4 µm)',nu:1063.7,S:1.5e-22,m:[2]},
+         {n:'combinaciones ν₁+ν₃ / 2ν₂+ν₃ (2,7 µm, resonancia de Fermi)',nu:3680,S:2.8e-18,m:[0,2]},{n:'combinaciones (2,0 µm)',nu:4978,S:1.2e-19,m:[0,2]},{n:'combinaciones (1,6 µm, satélites OCO-2)',nu:6350,S:1.7e-21,m:[0,2]}],
+ elec:[{n:'banda débil (disociativa: CO₂ → CO + O)',E:8.4,w:0.7,s:8e-19},{n:'banda Rydberg intensa',E:11.08,w:0.25,s:3e-16}],
+ IE:13.777,D:5.45,frag:[2],ion:3e-17,edges:[{el:'C 1s',E:284.2,s:9.5e-19,n:1},{el:'O 1s',E:543.1,s:5e-19,n:2}],ray:1.1e-26,
+ note:'Lineal y simétrica: sin dipolo permanente → no absorbe en microondas. Gas de efecto invernadero por ν₂ (15 µm) y ν₃ (4,26 µm).'},
+{id:'ch4',name:'Metano',f:'CH₄',phase:'gas',M:16.043,mu:0,B:5.241,gam:0.07,T:[100,1000,296],pdef:1,Tc:190.6,sat:{T:111.7,p:1,dH:8190},cp:2220,
+ atoms:[['C',0,0,0],['H',s3,s3,s3],['H',s3,-s3,-s3],['H',-s3,s3,-s3],['H',-s3,-s3,s3]],bonds:[[0,1],[0,2],[0,3],[0,4]],
+ modes:[{n:'ν₁ estiramiento simétrico C–H',nu:2917,ir:false,v:'radial'},{n:'ν₂ flexión simétrica',nu:1534,ir:false,v:'e2'},
+        {n:'ν₃ estiramiento asimétrico C–H',nu:3019,S:1.1e-17,ir:true,q:.3,v:'f2s'},{n:'ν₄ flexión asimétrica',nu:1306,S:5.4e-18,ir:true,q:.3,v:'f2b'}],
+ combos:[{n:'combinación ν₃+ν₄ (2,3 µm)',nu:4300,S:4e-19,m:[2,3]},{n:'sobretono 2ν₃ (1,66 µm)',nu:6005,S:1.3e-20,m:[2]}],
+ elec:[{n:'excitación 1t₂→3s (disociativa: CH₄ → CH₃ + H)',E:9.9,w:1.2,s:2e-17}],
+ IE:12.61,D:4.55,frag:[1],ion:4e-17,edges:[{el:'C 1s',E:284.2,s:9.5e-19,n:1}],ray:1.0e-26,
+ note:'Tetraédrica (sin dipolo permanente). Potente gas de efecto invernadero por ν₄ (7,7 µm).'},
+{id:'o2',name:'Oxígeno',f:'O₂',phase:'gas',M:31.998,mu:0,B:1.4377,gam:0.06,T:[60,2000,296],pdef:0.21,Tc:154.6,sat:{T:90.19,p:1,dH:6820},cp:918,mag:true,
+ atoms:[['O',-0.604,0,0],['O',0.604,0,0]],bonds:[[0,1]],
+ modes:[{n:'estiramiento O=O',nu:1556,ir:false,v:[[-1,0,0],[1,0,0]]}],
+ elec:[{n:'banda γ/1,27 µm (a¹Δg←X, prohibida)',E:0.976,w:0.012,s:3e-26},{n:'banda A a 762 nm (b¹Σg⁺←X³Σg⁻, prohibida)',E:1.627,w:0.012,s:2.4e-24},
+       {n:'continuo de Herzberg (O₂ → O + O)',E:5.6,w:1.0,s:7e-24},{n:'bandas de Schumann-Runge (predisociación)',E:6.65,w:0.7,s:1e-20},{n:'continuo de Schumann-Runge (O₂ → O + O*)',E:8.6,w:1.1,s:1.4e-17}],
+ IE:12.07,D:5.12,frag:[1],ion:2.5e-17,edges:[{el:'O 1s',E:543.1,s:5e-19,n:2}],ray:3.9e-27,
+ note:'Homonuclear: sin dipolo eléctrico, pero paramagnético → absorbe microondas a 60 y 118,75 GHz por su dipolo magnético.'},
+{id:'n2',name:'Nitrógeno',f:'N₂',phase:'gas',M:28.013,mu:0,B:1.998,gam:0.06,T:[50,2000,296],pdef:0.78,Tc:126.2,sat:{T:77.36,p:1,dH:5570},cp:1040,
+ atoms:[['N',-0.549,0,0],['N',0.549,0,0]],bonds:[[0,1]],
+ modes:[{n:'estiramiento N≡N',nu:2330,ir:false,v:[[-1,0,0],[1,0,0]]}],
+ elec:[{n:'bandas de Lyman-Birge-Hopfield (prohibidas)',E:8.5,w:1.5,s:1e-22},{n:'bandas de Birge-Hopfield (intensas)',E:13.0,w:1.0,s:1e-16}],
+ IE:15.581,D:9.76,frag:[1],ion:2.5e-17,edges:[{el:'N 1s',E:409.9,s:6.5e-19,n:2}],ray:4.6e-27,
+ note:'Homonuclear y no polar: transparente desde radio hasta el UV de vacío (~100 nm). Domina la dispersión Rayleigh del cielo.'},
+{id:'co',name:'Monóxido de carbono',f:'CO',phase:'gas',M:28.01,mu:0.110,B:1.9225,linear:true,gam:0.07,T:[55,2000,296],pdef:1,Tc:132.9,sat:{T:81.6,p:1,dH:6040},cp:1040,
+ atoms:[['C',-0.645,0,0],['O',0.483,0,0]],bonds:[[0,1]],
+ modes:[{n:'estiramiento C≡O',nu:2143.3,S:9.8e-18,ir:true,v:[[-0.57,0,0],[0.43,0,0]]}],
+ combos:[{n:'primer sobretono 2ν (2,35 µm)',nu:4260,S:7.4e-20,m:[0]}],
+ elec:[{n:'banda A¹Π←X¹Σ⁺ (cuarto positivo)',E:8.6,w:1.4,s:8e-18}],
+ IE:14.014,D:11.09,frag:[1],ion:2.2e-17,edges:[{el:'C 1s',E:284.2,s:9.5e-19,n:1},{el:'O 1s',E:543.1,s:5e-19,n:1}],ray:5.3e-27,
+ note:'Rotor lineal con dipolo pequeño (0,11 D): espectro rotacional de líneas equiespaciadas 2B(J+1); J=1←0 a 115,27 GHz (radioastronomía).'},
+{id:'nh3',name:'Amoníaco',f:'NH₃',phase:'gas',M:17.031,mu:1.471,Beff:8.2,Bv:9.44,gam:0.1,T:[200,800,296],pdef:1,Tc:405.5,sat:{T:239.8,p:1,dH:23350},cp:2090,
+ atoms:[['N',0,-0.27,0],['H',0.94,0.11,0],['H',-0.47,0.11,0.814],['H',-0.47,0.11,-0.814]],bonds:[[0,1],[0,2],[0,3]],
+ modes:[{n:'ν₁ estiramiento simétrico N–H',nu:3337,S:1.4e-18,ir:true,v:'radial'},{n:'ν₂ modo paraguas (inversión)',nu:950,S:2.1e-17,ir:true,q:.3,v:'umb'},
+        {n:'ν₃ estiramiento asimétrico N–H',nu:3444,S:8e-19,ir:true,v:'asym'},{n:'ν₄ flexión asimétrica',nu:1627,S:3.8e-18,ir:true,q:.3,v:'tang'}],
+ rotLines:[{f:23.6945,S:4e-24,E:16.2,n:'inversión (1,1) a 23,69 GHz'},{f:23.7226,S:6e-24,E:44.8,n:'inversión (2,2) a 23,72 GHz'},{f:23.8701,S:1.2e-23,E:84,n:'inversión (3,3) a 23,87 GHz — línea del máser de amoníaco (1954)'},
+   {f:24.1394,S:5e-24,E:137,n:'inversión (4,4) a 24,14 GHz'},{f:24.5329,S:4e-24,E:205,n:'inversión (5,5) a 24,53 GHz'},{f:25.056,S:5e-24,E:289,n:'inversión (6,6) a 25,06 GHz'},
+   {f:23.0988,S:2e-24,E:58,n:'inversión (2,1) a 23,10 GHz'},{f:22.8342,S:3e-24,E:104,n:'inversión (3,2) a 22,83 GHz'},{f:22.6883,S:4e-24,E:170,n:'inversión (4,3) a 22,69 GHz'}],
+ inversion:true,
+ elec:[{n:'banda Ã←X̃ (disociativa: NH₃ → NH₂ + H)',E:6.4,w:0.75,s:1.8e-17},{n:'bandas B̃/C̃ (Rydberg)',E:8.0,w:0.8,s:1.5e-17}],
+ IE:10.07,D:4.6,frag:[1],ion:2e-17,edges:[{el:'N 1s',E:409.9,s:6.5e-19,n:1}],ray:8e-27,
+ note:'Pirámide polar (1,47 D). El N atraviesa el plano de los H por efecto túnel: transiciones de inversión ~24 GHz.'},
+{id:'o3',name:'Ozono',f:'O₃',phase:'gas',M:47.998,mu:0.532,Beff:0.85,Bv:0.45,gam:0.08,T:[120,500,296],pdef:1e-5,Tc:261,sat:{T:161.3,p:1,dH:15200},cp:819,
+ atoms:[['O',0,-0.334,0],['O',-1.089,0.334,0],['O',1.089,0.334,0]],bonds:[[0,1],[0,2]],
+ modes:[{n:'ν₁ estiramiento simétrico',nu:1103.1,S:6e-19,ir:true,v:[[0,-0.2,0],[-0.85,0.52,0],[0.85,0.52,0]]},
+        {n:'ν₂ flexión',nu:700.9,S:7e-19,ir:true,v:[[0,0.3,0],[-0.52,-0.85,0],[0.52,-0.85,0]]},
+        {n:'ν₃ estiramiento asimétrico (banda de 9,6 µm)',nu:1042.1,S:1.4e-17,ir:true,v:[[0.35,0,0],[-0.85,0.52,0],[-0.85,-0.52,0]]}],
+ elec:[{n:'banda de Chappuis (visible, O₃ → O₂ + O)',E:2.07,w:0.55,s:5.2e-21},{n:'bandas de Huggins',E:3.8,w:0.3,s:2e-20},{n:'banda de Hartley (O₃ → O₂ + O(¹D)): el escudo UV de la estratosfera',E:4.86,w:0.7,s:1.15e-17}],
+ IE:12.53,D:1.05,frag:[2],ion:3e-17,edges:[{el:'O 1s',E:543.1,s:5e-19,n:3}],ray:1.2e-26,
+ note:'Presión parcial típica estratosférica ~10⁻⁵ atm. Absorbe casi todo el UV-C y gran parte del UV-B.'},
+{id:'i2',name:'Yodo (vapor)',f:'I₂',phase:'gas',M:253.81,mu:0,B:0.0374,gam:0.08,T:[250,1000,300],pdef:3e-4,Tc:819,sat:{T:298.15,p:4.1e-4,dH:62400},cp:145,
+ atoms:[['I',-1.333,0,0],['I',1.333,0,0]],bonds:[[0,1]],
+ modes:[{n:'estiramiento I–I',nu:214.5,ir:false,v:[[-1,0,0],[1,0,0]]}],
+ elec:[{n:'banda B³Π₀u⁺←X (absorbe verde-amarillo: vapor violeta). Disocia bajo 499 nm',E:2.33,w:0.45,s:2.2e-18},{n:'bandas Rydberg UV',E:6.8,w:0.8,s:3e-17}],
+ IE:9.31,D:2.48,frag:[1],ion:5e-17,edges:[{el:'I 3d (borde M₅)',E:619,s:3e-18,n:2}],ray:1.4e-25,
+ note:'Homonuclear pesada: color violeta por la banda electrónica B←X en el visible. Sublima a temperatura ambiente.'},
+{id:'nacl',name:'Cloruro de sodio (cristal)',f:'NaCl(s)',phase:'solid',M:58.44,T:[10,1073,298],Ldef:0.01,cp:864,rho:2165,nmol:2.23e22,
+ table:[[0.1,8e5],[0.13,1e6],[0.157,1.5e6],[0.165,3e5],[0.172,5e3],[0.18,30],[0.19,1],[0.2,0.01],[0.25,0.001],[1,5e-4],[10.6,0.0013],[14,0.02],[16,0.15],[20,1.5],[25,10],[30,60],[35,300],[40,1500],[45,8000],[50,3e4],[55,1.5e5],[61,4e5],[65,1.5e5],[70,3e4],[80,3e3],[100,500],[150,30],[300,3],[1000,0.05]],
+ tags:[[0.1,0.13,'ion','fotoemisión: el fotón arranca electrones de los iones Cl⁻'],[0.13,0.19,'elec','excitón / salto de banda prohibida (≈ 8,7 eV): un electrón pasa del Cl⁻ al Na⁺'],
+   [0.19,14,'none','ventana de transparencia: no hay transiciones entre 0,2 y 15 µm (por eso se usan ventanas de NaCl en espectrómetros IR)'],
+   [14,40,'vib','absorción multifonón (combinaciones de vibraciones de la red)'],[40,100,'vib','fonón óptico transversal (164 cm⁻¹): Na⁺ y Cl⁻ oscilan en oposición — banda reststrahlen'],
+   [100,1e9,'vib','cola del fonón y pérdidas dieléctricas mínimas (tan δ ≈ 2×10⁻⁴)']],
+ ionModel:{IE:9.5,ion:4e-17,edges:[{el:'Cl 2p (borde L)',E:200,s:2e-18,n:1},{el:'Na 1s',E:1070.8,s:2e-19,n:1}],D:99},
+ note:'Cristal iónico (no hay moléculas aisladas): la red de Na⁺ y Cl⁻ vibra como un todo (fonones).'}
+];
+COMP.forEach(function(c){ if(c.geom){ var g=COMP.filter(function(x){return x.id===c.geom;})[0]; c.atoms=g.atoms; c.bonds=g.bonds; c.modes=g.modes; } });
+
+/* vectores de modos para CH4 y NH3 (definidos geométricamente) */
+function norm(v){var l=Math.hypot(v[0],v[1],v[2])||1;return [v[0]/l,v[1]/l,v[2]/l];}
+function buildVec(c,code){
+  var A=c.atoms, c0=A[0], out=[], i, d;
+  var hs=[]; for(i=1;i<A.length;i++) hs.push(norm([A[i][1]-c0[1],A[i][2]-c0[2],A[i][3]-c0[3]]));
+  var mC=c.id==='ch4'?12:14, sum=[0,0,0];
+  function push(dv){out.push(dv); sum[0]+=dv[0];sum[1]+=dv[1];sum[2]+=dv[2];}
+  out.push(null);
+  for(i=0;i<hs.length;i++){
+    var h=hs[i];
+    if(code==='radial') d=[h[0]*.6,h[1]*.6,h[2]*.6];
+    else if(code==='f2s'){var sg=h[0]>0?1:-1; d=[h[0]*.6*sg,h[1]*.6*sg,h[2]*.6*sg];}
+    else if(code==='f2b'){var dot=h[0]; d=[(1-dot*h[0])*.6,(-dot*h[1])*.6,(-dot*h[2])*.6];}
+    else if(code==='e2'){var t=[h[0],-h[1],0]; var dt=t[0]*h[0]+t[1]*h[1]; d=[(t[0]-dt*h[0])*.6,(t[1]-dt*h[1])*.6,(-dt*h[2])*.6];}
+    else if(code==='umb'){d=[0,-0.45,0];}
+    else if(code==='asym'){var k=i===0?0.6:-0.3; d=[h[0]*k,h[1]*k,h[2]*k];}
+    else if(code==='tang'){var tg=i===0?[0,0,1]:(i===1?[0.87,0,-0.5]:[-0.87,0,-0.5]); d=[tg[0]*.5,tg[1]*.5,tg[2]*.5];}
+    else d=[0,0,0];
+    push(d);
+  }
+  out[0]=[-sum[0]/mC,-sum[1]/mC,-sum[2]/mC];
+  return out;
+}
+COMP.forEach(function(c){ (c.modes||[]).forEach(function(m){ if(typeof m.v==='string') m.v=buildVec(c,m.v); }); });
+
+/* ===================== Utilidades ===================== */
+function clamp(x,a,b){return x<a?a:(x>b?b:x);}
+function sig(x){return 1/(1+Math.exp(-x));}
+var SUP={'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+function dec(x,d){return x.toFixed(d).replace('.',',');}
+function sigf(x,n){ if(x===0) return '0'; var a=Math.abs(x); var d=Math.max(0,n-1-Math.floor(Math.log10(a))); if(d>6)d=6; return dec(x,d); }
+function sci(x,n){
+  if(!isFinite(x)) return '∞'; if(x===0) return '0';
+  var a=Math.abs(x); if(a>=0.01&&a<1e4) return sigf(x,n||3);
+  var e=Math.floor(Math.log10(a)), m=x/Math.pow(10,e);
+  if(Math.abs(m)>=9.995){m/=10;e++;}
+  return dec(m,(n||3)-1)+'×10'+String(e).split('').map(function(ch){return SUP[ch];}).join('');
+}
+function fmtLen(l){
+  if(l>=1) return sigf(l,3)+' m'; if(l>=1e-2) return sigf(l*100,3)+' cm'; if(l>=1e-3) return sigf(l*1e3,3)+' mm';
+  if(l>=1e-6) return sigf(l*1e6,3)+' µm'; return sigf(l*1e9,3)+' nm';
+}
+function fmtL(l){ if(l>=1000) return sigf(l/1000,3)+' km'; return fmtLen(l); }
+function fmtFreq(f){
+  var u=[['EHz',1e18],['PHz',1e15],['THz',1e12],['GHz',1e9],['MHz',1e6],['kHz',1e3]];
+  for(var i=0;i<u.length;i++) if(f>=u[i][1]) return sigf(f/u[i][1],3)+' '+u[i][0];
+  return sigf(f,3)+' Hz';
+}
+function fmtE(e){ if(e>=1000) return sigf(e/1000,3)+' keV'; if(e<1e-3) return sigf(e*1e6,3)+' µeV'; if(e<0.1) return sigf(e*1e3,3)+' meV'; return sigf(e,3)+' eV'; }
+function psat(c,T){ if(!c.sat) return Infinity; if(T>=c.Tc) return Infinity; return c.sat.p*Math.exp(-c.sat.dH/RG*(1/T-1/c.sat.T)); }
+function pmaxOf(c,T){ return Math.min(10,psat(c,T)); }
+
+function region(l){
+  var nm=l*1e9;
+  if(l>=1) return 'Radio (VHF)';
+  if(l>=1e-2) return 'Microondas (centimétricas)';
+  if(l>=1e-3) return 'Ondas milimétricas';
+  if(l>=1e-4) return 'Terahercios / IR lejano';
+  if(l>=1.5e-5) return 'Infrarrojo lejano';
+  if(l>=3e-6) return 'Infrarrojo medio (térmico)';
+  if(l>=7.5e-7) return 'Infrarrojo cercano';
+  if(nm>=380){ var n= nm>=620?'rojo':nm>=590?'naranja':nm>=565?'amarillo':nm>=500?'verde':nm>=485?'cian':nm>=450?'azul':'violeta'; return 'Luz visible ('+n+')'; }
+  if(nm>=315) return 'Ultravioleta A';
+  if(nm>=280) return 'Ultravioleta B';
+  if(nm>=200) return 'Ultravioleta C';
+  if(nm>=100) return 'Ultravioleta de vacío';
+  if(nm>=10) return 'Ultravioleta extremo';
+  return 'Rayos X blandos';
+}
+function waveRGB(l){
+  var nm=l*1e9, r,g,b;
+  if(nm>=380&&nm<=780){
+    if(nm<440){r=-(nm-440)/60;g=0;b=1;} else if(nm<490){r=0;g=(nm-440)/50;b=1;} else if(nm<510){r=0;g=1;b=-(nm-510)/20;}
+    else if(nm<580){r=(nm-510)/70;g=1;b=0;} else if(nm<645){r=1;g=-(nm-645)/65;b=0;} else {r=1;g=0;b=0;}
+    var f=nm<420?0.4+0.6*(nm-380)/40:(nm>700?0.4+0.6*(780-nm)/80:1);
+    return [Math.round(255*Math.pow(r*f,0.8)),Math.round(255*Math.pow(g*f,0.8)),Math.round(255*Math.pow(b*f,0.8))];
+  }
+  if(nm>780&&l<1e-4){ var t=clamp((Math.log10(l)+6.1)/2,0,1); return [Math.round(220-90*t),Math.round(60+20*t),Math.round(50+40*t)]; }
+  if(l>=1e-4) return [120,170,220];
+  if(nm<380&&nm>=100) return [170,120,255];
+  if(nm<100&&nm>=10) return [200,170,255];
+  return [215,240,255];
+}
+function rgbS(c,a){return 'rgba('+c[0]+','+c[1]+','+c[2]+','+(a==null?1:a)+')';}
+
+/* ===================== Modelo espectroscópico ===================== */
+function gN(x,mu,s){var z=(x-mu)/s;return Math.exp(-0.5*z*z)/(s*2.5066283);}
+function vibBand(nu,nu0,S,Bv,T,q){
+  var d=Math.max(2,Math.sqrt(2*Bv*T/C2)), s=Math.max(1.5,0.55*d); q=q||0;
+  if(Math.abs(nu-nu0)>d+6*s) return 0;
+  var v=(1-q)*S*0.5*(gN(nu,nu0-d,s)+gN(nu,nu0+d,s));
+  if(q) v+=q*S*gN(nu,nu0,Math.max(0.8,0.12*d));
+  return v;
+}
+function ionPart(cm,E,add){
+  if(E>cm.IE-1){ var v=cm.ion*sig((E-cm.IE)/0.25)*Math.min(1,Math.pow(25/E,2.5)); add('ion',v,{label:'fotoionización de valencia (energía de ionización '+dec(cm.IE,2)+' eV)',ke:E-cm.IE}); }
+  (cm.edges||[]).forEach(function(ed){ if(E>ed.E*0.96){ var v=ed.n*ed.s*sig((E-ed.E)/(0.004*ed.E))*Math.pow(ed.E/E,2.7); add('ion',v,{label:'ionización de capa interna '+ed.el+' (borde a '+ed.E+' eV) seguida de emisión Auger',ke:E-ed.E,core:true}); } });
+}
+/* devuelve secciones eficaces (cm²/molécula) por proceso para un gas */
+function gasSigma(c,nu,T,p){
+  var E=nu*1.239841984e-4, out={rot:0,vib:0,elec:0,ion:0,scat:0}, best={};
+  function add(t,v,info){ if(!(v>0)) return; out[t]+=v; if(!best[t]||v>best[t].v){info.v=v;best[t]=info;} }
+  var Pt=Math.max(1,p), gL=c.gam*Pt*Math.pow(296/T,0.75), dF=3.581e-7*Math.sqrt(T/c.M);
+  function lor(nu0,S){var gD=nu0*dF, g=0.5346*gL+Math.sqrt(0.2166*gL*gL+gD*gD), d=nu-nu0; return S*g/Math.PI/(d*d+g*g);}
+  if(nu<4000){
+    if(c.linear&&c.mu>0){
+      var B=c.B, Q=T/(C2*B)+1/3;
+      for(var J=0;J<260;J++){ var nu0=2*B*(J+1), pop=Math.exp(-C2*B*J*(J+1)/T); if(pop<1e-7&&J>3) break;
+        if(Math.abs(nu-nu0)>60*gL+0.05*nu0+5) continue;
+        var S=4.162e-19*nu0*c.mu*c.mu*(J+1)*pop/Q*(1-Math.exp(-C2*nu0/T));
+        add('rot',lor(nu0,S),{label:'rotación pura J = '+J+' → '+(J+1)+' (línea a '+fmtFreq(nu0*2.99792458e10)+')'}); }
+    }
+    if(c.rotLines) c.rotLines.forEach(function(L){ var nu0=L.f/29.9792458;
+      var S=L.S*Math.pow(296/T,1.5)*Math.exp(-C2*L.E*(1/T-1/296))*(1-Math.exp(-C2*nu0/T))/(1-Math.exp(-C2*nu0/296));
+      add('rot',lor(nu0,S),{label:(c.inversion?'transición de ':'rotación: ')+L.n,inv:c.inversion}); });
+    if(c.Beff&&c.mu>0){ var Bb=c.Beff, x=nu/(2*Bb);
+      if(x>0.5){ var Qb=T/(C2*Bb), Sx=4.162e-19*nu*c.mu*c.mu*x*Math.exp(-C2*Bb*(x-1)*x/T)/Qb*(1-Math.exp(-C2*nu/T));
+        add('rot',Sx/(2*Bb)*sig((x-0.9)/0.12),{label:'banda de rotación pura (cientos de líneas entre niveles de rotación)'}); } }
+    if(c.mag){ add('rot',6.5e-24*Math.exp(-2.7726*Math.pow((nu-2.0)/0.5,2)),{label:'banda magnética de 60 GHz: el O₂ es paramagnético y su dipolo magnético gira con el campo',mag:true});
+      add('rot',lor(3.961,1.8e-25),{label:'línea magnética del O₂ a 118,75 GHz',mag:true}); }
+  }
+  var Bv=c.Bv||c.B||c.Beff||1;
+  (c.modes||[]).forEach(function(m,i){ if(m.ir&&m.S) add('vib',vibBand(nu,m.nu,m.S,Bv,T,m.q),{label:m.n+' ('+String(m.nu).replace('.',',')+' cm⁻¹)',mode:[i]}); });
+  (c.combos||[]).forEach(function(cb){ add('vib',vibBand(nu,cb.nu,cb.S,Bv,T,cb.q),{label:cb.n,mode:cb.m}); });
+  (c.elec||[]).forEach(function(e){ var z=(E-e.E)/e.w; if(Math.abs(z)<4) add('elec',e.s*Math.exp(-2.7726*z*z),{label:e.n,diss:E>=c.D}); });
+  ionPart(c,E,add);
+  var lnm=1e7/nu; if(lnm>180) add('scat',c.ray*Math.pow(550/lnm,4),{label:'dispersión Rayleigh'});
+  return {s:out,best:best};
+}
+function interpTable(tb,lum){
+  if(lum<=tb[0][0]) return tb[0][1];
+  for(var i=1;i<tb.length;i++) if(lum<=tb[i][0]){ var a=tb[i-1],b=tb[i], t=(Math.log(lum)-Math.log(a[0]))/(Math.log(b[0])-Math.log(a[0])); return Math.exp(Math.log(a[1])+t*(Math.log(b[1])-Math.log(a[1]))); }
+  return tb[tb.length-1][1];
+}
+/* devuelve {a:{rot,vib,...} en cm⁻¹, best, kind} */
+function spectrum(c,lam,T,p){
+  var nu=0.01/lam, E=1.239841984e-6/lam, lum=lam*1e6;
+  if(c.phase==='gas'){
+    var g=gasSigma(c,nu,T,p), n=p*101325/(KB*T)*1e-6, a={};
+    for(var k in g.s) a[k]=g.s[k]*n;
+    return {a:a,best:g.best,n:n};
+  }
+  var a={rot:0,vib:0,elec:0,ion:0,scat:0,none:0}, best={};
+  if(lum<0.1){
+    var cm=c.id==='h2ol'?COMP[0]:c.ionModel, tmp={rot:0,vib:0,elec:0,ion:0,scat:0};
+    ionPart(cm,E,function(t,v,info){ if(!(v>0))return; tmp[t]+=v; if(!best[t]||v>best[t].v){info.v=v;best[t]=info;} });
+    a.ion=tmp.ion*c.nmol; if(best.ion) best.ion.v*=c.nmol;
+    return {a:a,best:best,n:c.nmol};
+  }
+  var al;
+  if(lum>1000){
+    if(c.id==='h2ol'){
+      var f=CL/lam, w=2*Math.PI*f, t=T-273.15, es=87.74-0.40008*t+9.398e-4*t*t-1.41e-6*t*t*t, tau=8.27e-12*Math.exp(2480*(1/T-1/298.15)), ei=5.2;
+      var wt=w*tau, e1=ei+(es-ei)/(1+wt*wt), e2=(es-ei)*wt/(1+wt*wt), mod=Math.hypot(e1,e2), kk=Math.sqrt((mod-e1)/2);
+      al=4*Math.PI*kk/(lam*100);
+    } else al=2*Math.PI*Math.sqrt(5.9)*2e-4/(lam*100);
+  } else al=interpTable(c.table,lum);
+  if(c.id==='nacl'){ al*=1+0.6*(T-298)/775*(lum>14&&lum<200?1:0); }
+  var tag=c.tags[c.tags.length-1];
+  for(var i=0;i<c.tags.length;i++) if(lum>=c.tags[i][0]&&lum<c.tags[i][1]){tag=c.tags[i];break;}
+  var ty=tag[2];
+  a[ty]=al; best[ty]={v:al,label:tag[3],mode:tag[4],diss:ty==='elec'&&c.id==='h2ol'};
+  if(ty==='ion'){ best.ion.ke=E-(c.id==='h2ol'?11:c.ionModel.IE); }
+  return {a:a,best:best,n:c.nmol};
+}
+
+/* ===================== Estado ===================== */
+var S={ci:0,lam:6.27e-6,I:1000,T:296,p:0.01,L:1,paused:false,sweep:false,pi:0};
+var PRESETS=[
+ ['Radio FM 100 MHz',3.0],['Wi-Fi / horno microondas 2,45 GHz',0.12236],['Inversión NH₃ 23,87 GHz',0.012559],['Vapor de agua 22,235 GHz',0.013483],
+ ['Oxígeno 60 GHz',0.0049965],['CO J=1←0 115,27 GHz',0.0026007],['Vapor de agua 183 GHz',0.0016355],['Terahercio 1 THz',2.998e-4],
+ ['Fonón NaCl 61 µm',6.1e-5],['CO₂ flexión 15 µm',1.4984e-5],['Láser CO₂ 10,6 µm',1.0591e-5],['O₃ 9,6 µm',9.596e-6],['CH₄ 7,66 µm',7.657e-6],
+ ['H₂O flexión 6,27 µm',6.271e-6],['CO 4,67 µm',4.666e-6],['CO₂ 4,26 µm',4.257e-6],['O–H agua 2,95 µm',2.95e-6],['O₂ banda A 762 nm',7.62e-7],
+ ['Rojo 650 nm',6.5e-7],['Verde 532 nm',5.32e-7],['Azul 450 nm',4.5e-7],['UV-A 365 nm',3.65e-7],['UV-B 300 nm',3.0e-7],['UV-C germicida 254 nm',2.537e-7],
+ ['NH₃ Ã 194 nm',1.94e-7],['H₂O Ã 166 nm',1.665e-7],['Lyman-α 121,6 nm',1.2157e-7],['UV extremo 30 nm',3.0e-8],['Borde K del C 4,4 nm',4.36e-9],['Borde K del O 2,28 nm',2.28e-9],['Rayos X 1 nm',1e-9]
+];
+var IREF=[[1e-3,'luz de luna llena'],[1,'iluminación interior'],[100,'día nublado'],[1361,'constante solar'],[1e4,'interior de un horno microondas'],[1e6,'puntero láser enfocado'],[1e9,'láser industrial enfocado (límite del modelo lineal)']];
+
+function setComp(i){
+  S.ci=i; var c=COMP[i];
+  S.T=clamp(c.T[2],c.T[0],c.T[1]);
+  if(c.phase==='gas'){ S.p=Math.min(c.pdef,pmaxOf(c,S.T)); S.L=1; } else { S.L=c.Ldef; }
+  if(c.id==='nacl'&&(S.lam<4e-5||S.lam>1e-4)&&!S.sweep) S.lam=6.1e-5;
+  if(c.id==='h2ol'&&!S.sweep) S.lam=0.12236;
+  if(c.id==='co2'&&!S.sweep) S.lam=1.4984e-5;
+  if(c.id==='ch4'&&!S.sweep) S.lam=7.657e-6;
+  if(c.id==='o3'&&!S.sweep) S.lam=2.537e-7;
+  if(c.id==='i2'&&!S.sweep) S.lam=5.32e-7;
+  if(c.id==='nh3'&&!S.sweep) S.lam=0.012559;
+  if(c.id==='co'&&!S.sweep) S.lam=0.0026007;
+  if(c.id==='o2'&&!S.sweep) S.lam=0.0049965;
+  if(c.id==='n2'&&!S.sweep) S.lam=4.5e-7;
+  if(c.id==='h2o'&&!S.sweep) S.lam=6.271e-6;
+  initParticles(); dirtySpec=true; dirty=true;
+}
+var warnMsg='';
+function enforce(){
+  var c=COMP[S.ci]; warnMsg='';
+  S.T=clamp(S.T,c.T[0],c.T[1]);
+  if(c.phase==='gas'){ var pm=pmaxOf(c,S.T); if(S.p>pm){S.p=pm; warnMsg='Presión limitada a la presión de vapor saturado p_sat('+dec(S.T,0)+' K) = '+sci(pm,3)+' atm: más gas se condensaría.';} S.p=clamp(S.p,1e-6,pm); }
+  S.lam=clamp(S.lam,LMIN,LMAX); S.I=clamp(S.I,1e-3,1e9); S.L=clamp(S.L,1e-6,1e4);
+}
+
+/* ===================== Controles (TV) ===================== */
+function logFrac(v,a,b){return (Math.log10(v)-Math.log10(a))/(Math.log10(b)-Math.log10(a));}
+var CTRLS=[
+ {id:'comp',lab:'Compuesto',kind:'list',val:function(){var c=COMP[S.ci];return c.f+' · '+c.name;},frac:function(){return S.ci/(COMP.length-1);},
+   step:function(d){setComp((S.ci+d+COMP.length)%COMP.length);},rng:['',''],hint:function(){return '◀ ▶ cambia de compuesto ('+(S.ci+1)+'/'+COMP.length+')';}},
+ {id:'lam',lab:'Longitud de onda λ',kind:'log',inv:true,a:LMIN,b:LMAX,get:function(){return S.lam;},set:function(v){S.lam=v;},val:function(){return fmtLen(S.lam)+' · '+fmtFreq(CL/S.lam);},rng:['10 m','1 nm'],
+   hint:function(){return '◀ λ más larga · más corta ▶ (mantén pulsado para acelerar)';}},
+ {id:'pre',lab:'Ir a una línea o banda',kind:'list',val:function(){return Math.abs(Math.log10(PRESETS[S.pi][1]/S.lam))<0.004?PRESETS[S.pi][0]:'— elige con ◀ ▶';},frac:function(){return S.pi/(PRESETS.length-1);},
+   step:function(d){S.pi=(S.pi+d+PRESETS.length)%PRESETS.length; S.lam=PRESETS[S.pi][1]; S.sweep=false;},rng:['',''],hint:function(){return '◀ ▶ salta a frecuencias famosas';}},
+ {id:'I',lab:'Intensidad',kind:'log',a:1e-3,b:1e9,get:function(){return S.I;},set:function(v){S.I=v;},val:function(){return sci(S.I,2)+' W/m²';},rng:['10⁻³','10⁹'],
+   hint:function(){var best=IREF[0];IREF.forEach(function(r){if(Math.abs(Math.log10(r[0]/S.I))<Math.abs(Math.log10(best[0]/S.I)))best=r;});return '≈ '+best[1]+' ('+sci(best[0],2)+' W/m²)';}},
+ {id:'T',lab:'Temperatura',kind:'lin',a:function(){return COMP[S.ci].T[0];},b:function(){return COMP[S.ci].T[1];},get:function(){return S.T;},set:function(v){S.T=v;},stepv:1,
+   val:function(){return dec(S.T,S.T<100?1:0)+' K ('+dec(S.T-273.15,0)+' °C)';},rng:function(){var c=COMP[S.ci];return [dec(c.T[0],0)+' K',dec(c.T[1],0)+' K'];},
+   hint:function(){var c=COMP[S.ci];return c.phase==='gas'?'Rango admisible en fase gaseosa sin descomposición':(c.phase==='liquid'?'Agua líquida a 1 atm: entre fusión y ebullición':'Sólido hasta su fusión (1074 K)');}},
+ {id:'p',lab:'Presión parcial',kind:'log',a:1e-6,b:function(){return pmaxOf(COMP[S.ci],S.T);},get:function(){return S.p;},set:function(v){S.p=v;},dis:function(){return COMP[S.ci].phase!=='gas';},
+   val:function(){return COMP[S.ci].phase!=='gas'?'no aplica (fase condensada)':sci(S.p,3)+' atm';},rng:function(){return ['10⁻⁶',sci(pmaxOf(COMP[S.ci],S.T),2)];},
+   hint:function(){var c=COMP[S.ci]; if(c.phase!=='gas')return 'Densidad fija del '+(c.phase==='liquid'?'líquido':'sólido'); var ps=psat(c,S.T); return isFinite(ps)?'Máx.: p_sat(T) = '+sci(ps,3)+' atm (Clausius-Clapeyron)':'Sobre la T crítica ('+dec(c.Tc,1)+' K): sin condensación, máx. 10 atm';}},
+ {id:'L',lab:'Camino óptico (espesor)',kind:'log',a:1e-6,b:1e4,get:function(){return S.L;},set:function(v){S.L=v;},val:function(){return fmtL(S.L);},rng:['1 µm','10 km'],hint:function(){return 'Distancia que recorre la onda dentro del material';}},
+ {id:'btns',kind:'row',items:[
+   {id:'play',txt:function(){return S.paused?'▶ Reanudar':'⏸ Pausa';},act:function(){S.paused=!S.paused;}},
+   {id:'sweep',txt:function(){return S.sweep?'⏹ Parar barrido':'↻ Barrido λ';},act:function(){S.sweep=!S.sweep;}},
+   {id:'info',txt:function(){return 'ℹ Fuentes';},act:function(){openModal(true);}}]}
+];
+var focusList=[], fi=1, ctrlEls={};
+function buildCtrls(){
+  var box=document.getElementById('ctrls'); box.innerHTML='';
+  CTRLS.forEach(function(ct){
+    if(ct.kind==='row'){
+      var row=document.createElement('div'); row.className='btns';
+      ct.items.forEach(function(it){ var b=document.createElement('div'); b.className='ctrl'; b.tabIndex=0; b.id='c_'+it.id; row.appendChild(b);
+        b.addEventListener('click',function(){ setFocus(focusList.indexOf(it)); it.act(); dirty=true; refreshCtrls(); });
+        it.el=b; it.kind='btn'; focusList.push(it); });
+      box.appendChild(row); return;
+    }
+    var d=document.createElement('div'); d.className='ctrl'; d.tabIndex=0; d.id='c_'+ct.id;
+    d.innerHTML='<div class="top"><span class="lab">'+ct.lab+'</span><span class="val"></span></div><div class="barrow"><span class="ar" data-d="-1">◀</span><span class="mn"></span><div class="bar"><div class="fill"></div><div class="knob"></div></div><span class="mx"></span><span class="ar" data-d="1">▶</span></div><div class="hint"></div>';
+    box.appendChild(d); ct.el=d; focusList.push(ct);
+    var bar=d.querySelector('.bar');
+    var drag=false; function bf(ev){ var r=bar.getBoundingClientRect(); setFrac(ct,clamp((ev.clientX-r.left)/r.width,0,1)); }
+    bar.addEventListener('pointerdown',function(ev){ drag=true; try{bar.setPointerCapture(ev.pointerId);}catch(e){} setFocus(focusList.indexOf(ct)); bf(ev); });
+    bar.addEventListener('pointermove',function(ev){ if(drag) bf(ev); });
+    ['pointerup','pointercancel','lostpointercapture'].forEach(function(n){ bar.addEventListener(n,function(){ drag=false; }); });
+    Array.prototype.forEach.call(d.querySelectorAll('.ar'),function(btn){ var dir=+btn.getAttribute('data-d'), t1=null, t2=null, acc=1;
+      function stop(){ clearTimeout(t1); clearInterval(t2); t1=t2=null; }
+      btn.addEventListener('pointerdown',function(ev){ ev.preventDefault(); ev.stopPropagation(); setFocus(focusList.indexOf(ct)); acc=1; adjust(ct,dir,1); stop();
+        t1=setTimeout(function(){ t2=setInterval(function(){ acc=Math.min(acc*1.12,10); adjust(ct,dir,acc); },ct.kind==='list'?260:70); },380); });
+      ['pointerup','pointerleave','pointercancel'].forEach(function(n){ btn.addEventListener(n,stop); });
+      btn.addEventListener('click',function(ev){ ev.stopPropagation(); }); });
+    d.addEventListener('click',function(){ setFocus(focusList.indexOf(ct)); });
+    d.addEventListener('wheel',function(ev){ ev.preventDefault(); adjust(ct,ev.deltaY<0?1:-1,1); },{passive:false});
+  });
+}
+function A(ct){return typeof ct.a==='function'?ct.a():ct.a;}
+function Bf(ct){return typeof ct.b==='function'?ct.b():ct.b;}
+function getFrac(ct){
+  if(ct.frac) return ct.frac();
+  if(ct.kind==='log'){ var f=logFrac(ct.get(),A(ct),Bf(ct)); return ct.inv?1-f:f; }
+  return (ct.get()-A(ct))/(Bf(ct)-A(ct));
+}
+function setFrac(ct,f){
+  if(ct.dis&&ct.dis()) return;
+  if(ct.kind==='log'){ if(ct.inv) f=1-f; var la=Math.log10(A(ct)),lb=Math.log10(Bf(ct)); ct.set(Math.pow(10,la+f*(lb-la))); if(ct.id==='lam')S.sweep=false; }
+  else if(ct.kind==='lin'){ ct.set(A(ct)+f*(Bf(ct)-A(ct))); }
+  else if(ct.kind==='list'){ var n=ct.id==='comp'?COMP.length:PRESETS.length; var idx=Math.round(f*(n-1)); var cur=ct.id==='comp'?S.ci:S.pi; if(idx!==cur) ct.step(idx-cur); }
+  afterChange(ct);
+}
+var accel=1,lastKey=0;
+function adjust(ct,dir,acc){
+  if(ct.dis&&ct.dis()) return;
+  if(ct.kind==='list'){ ct.step(dir); afterChange(ct); return; }
+  if(ct.kind==='log'){ var d=0.02*acc*(ct.inv?-dir:dir); ct.set(ct.get()*Math.pow(10,d)); if(ct.id==='lam')S.sweep=false; }
+  else if(ct.kind==='lin'){ var span=Bf(ct)-A(ct); ct.set(ct.get()+dir*Math.max(ct.stepv,span/400)*acc); }
+  afterChange(ct);
+}
+function afterChange(ct){ enforce(); if(ct.id!=='lam'&&ct.id!=='I'&&ct.id!=='pre') dirtySpec=true; dirty=true; refreshCtrls(); }
+function refreshCtrls(){
+  focusList.forEach(function(ct,i){
+    if(ct.kind==='btn'){ ct.el.textContent=ct.txt(); }
+    else{
+      var e=ct.el; e.querySelector('.val').textContent=ct.val();
+      var f=clamp(getFrac(ct),0,1); e.querySelector('.fill').style.width=(f*100)+'%'; e.querySelector('.knob').style.left=(f*100)+'%';
+      var r=typeof ct.rng==='function'?ct.rng():ct.rng; e.querySelector('.mn').textContent=r[0]; e.querySelector('.mx').textContent=r[1];
+      e.querySelector('.hint').textContent=ct.hint?ct.hint():'';
+      e.classList.toggle('dis',!!(ct.dis&&ct.dis()));
+    }
+    ct.el.classList.toggle('focus',i===fi);
+  });
+  document.getElementById('warn').textContent=warnMsg;
+  document.getElementById('hdrComp').textContent=COMP[S.ci].f+' — '+COMP[S.ci].name;
+}
+function setFocus(i){ fi=clamp(i,0,focusList.length-1); try{focusList[fi].el.focus({preventScroll:true});}catch(e){} refreshCtrls(); }
+var modalOpen=false;
+function openModal(o){ modalOpen=o; document.getElementById('modal').classList.toggle('open',o); if(o) document.getElementById('mclose').focus(); else setFocus(fi); }
+document.getElementById('mclose').addEventListener('click',function(){openModal(false);}); document.getElementById('srcBtn').addEventListener('click',function(){openModal(true);});
+document.addEventListener('keydown',function(e){
+  var k=e.keyCode;
+  if(modalOpen){
+    if(k===13||k===27||k===8||k===70||k===73||k===10009||k===461){ e.preventDefault(); openModal(false); }
+    else if(k===38||k===40){ e.preventDefault(); document.getElementById('modal').scrollTop+=(k===40?1:-1)*120; }
+    return;
+  }
+  var now=Date.now(); accel=(e.repeat||now-lastKey<220)?Math.min(accel*1.18,10):1; lastKey=now;
+  var ct=focusList[fi];
+  if(k===38){e.preventDefault(); setFocus(fi-1);}                    // arriba
+  else if(k===40){e.preventDefault(); setFocus(fi+1);}               // abajo
+  else if(k===37||k===39){ e.preventDefault(); var dir=k===39?1:-1;
+    if(ct.kind==='btn'){ setFocus(fi+dir); } else adjust(ct,dir,accel); }
+  else if(k===13){ e.preventDefault(); if(ct.kind==='btn'){ct.act(); dirty=true; refreshCtrls();} else if(ct.id==='pre'){ S.lam=PRESETS[S.pi][1]; S.sweep=false; afterChange(ct);} }
+  else if(k===187||k===107||k===189||k===109||k===173){ e.preventDefault(); adjust(CTRLS[1],(k===187||k===107)?1:-1,accel); }
+  else if(k===33||k===34){ e.preventDefault(); adjust(CTRLS[2],k===34?1:-1,1); }
+  else if(k===70){ e.preventDefault(); openModal(true); }
+  else if(k===82){ setComp(S.ci); enforce(); refreshCtrls(); }
+  else if(k===80||k===415||k===19||k===10252||k===32){ e.preventDefault(); S.paused=!S.paused; refreshCtrls(); }
+  else if(k===73){ openModal(true); }
+  else if(k===66){ S.sweep=!S.sweep; refreshCtrls(); }
+  else if(k>=48&&k<=57){ var idx=k===48?9:k-49; if(idx<COMP.length){ setComp(idx); enforce(); refreshCtrls(); } }
+  else if(k>=96&&k<=105){ var idx2=k===96?9:k-97; if(idx2<COMP.length){ setComp(idx2); enforce(); refreshCtrls(); } }
+});
+
+/* ===================== Lienzos ===================== */
+var cv=document.getElementById('sim'), cx=cv.getContext('2d'), sp=document.getElementById('spec'), sx=sp.getContext('2d');
+var W=0,H=0,SW=0,SH=0,DPR=Math.min(window.devicePixelRatio||1,1.5);
+function resize(){
+  var r=cv.getBoundingClientRect(); W=r.width; H=r.height; cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); cx.setTransform(DPR,0,0,DPR,0,0);
+  var r2=sp.getBoundingClientRect(); SW=r2.width; SH=r2.height; sp.width=Math.round(SW*DPR); sp.height=Math.round(SH*DPR); sx.setTransform(DPR,0,0,DPR,0,0);
+  initParticles(); dirtySpec=true;
+}
+window.addEventListener('resize',resize);
+
+/* ===================== Partículas ===================== */
+var mols=[], fx=[], lattice=[], scl=60;
+function rnd(a,b){return a+Math.random()*(b-a);}
+function initParticles(){
+  var c=COMP[S.ci]; mols=[]; fx=[]; lattice=[];
+  if(!W) return;
+  if(c.phase==='solid'){
+    var rows=7, cols=clamp(Math.round(7.5*W/Math.max(H,1)),6,18); scl=Math.min(W/(cols+1),H/(rows+1.2))/2.82;
+    var ox=(W-(cols-1)*2.82*scl)/2, oy=(H-(rows-1)*2.82*scl)/2+H*0.05;
+    for(var r=0;r<rows;r++) for(var q=0;q<cols;q++){ var na=(r+q)%2===0; lattice.push({x:ox+q*2.82*scl,y:oy+r*2.82*scl,na:na,ph:[rnd(0,6.28),rnd(0,6.28)],fr:[rnd(0.7,1.4),rnd(0.7,1.4)],ex:0,fl:0}); }
+    return;
+  }
+  var liquid=c.phase==='liquid', ar=W/Math.max(H,1), cols2=liquid?clamp(Math.round(3.75*ar),4,10):clamp(Math.round(1.9*ar),3,7), rows2=liquid?5:3, N=liquid?cols2*rows2:(c.id==='i2'?cols2*2+1:cols2*3);
+  scl=liquid?H/15:H/(c.id==='i2'?10:8.5);
+  for(var i=0;i<N;i++){
+    var gx=(i%cols2+0.5+rnd(-0.25,0.25))*W/cols2, gy=(Math.floor(i/cols2)%rows2+0.5+rnd(-0.25,0.25))*H/rows2;
+    var th=rnd(0,6.28), m={x:gx,y:gy,hx:gx,hy:gy,vx:Math.cos(th),vy:Math.sin(th),a:rnd(0,6.28),b:rnd(0,6.28),cc:rnd(0,6.28),
+      wa:rnd(-1,1),wb:rnd(-1,1),wc:rnd(-1,1),rb:0,amp:(c.modes||[]).map(function(){return 0;}),ph:(c.modes||[]).map(function(){return rnd(0,6.28);}),
+      ex:0,exc:[255,255,255],st:'ok',t:0,off:null,el:null,fade:1,ring:0,ringc:'#fff',lag:rnd(0.2,1.2)};
+    if(liquid){ m.b=rnd(-0.3,0.3); m.cc=rnd(-0.3,0.3); }
+    mols.push(m);
+  }
+}
+
+/* ===================== Cálculo actual ===================== */
+var cur=null;
+function compute(){
+  var c=COMP[S.ci], sp0=spectrum(c,S.lam,S.T,S.p), a=sp0.a, Lcm=S.L*100;
+  var abs=(a.rot||0)+(a.vib||0)+(a.elec||0)+(a.ion||0), ext=abs+(a.scat||0);
+  var tauA=abs*Lcm, tauS=(a.scat||0)*Lcm, tau=tauA+tauS;
+  var dom='none', mv=0; ['rot','vib','elec','ion','scat'].forEach(function(k){ if((a[k]||0)>mv){mv=a[k];dom=k;} });
+  if(tau<1e-9) dom='none';
+  if(c.phase!=='gas'&&a.none>0) dom='none';
+  var E=1.239841984e-6/S.lam, Ej=E*EVJ, phi=S.I/Ej, sig=abs/sp0.n;
+  var rhocp;
+  if(c.phase==='gas'){ var rhoS=S.p*101325*c.M*1e-3/(RG*S.T), rhoA=Math.max(0,1-S.p)*101325*28.96e-3/(RG*S.T); rhocp=rhoS*c.cp+rhoA*1005; }
+  else rhocp=c.rho*c.cp;
+  var Pv=S.I*(1-Math.exp(-tauA))/S.L, dTdt=Pv/rhocp;
+  var inact=null;
+  if(c.phase==='gas'){ var nu=0.01/S.lam; (c.modes||[]).forEach(function(m,i){ if(!m.ir&&Math.abs(nu-m.nu)<Math.max(25,0.03*m.nu)) inact={m:m,i:i}; }); }
+  cur={c:c,a:a,best:sp0.best,abs:abs,ext:ext,tauA:tauA,tauS:tauS,tau:tau,dom:dom,E:E,phi:phi,sig:sig,Pv:Pv,dTdt:dTdt,inact:inact,n:sp0.n};
+}
+function visOf(t){return clamp((Math.log10(t+1e-30)+6)/7,0,1);}
+
+/* ===================== Paneles de texto ===================== */
+var EXPL={
+ rot:'El campo eléctrico de la onda ejerce un torque sobre el dipolo permanente de la molécula y la hace girar más rápido. La rotación está cuantizada: sólo se absorben frecuencias que coinciden con saltos entre niveles de energía rotacional.',
+ vib:'La onda hace oscilar los enlaces cuando su frecuencia coincide con un modo normal de vibración que cambia el momento dipolar. La energía absorbida pasa a choques entre moléculas y se convierte en calor.',
+ elec:'El fotón tiene energía suficiente para promover un electrón a un orbital excitado. Si el estado excitado es repulsivo o la energía supera la del enlace, la molécula se rompe (fotodisociación); si no, se relaja emitiendo luz o calor.',
+ ion:'El fotón supera la energía de ionización y arranca un electrón (efecto fotoeléctrico). La energía sobrante se la lleva el electrón: E_cinética = hν − E_ionización. Es radiación ionizante: rompe enlaces y daña tejidos.',
+ scat:'La onda no encuentra transiciones que absorber: induce un dipolo oscilante en la nube electrónica, que re-emite en todas direcciones sin perder energía (dispersión Rayleigh ∝ 1/λ⁴). Por eso el cielo es azul.',
+ none:'No hay transiciones a esta energía: la onda atraviesa el material prácticamente sin interacción.'
+};
+function renderInfo(){
+  var c=cur.c, f=CL/S.lam, nu=0.01/S.lam, E=cur.E, b=cur.best[cur.dom];
+  var T=Math.exp(-cur.tau);
+  var shares='', tot=cur.ext||1;
+  ['rot','vib','elec','ion','scat'].forEach(function(k){ var v=(cur.a[k]||0)/tot; if(v>0.002) shares+='<div style="width:'+(v*100)+'%;background:'+COL[k]+'"></div>'; });
+  var sigTxt=c.phase==='gas'?'σ = <b>'+sci(cur.sig,2)+' cm²</b>/molécula · α = <b>'+sci(cur.abs,2)+' cm⁻¹</b>':'α = <b>'+sci(cur.abs,2)+' cm⁻¹</b> (profundidad de penetración '+fmtL(cur.abs>0?0.01/cur.abs:Infinity)+')';
+  if(c.phase!=='gas'&&!(cur.abs>0)) sigTxt='α ≈ <b>'+sci(cur.a.none||0,2)+' cm⁻¹</b> (ventana transparente)';
+  var perMol=cur.phi*cur.sig*1e-4;
+  var h='<div class="big">'+region(S.lam)+'</div>'+
+   '<div class="row">Fotón: <b>'+fmtE(E)+'</b> ('+sigf(E*96.485,3)+' kJ/mol) · <b>'+fmtFreq(f)+'</b> · '+sigf(nu,4)+' cm⁻¹</div>'+
+   '<div class="row" style="margin-top:.25em">Proceso dominante: <span class="chip" style="background:'+COL[cur.dom]+'">'+PNAME[cur.dom]+'</span></div>'+
+   (b&&cur.dom!=='none'?'<div class="row"><b>'+b.label+'</b></div>':(cur.dom==='none'&&cur.best.none?'<div class="row"><b>'+cur.best.none.label+'</b></div>':''))+
+   '<div id="shares">'+shares+'</div>'+
+   '<div class="row">'+sigTxt+'</div>'+
+   '<div class="row">Opacidad τ = <b>'+sci(cur.tau,2)+'</b> · transmitido: <b>'+(T>0.9995?'≈100':(T<1e-30?'≈0':(T<1e-4?sci(T*100,2):sigf(T*100,3))))+' %</b> en '+fmtL(S.L)+'</div>'+
+   '<div class="row">Fotones: '+sci(cur.phi,2)+' /m²·s · absorbidos por molécula: <b>'+sci(perMol,2)+' /s</b></div>'+
+   '<div class="row">Calentamiento inicial: <b>'+sci(cur.dTdt,2)+' K/s</b></div>';
+  document.getElementById('info').innerHTML=h;
+  var ex=EXPL[cur.dom];
+  if(cur.dom==='rot'&&b&&b.mag) ex='El O₂ no tiene dipolo eléctrico, pero sí un dipolo magnético (dos electrones desapareados): el campo magnético de la onda lo hace girar y absorbe débilmente cerca de 60 GHz. Limita las comunicaciones a 60 GHz.';
+  if(cur.dom==='rot'&&b&&b.inv) ex='En el NH₃ el átomo de N atraviesa el plano de los tres H por efecto túnel (como un paraguas que se da vuelta). La onda a ~24 GHz induce ese salto entre los dos estados de inversión: fue la base del primer máser (Townes, 1954).';
+  if(c.id==='h2ol'&&cur.dom==='rot'&&S.lam>1e-3) ex='Los dipolos del agua intentan girar siguiendo el campo, pero los puentes de hidrógeno los frenan: llegan con retraso y la fricción disipa la energía como calor. A 2,45 GHz la radiación penetra 1–2 cm. Al subir T las moléculas giran más libres y el agua absorbe menos.';
+  var note='';
+  if(cur.inact) note='Este modo, '+cur.inact.m.n+' ('+cur.inact.m.nu+' cm⁻¹), no cambia el momento dipolar: es inactivo en infrarrojo (sólo se observa por espectroscopía Raman). La onda pasa sin excitarlo.';
+  else if(cur.dom==='scat'||cur.dom==='none'){ if(c.mu===0&&S.lam>1e-4&&c.phase==='gas'&&!c.mag) note='Sin dipolo permanente: la onda no puede hacer girar a la molécula, por eso es transparente en microondas.'; else note=c.note; }
+  else if(cur.dom==='elec'&&b&&b.diss) note='Energía del fotón ('+fmtE(E)+') ≥ energía de enlace ('+dec(c.D||0,2)+' eV): la molécula se fotodisocia.';
+  else if(cur.dom==='ion'&&b&&b.ke!=null) note='Energía cinética del electrón expulsado ≈ '+fmtE(Math.max(0,b.ke))+(b.core?'. El hueco en la capa interna se llena y se emite un electrón Auger.':'.');
+  else note=c.note;
+  var warn=E>=10?'⚠ Radiación ionizante (E ≥ 10 eV).':(S.lam<3.15e-7&&S.lam>=1e-7?'⚠ UV dañino para el ADN y la piel.':'');
+  document.getElementById('expl').innerHTML='<div><b style="color:'+COL[cur.dom]+'">'+PNAME[cur.dom]+':</b> '+ex+'</div>'+(note?'<div class="note">'+note+'</div>':'')+(warn?'<div class="warn">'+warn+'</div>':'');
+}
+function buildLegend(){
+  var rows='<tr><th>Compuesto</th><th>Fase</th><th>μ (D)</th><th>Modos (cm⁻¹) — IR activo</th><th>E ionización (eV)</th><th>E disociación (eV)</th><th>T admisible (K)</th></tr>';
+  COMP.forEach(function(c){
+    var md=(c.modes||[]).map(function(m){return m.nu+(m.ir?'✓':'✗');}).join(', ');
+    if(c.id==='h2ol') md='3400 (O–H), 1640 (flexión), ~700 (libración)';
+    if(c.id==='nacl') md='164 (fonón TO)';
+    rows+='<tr><td>'+c.f+' '+c.name+'</td><td>'+(c.phase==='gas'?'gas':c.phase==='liquid'?'líquido':'sólido')+'</td><td>'+(c.mu!=null?dec(c.mu,3):'—')+'</td><td>'+md+'</td><td>'+(c.IE||(c.ionModel?'≈'+c.ionModel.IE:'≈11'))+'</td><td>'+(c.D&&c.D<50?c.D:'—')+'</td><td>'+c.T[0]+'–'+c.T[1]+'</td></tr>';
+  });
+  document.getElementById('dtable').innerHTML=rows;
+}
+
+/* ===================== Espectro ===================== */
+var dirtySpec=true, dirty=true, specData=null;
+var SPN=640, LYMIN=-6, LYMAX=6;
+function xOfLam(l){ var pad=Math.max(SW*0.055,42), w=SW-pad-Math.max(SW*0.012,24); return pad+(Math.log10(LMAX)-Math.log10(l))/(Math.log10(LMAX)-Math.log10(LMIN))*w; }
+function lamOfX(x){ var pad=Math.max(SW*0.055,42), w=SW-pad-Math.max(SW*0.012,24); var f=(x-pad)/w; return Math.pow(10,Math.log10(LMAX)-f*(Math.log10(LMAX)-Math.log10(LMIN))); }
+function yOfTau(t,top,bot){ var l=Math.log10(Math.max(t,1e-30)); return bot-(clamp(l,LYMIN,LYMAX)-LYMIN)/(LYMAX-LYMIN)*(bot-top); }
+function computeSpec(){
+  var c=COMP[S.ci], Lcm=S.L*100, pts=[];
+  for(var i=0;i<SPN;i++){
+    var l=Math.pow(10,Math.log10(LMAX)-(i+0.5)/SPN*(Math.log10(LMAX)-Math.log10(LMIN)));
+    var r=spectrum(c,l,S.T,S.p), a=r.a, dom='none', mv=0, tot=0;
+    ['rot','vib','elec','ion','scat'].forEach(function(k){ tot+=a[k]||0; if((a[k]||0)>mv){mv=a[k];dom=k;} });
+    if(c.phase!=='gas'&&a.none>0){dom='none';tot=a.none;}
+    pts.push({l:l,t:tot*Lcm,d:dom});
+  }
+  var sticks=[];
+  if(c.phase==='gas'){
+    var lines=[];
+    if(c.linear&&c.mu>0) for(var J=0;J<80;J++){ var nu0=2*c.B*(J+1); if(Math.exp(-C2*c.B*J*(J+1)/S.T)<1e-4) break; lines.push(nu0); }
+    (c.rotLines||[]).forEach(function(L){lines.push(L.f/29.9792458);});
+    if(c.mag){lines.push(3.961);}
+    lines.forEach(function(nu0){ var l=0.01/nu0, r=spectrum(c,l,S.T,S.p), a=r.a; sticks.push({l:l,t:((a.rot||0)+(a.vib||0)+(a.scat||0))*Lcm}); });
+  }
+  specData={pts:pts,sticks:sticks};
+}
+var RBANDS=[[10,1,'Radio','#151c29'],[1,1e-3,'Microondas','#17222f','µondas'],[1e-3,1.5e-5,'IR lejano','#1a1d2c','IRl'],[1.5e-5,2.5e-6,'IR medio','#1f1a26','IRm'],[2.5e-6,7.5e-7,'IR cercano','#231a22','IRc'],[7.5e-7,3.8e-7,'Visible',null,'Vis'],[3.8e-7,1e-7,'UV','#1e1a2e'],[1e-7,1e-8,'UV vacío','#1a1830','UVv'],[1e-8,1e-9,'Rayos X','#161c2c','RX']];
+function drawSpec(){
+  if(!SW) return;
+  var top=SH*0.17, bot=SH*0.8;
+  sx.clearRect(0,0,SW,SH);
+  sx.fillStyle='#0a0e15'; sx.fillRect(0,0,SW,SH);
+  var fs=Math.max(11,SH*0.062);
+  sx.font='600 '+fs+'px system-ui,sans-serif'; sx.textBaseline='middle'; sx.textAlign='center';
+  RBANDS.forEach(function(b){ var x0=xOfLam(b[0]), x1=xOfLam(b[1]);
+    if(b[3]){ sx.fillStyle=b[3]; sx.fillRect(x0,top,x1-x0,bot-top); }
+    else { var g=sx.createLinearGradient(x0,0,x1,0); for(var i=0;i<=8;i++){ var l=7.5e-7-(i/8)*(7.5e-7-3.8e-7); g.addColorStop(i/8,rgbS(waveRGB(l),0.35)); } sx.fillStyle=g; sx.fillRect(x0,top,x1-x0,bot-top); }
+    var nm2=b[2]; if(sx.measureText(nm2).width>x1-x0-4) nm2=b[4]||nm2; if(sx.measureText(nm2).width<=x1-x0-2){ sx.fillStyle='#8ea0b6'; sx.fillText(nm2,(x0+x1)/2,top-fs*0.75); }
+    sx.strokeStyle='#26324a'; sx.beginPath(); sx.moveTo(x1,top); sx.lineTo(x1,bot); sx.stroke(); });
+  // líneas guía
+  sx.strokeStyle='rgba(255,255,255,0.08)'; sx.lineWidth=1;
+  for(var e=LYMIN;e<=LYMAX;e+=2){ var y=yOfTau(Math.pow(10,e),top,bot); sx.beginPath(); sx.moveTo(xOfLam(LMAX),y); sx.lineTo(xOfLam(LMIN),y); sx.stroke(); }
+  var y1=yOfTau(1,top,bot); sx.strokeStyle='rgba(255,214,10,0.55)'; sx.setLineDash([6,5]); sx.beginPath(); sx.moveTo(xOfLam(LMAX),y1); sx.lineTo(xOfLam(LMIN),y1); sx.stroke(); sx.setLineDash([]);
+  sx.textAlign='left'; sx.fillStyle='rgba(255,214,10,0.85)'; sx.font=(fs*0.85)+'px system-ui,sans-serif'; sx.fillText('τ = 1: opaco',xOfLam(LMAX)+4,y1-fs*0.55);
+  // eje y
+  sx.save(); sx.translate(fs*0.75,(top+bot)/2); sx.rotate(-Math.PI/2); sx.textAlign='center'; sx.fillStyle='#8ea0b6'; sx.fillText('opacidad τ = α·L',0,0); sx.restore();
+  sx.textAlign='right'; sx.fillStyle='#6f8096';
+  for(var e2=LYMIN;e2<=LYMAX;e2+=3){ sx.fillText('10'+String(e2).split('').map(function(ch){return SUP[ch];}).join(''),xOfLam(LMAX)-4,yOfTau(Math.pow(10,e2),top,bot)); }
+  // curva
+  if(specData){
+    var P=specData.pts, dx=(xOfLam(LMIN)-xOfLam(LMAX))/SPN;
+    for(var i=0;i<P.length;i++){ var p=P[i]; if(p.t<=0) continue; var x=xOfLam(p.l), y=yOfTau(p.t,top,bot); if(y>=bot) continue; sx.fillStyle=COL[p.d]; sx.globalAlpha=0.55; sx.fillRect(x-dx/2,y,dx+0.6,bot-y); }
+    sx.globalAlpha=1; sx.strokeStyle='#e9eef5'; sx.lineWidth=1.6; sx.beginPath(); var started=false;
+    for(var j=0;j<P.length;j++){ var x2=xOfLam(P[j].l), yy=yOfTau(P[j].t,top,bot); if(!started){sx.moveTo(x2,yy);started=true;} else sx.lineTo(x2,yy); }
+    sx.stroke();
+    sx.strokeStyle=COL.rot; sx.lineWidth=1.4;
+    specData.sticks.forEach(function(s){ var x=xOfLam(s.l), y=yOfTau(s.t,top,bot); if(y<bot){ sx.beginPath(); sx.moveTo(x,bot); sx.lineTo(x,y); sx.stroke(); } });
+  }
+  // eje x
+  sx.fillStyle='#8ea0b6'; sx.textAlign='center'; sx.font=(fs*0.85)+'px system-ui,sans-serif';
+  var ticks=[[10,'10 m','30 MHz'],[1,'1 m','300 MHz'],[0.1,'10 cm','3 GHz'],[0.01,'1 cm','30 GHz'],[1e-3,'1 mm','300 GHz'],[1e-4,'100 µm','3 THz'],[1e-5,'10 µm','30 THz'],[1e-6,'1 µm','1,24 eV'],[1e-7,'100 nm','12,4 eV'],[1e-8,'10 nm','124 eV'],[1e-9,'1 nm','1,24 keV']];
+  ticks.forEach(function(t,ti){ if(SW<620&&ti%2) return; var x=xOfLam(t[0]); sx.fillStyle='#b8c6d8'; sx.fillText(t[1],x,bot+fs*0.75); sx.fillStyle='#6f8096'; sx.fillText(t[2],x,bot+fs*1.75); sx.fillStyle='#2a3646'; sx.fillRect(x-0.5,bot,1,4); });
+  // marcador
+  var xm=xOfLam(S.lam), col=rgbS(waveRGB(S.lam));
+  sx.strokeStyle=col; sx.lineWidth=3; sx.beginPath(); sx.moveTo(xm,top-2); sx.lineTo(xm,bot); sx.stroke();
+  sx.fillStyle='#fff'; sx.beginPath(); sx.arc(xm,yOfTau(Math.max(cur?cur.tau:1e-30,1e-30),top,bot),5,0,6.29); sx.fill();
+  var lab=fmtLen(S.lam)+'  ·  '+fmtE(cur?cur.E:0);
+  sx.font='700 '+fs+'px system-ui,sans-serif'; var tw=sx.measureText(lab).width+16, lx=clamp(xm-tw/2,2,SW-tw-2);
+  sx.fillStyle='rgba(10,15,24,0.92)'; sx.fillRect(lx,2,tw,fs*1.35); sx.strokeStyle=col; sx.lineWidth=1.5; sx.strokeRect(lx,2,tw,fs*1.35);
+  sx.fillStyle='#fff'; sx.textAlign='center'; sx.fillText(lab,lx+tw/2,2+fs*0.68);
+  sx.textAlign='right'; sx.fillStyle='#6f8096'; sx.font=(fs*0.8)+'px system-ui,sans-serif'; sx.fillText(SW<620?'clic o arrastre para elegir λ':'← menor energía · mayor energía →  (clic, arrastre o rueda para elegir λ)',SW-6,SH-fs*0.45);
+  sx.textAlign='left'; var lx2=SW*0.055;
+  if(SW>=620) ['rot','vib','elec','ion','scat'].forEach(function(k){ sx.fillStyle=COL[k]; sx.fillRect(lx2,SH-fs*0.85,fs*0.75,fs*0.75); sx.fillStyle='#b8c6d8'; sx.fillText(PNAME[k],lx2+fs,SH-fs*0.45); lx2+=fs*1.6+sx.measureText(PNAME[k]).width; });
+}
+var spDrag=false; function spAt(e){ var r=sp.getBoundingClientRect(); S.lam=clamp(lamOfX(e.clientX-r.left),LMIN,LMAX); S.sweep=false; dirty=true; refreshCtrls(); }
+sp.addEventListener('pointerdown',function(e){ spDrag=true; try{sp.setPointerCapture(e.pointerId);}catch(_){} spAt(e); });
+sp.addEventListener('pointermove',function(e){ if(spDrag) spAt(e); });
+['pointerup','pointercancel','lostpointercapture'].forEach(function(n){ sp.addEventListener(n,function(){ spDrag=false; }); });
+sp.addEventListener('wheel',function(e){ e.preventDefault(); S.lam=clamp(S.lam*Math.pow(10,e.deltaY>0?0.02:-0.02),LMIN,LMAX); S.sweep=false; dirty=true; refreshCtrls(); },{passive:false});
+
+/* ===================== Simulación molecular ===================== */
+function proj(m,p){
+  var x=p[0],y=p[1],z=p[2], cc=Math.cos(m.cc), sc=Math.sin(m.cc), cb=Math.cos(m.b), sb=Math.sin(m.b), ca=Math.cos(m.a), sa=Math.sin(m.a);
+  var y1=y*cc-z*sc, z1=y*sc+z*cc, x2=x*cb+z1*sb, z2=-x*sb+z1*cb, x3=x2*ca-y1*sa, y3=x2*sa+y1*ca;
+  return [x3,y3,z2];
+}
+function chooseType(){
+  var a=cur.a, ks=['rot','vib','elec','ion'], tot=0; ks.forEach(function(k){tot+=a[k]||0;});
+  if(!(tot>0)) return null; var r=Math.random()*tot;
+  for(var i=0;i<ks.length;i++){ r-=a[ks[i]]||0; if(r<=0) return ks[i]; } return ks[0];
+}
+function bestFor(t){ return cur.best[t]||{}; }
+function trigger(m,t){
+  var c=cur.c, col=waveRGB(S.lam);
+  if(t==='rot'){ m.rb=1; m.ring=1; m.ringc=COL.rot; }
+  else if(t==='vib'){ var md=bestFor('vib').mode||[0]; md.forEach(function(i){ if(i<m.amp.length) m.amp[i]=1; }); m.ring=1; m.ringc=COL.vib; }
+  else if(t==='elec'){
+    if(m.st!=='ok') return;
+    m.ex=1; m.exc=col; m.ring=1; m.ringc=COL.elec;
+    if(bestFor('elec').diss&&c.frag){ m.st='diss'; m.t=0; m.off=c.atoms.map(function(){return [0,0,0];}); }
+    else fx.push({x:m.x,y:m.y,vx:rnd(-1,1),vy:rnd(-1,1),life:1.6,t:0,c:[Math.min(255,col[0]+40),Math.max(0,col[1]-20),Math.max(0,col[2]-60)],kind:'ph',delay:0.5});
+  }
+  else if(t==='ion'){
+    if(m.st!=='ok') return;
+    var ke=Math.max(0.05,bestFor('ion').ke||1), sp=120+320*Math.sqrt(Math.min(ke,200)/200), th=rnd(0,6.28);
+    m.st='ion'; m.t=0; m.ex=1; m.exc=[255,214,10]; m.el={x:m.x,y:m.y,vx:Math.cos(th)*sp,vy:Math.sin(th)*sp};
+  }
+  else if(t==='scat'){ var th2=rnd(0,6.28); fx.push({x:m.x,y:m.y,vx:Math.cos(th2),vy:Math.sin(th2),life:1.1,t:0,c:col,kind:'sc',delay:0}); }
+}
+var simT=0;
+function stepSim(dt){
+  var c=cur.c, fI=0.3+0.7*clamp((Math.log10(S.I)+3)/12,0,1);
+  var visA=visOf(cur.tauA)*fI, visS=visOf(cur.tauS)*fI*0.6;
+  var vth=40*Math.sqrt((S.T/296)/(c.M/18)); vth=clamp(vth,6,140);
+  var wth=0.9*Math.sqrt(S.T/296)*Math.pow(18/c.M,0.25);
+  if(c.phase==='solid'){
+    lattice.forEach(function(q){ q.ph[0]+=q.fr[0]*dt*6; q.ph[1]+=q.fr[1]*dt*6; q.ex=Math.max(0,q.ex-dt/1.0); q.fl=Math.max(0,q.fl-dt/0.8);
+      if(Math.random()<2.2*visA*dt/6){ var t=chooseType(); if(t==='elec'&&!q.na){q.ex=1;} else if(t==='ion'&&!q.na){ q.ex=1; var th=rnd(0,6.28); fx.push({x:q.x,y:q.y,vx:Math.cos(th),vy:Math.sin(th),life:1.4,t:0,c:[255,214,10],kind:'el',delay:0}); } else if(t) q.fl=1; } });
+    fx=fx.filter(function(p){ p.t+=dt; return p.t<p.life; });
+    fx.forEach(function(p){ var s=p.kind==='el'?380:300; p.x+=p.vx*s*dt; p.y+=p.vy*s*dt; });
+    return;
+  }
+  mols.forEach(function(m){
+    if(c.phase==='liquid'){
+      m.x+=( (m.hx-m.x)*0.8 + rnd(-1,1)*vth*0.6 )*dt; m.y+=((m.hy-m.y)*0.8+rnd(-1,1)*vth*0.6)*dt;
+      var drive=cur.dom==='rot'&&S.lam>1e-3?0.55*visA:0;
+      m.a+=(wth*0.6*m.wa*(1+2*m.rb)+rnd(-0.5,0.5))*dt + drive*Math.cos(2*Math.PI*0.9*simT-m.lag)*dt*5.6;
+    } else {
+      m.x+=m.vx*vth*dt; m.y+=m.vy*vth*dt;
+      if(m.x<-40)m.x+=W+80; if(m.x>W+40)m.x-=W+80; if(m.y<-40)m.y+=H+80; if(m.y>H+40)m.y-=H+80;
+      var k=1+2.2*m.rb;
+      m.a+=m.wa*wth*k*dt; m.b+=m.wb*wth*k*dt; m.cc+=m.wc*wth*k*dt;
+    }
+    m.rb=Math.max(0,m.rb-dt/2.2); m.ring=Math.max(0,m.ring-dt/0.9); m.ex=Math.max(0,m.ex-dt/1.4);
+    for(var i=0;i<m.amp.length;i++){ var md=c.modes[i]; m.ph[i]+=dt*2*Math.PI*(1.1+1.2*Math.log10(Math.max(md.nu,150)/100)); m.amp[i]=Math.max(0,m.amp[i]-dt/2.0); }
+    if(m.st==='diss'){ m.t+=dt; c.frag.forEach(function(fi2){ var p=c.atoms[fi2], d=norm([p[1],p[2],p[3]]); m.off[fi2][0]+=d[0]*2.2*dt; m.off[fi2][1]+=d[1]*2.2*dt; m.off[fi2][2]+=d[2]*2.2*dt; });
+      if(m.t>2.6){ m.st='ok'; m.off=null; m.fade=0; } }
+    if(m.st==='ion'){ m.t+=dt; m.el.x+=m.el.vx*dt; m.el.y+=m.el.vy*dt; if(m.t>2.2){ m.st='ok'; m.el=null; } }
+    m.fade=Math.min(1,m.fade+dt/0.6);
+    if(Math.random()<2.2*visA*dt){ var t=chooseType(); if(t) trigger(m,t); }
+    if(Math.random()<2.2*visS*dt) trigger(m,'scat');
+  });
+  fx=fx.filter(function(p){ p.t+=dt; return p.t<p.life; });
+  fx.forEach(function(p){ if(p.t<p.delay) return; p.x+=p.vx*300*dt; p.y+=p.vy*300*dt; });
+}
+function drawWave(){
+  var col=waveRGB(S.lam), lpx=40+clamp((Math.log10(S.lam)+9)/10,0,1)*360;
+  var fI=clamp((Math.log10(S.I)+3)/12,0,1), A0=H*(0.035+0.11*fI);
+  var tauTot=cur.tau;
+  var rows=[0.22,0.5,0.78];
+  rows.forEach(function(ry,ri){
+    cx.beginPath();
+    for(var x=0;x<=W;x+=4){ var att=Math.exp(-0.5*tauTot*x/W); var y=H*ry+A0*att*Math.sin(2*Math.PI*(x-simT*170)/lpx+ri); if(x===0)cx.moveTo(x,y); else cx.lineTo(x,y); }
+    cx.strokeStyle=rgbS(col,ri===1?0.55:0.25); cx.lineWidth=ri===1?4:2.5; cx.stroke();
+  });
+  // flecha de propagación y polarización
+  cx.fillStyle=rgbS(col,0.8); cx.font='600 '+Math.max(12,H*0.028)+'px system-ui,sans-serif'; cx.textAlign='left'; cx.textBaseline='middle';
+  cx.fillText('onda → (campo E vertical)',10,H*0.5+A0+18);
+  var Tout=Math.exp(-tauTot);
+  cx.textAlign='right'; cx.fillText('sale: '+(Tout>0.9995?'≈100':(Tout<1e-3?sci(Tout*100,2):sigf(Tout*100,3)))+' %',W-10,H*0.5+A0+18);
+}
+function sphere(x,y,r,c,alpha){
+  var g=cx.createRadialGradient(x-r*0.35,y-r*0.35,r*0.1,x,y,r);
+  g.addColorStop(0,'#ffffff'); g.addColorStop(0.25,c); g.addColorStop(1,shade(c,-0.55));
+  cx.globalAlpha=alpha; cx.fillStyle=g; cx.beginPath(); cx.arc(x,y,r,0,6.2832); cx.fill(); cx.globalAlpha=1;
+}
+function shade(hex,f){ var n=parseInt(hex.slice(1),16), r=n>>16&255, g=n>>8&255, b=n&255; var t=f<0?0:255, p=Math.abs(f); return 'rgb('+Math.round((t-r)*p+r)+','+Math.round((t-g)*p+g)+','+Math.round((t-b)*p+b)+')'; }
+function atomPositions(m,c){
+  var pts=[];
+  for(var i=0;i<c.atoms.length;i++){
+    var a=c.atoms[i], p=[a[1],a[2],a[3]];
+    for(var j=0;j<c.modes.length;j++){ var A2=0.05+0.3*m.amp[j]; if(!c.modes[j].v) continue; var v=c.modes[j].v[i], s=A2*Math.sin(m.ph[j]); p[0]+=v[0]*s; p[1]+=v[1]*s; p[2]+=v[2]*s; }
+    if(m.off){ p[0]+=m.off[i][0]; p[1]+=m.off[i][1]; p[2]+=m.off[i][2]; }
+    var q=proj(m,p); pts.push({x:m.x+q[0]*scl,y:m.y+q[1]*scl,z:q[2],el:a[0],i:i});
+  }
+  return pts;
+}
+function drawMols(){
+  var c=cur.c;
+  if(c.phase==='solid'){ drawLattice(); return; }
+  var all=mols.map(function(m){return {m:m,p:atomPositions(m,c)};});
+  if(c.phase==='liquid'){
+    cx.strokeStyle='rgba(120,190,255,0.35)'; cx.lineWidth=1.5; cx.setLineDash([4,4]);
+    for(var i=0;i<all.length;i++) for(var j=0;j<all.length;j++){ if(i===j) continue; var O=all[i].p[0];
+      for(var h=1;h<=2;h++){ var Hh=all[j].p[h], d=Math.hypot(O.x-Hh.x,O.y-Hh.y)/scl; if(d>1.5&&d<2.4){ cx.beginPath(); cx.moveTo(O.x,O.y); cx.lineTo(Hh.x,Hh.y); cx.stroke(); } } }
+    cx.setLineDash([]);
+  }
+  all.forEach(function(o){
+    var m=o.m, P=o.p, alpha=m.fade;
+    if(m.ex>0.01){ var gr=cx.createRadialGradient(m.x,m.y,0,m.x,m.y,scl*2.2); gr.addColorStop(0,rgbS(m.exc,0.55*m.ex)); gr.addColorStop(1,rgbS(m.exc,0)); cx.fillStyle=gr; cx.beginPath(); cx.arc(m.x,m.y,scl*2.2,0,6.29); cx.fill(); }
+    if(m.ring>0.01){ cx.strokeStyle=m.ringc; cx.globalAlpha=m.ring; cx.lineWidth=3; cx.beginPath(); cx.arc(m.x,m.y,scl*(1.3+1.4*(1-m.ring)),0,6.29); cx.stroke(); cx.globalAlpha=1; }
+    cx.lineCap='round';
+    c.bonds.forEach(function(b){
+      if(m.st==='diss'&&c.frag&&(c.frag.indexOf(b[0])>=0||c.frag.indexOf(b[1])>=0)) return;
+      var A1=P[b[0]],B1=P[b[1]]; cx.strokeStyle='rgba(205,214,228,'+(0.85*alpha)+')'; cx.lineWidth=Math.max(2,scl*0.16); cx.beginPath(); cx.moveTo(A1.x,A1.y); cx.lineTo(B1.x,B1.y); cx.stroke(); });
+    P.slice().sort(function(a,b){return a.z-b.z;}).forEach(function(p){ var at=ATOM[p.el], fa=alpha;
+      if(m.st==='diss'&&c.frag.indexOf(p.i)>=0) fa=alpha*clamp(1-(m.t-1.6),0,1);
+      sphere(p.x,p.y,at.r*scl*(1+0.12*p.z),at.c,fa); });
+    if(m.st==='ion'){ cx.fillStyle='#ffd60a'; cx.font='700 '+Math.max(14,scl*0.6)+'px system-ui,sans-serif'; cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText('+',m.x+scl*1.1,m.y-scl*1.0);
+      if(m.el){ var g2=cx.createRadialGradient(m.el.x,m.el.y,0,m.el.x,m.el.y,12); g2.addColorStop(0,'rgba(255,240,150,1)'); g2.addColorStop(1,'rgba(255,214,10,0)'); cx.fillStyle=g2; cx.beginPath(); cx.arc(m.el.x,m.el.y,12,0,6.29); cx.fill();
+        cx.fillStyle='#fff3b0'; cx.font='600 '+Math.max(11,scl*0.32)+'px system-ui,sans-serif'; cx.fillText('e⁻',m.el.x,m.el.y-16); } }
+  });
+  drawFx();
+}
+function drawFx(){
+  fx.forEach(function(p){ if(p.t<p.delay) return; var a=1-p.t/p.life;
+    if(p.kind==='el'){ cx.fillStyle='rgba(255,224,90,'+a+')'; cx.beginPath(); cx.arc(p.x,p.y,6,0,6.29); cx.fill(); cx.fillStyle='rgba(255,243,176,'+a+')'; cx.font='600 13px system-ui,sans-serif'; cx.textAlign='center'; cx.fillText('e⁻',p.x,p.y-12); return; }
+    cx.strokeStyle=rgbS(p.c,a); cx.lineWidth=2.5; cx.beginPath();
+    var L=22, nx=p.vx, ny=p.vy, l=Math.hypot(nx,ny)||1; nx/=l; ny/=l;
+    for(var s=0;s<=L;s+=2){ var w=Math.sin(s*0.9)*3; var x=p.x-nx*s-ny*w, y=p.y-ny*s+nx*w; if(s===0)cx.moveTo(x,y); else cx.lineTo(x,y); }
+    cx.stroke(); });
+}
+function drawLattice(){
+  var c=cur.c, amp=0.08*Math.sqrt(S.T/300), fI=0.3+0.7*clamp((Math.log10(S.I)+3)/12,0,1);
+  var ph=cur.dom==='vib'?0.4*visOf(cur.tauA)*fI:0;
+  var w=Math.sin(2*Math.PI*1.6*simT);
+  lattice.forEach(function(q){
+    var dx=amp*Math.sin(q.ph[0])*scl, dy=amp*Math.sin(q.ph[1])*scl + (q.na?1:-0.65)*ph*w*scl;
+    var x=q.x+dx, y=q.y+dy, r=(q.na?0.5:0.78)*scl;
+    if(q.ex>0.01){ var g=cx.createRadialGradient(x,y,0,x,y,r*2.4); g.addColorStop(0,'rgba(224,86,253,'+(0.6*q.ex)+')'); g.addColorStop(1,'rgba(224,86,253,0)'); cx.fillStyle=g; cx.beginPath(); cx.arc(x,y,r*2.4,0,6.29); cx.fill(); }
+    if(q.fl>0.01){ cx.strokeStyle='rgba(255,159,28,'+q.fl+')'; cx.lineWidth=2.5; cx.beginPath(); cx.arc(x,y,r*1.5,0,6.29); cx.stroke(); }
+    sphere(x,y,r,q.na?ATOM.Na.c:ATOM.Cl.c,1);
+    if(r>13){ cx.fillStyle='rgba(10,15,24,0.85)'; cx.font='700 '+Math.round(r*0.55)+'px system-ui,sans-serif'; cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText(q.na?'Na⁺':'Cl⁻',x,y); }
+  });
+  drawFx();
+}
+
+/* ===================== Bucle ===================== */
+var last=performance.now(), infoTimer=0, specLam=-1;
+function frame(now){
+  var dt=Math.min(0.05,(now-last)/1000); last=now;
+  if(S.sweep&&!S.paused){ S.lam=S.lam/Math.pow(10,0.18*dt); if(S.lam<LMIN) S.lam=LMAX; dirty=true; }
+  if(dirtySpec){ computeSpec(); dirtySpec=false; dirty=true; }
+  if(dirty||!cur){ compute(); }
+  if(!S.paused){ simT+=dt; stepSim(dt); }
+  cx.clearRect(0,0,W,H);
+  drawWave(); drawMols();
+  infoTimer-=dt;
+  if(dirty&&infoTimer<=0){ renderInfo(); drawSpec(); if(S.sweep) refreshCtrls(); infoTimer=S.sweep?0.12:0; dirty=false; }
+  requestAnimationFrame(frame);
+}
+buildCtrls(); buildLegend(); resize(); setComp(0); enforce(); compute(); refreshCtrls(); setFocus(1);
+requestAnimationFrame(frame);
+})();
+</script>
+<div id="about" role="dialog" aria-modal="true"><div class="abox">
+  <h2>Ondas EM y moléculas</h2>
+  <p>Creado por <b>Miguel Agip</b>.</p>
+  <p>Comentarios y sugerencias:</p>
+  <p>✉ <a href="mailto:neptaliagiphoyos@gmail.com">neptaliagiphoyos@gmail.com</a><br><button type="button" id="cpMail">Copiar correo</button></p>
+  <p>WhatsApp: <a href="https://wa.me/51975525627" target="_blank" rel="noopener">+51 975 525 627</a></p>
+  <p class="amut">Herramienta didáctica: los valores son experimentales (NIST, HITRAN, JPL, MPI-Mainz) pero las secciones eficaces son aproximaciones de orden de magnitud. Ver «Fuentes».</p>
+  <button type="button" id="aboutClose">Cerrar</button>
+</div></div>
+<script>
+(function(){ var ab=document.getElementById('about'); function o(v){ ab.classList.toggle('open',v); }
+document.getElementById('aboutBtn').addEventListener('click',function(){ o(true); });
+document.getElementById('aboutClose').addEventListener('click',function(){ o(false); });
+ab.addEventListener('click',function(e){ if(e.target===ab) o(false); });
+document.getElementById('cpMail').addEventListener('click',function(){ var t='neptaliagiphoyos@gmail.com', b=this;
+  function ok(){ b.textContent='¡Copiado!'; setTimeout(function(){ b.textContent='Copiar correo'; },1600); }
+  function fb(){ var x=document.createElement('textarea'); x.value=t; document.body.appendChild(x); x.select(); try{ document.execCommand('copy'); ok(); }catch(e){} x.remove(); }
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok,fb); else fb(); });
+document.addEventListener('keydown',function(e){ if(!ab.classList.contains('open')) return; if(e.key==='Escape'||e.key==='Enter'||e.key==='Backspace') o(false); e.stopPropagation(); e.preventDefault(); },true);
+})();
+</script>
+</body>
+</html>
