@@ -92,7 +92,7 @@ footer b{color:var(--ink)}
 <header class="cover">
   <div class="stars"></div>
   <div class="wrap" style="position:relative">
-    <nav class="topnav"><a href="../">🔬 Simuladores</a><a href="./" aria-current="page">🎮 Juegos</a><a href="../libros/">📖 Libros</a></nav>
+    <nav class="topnav"><a href="../">🔬 Simuladores</a><a href="./" aria-current="page">🎮 Juegos</a><a href="https://neptaliagiphoyos.github.io/El-Sastre-del-Grid/libros/">📖 Libros</a></nav>
     <span class="eyebrow">🎮 Juegos para niños · gratis</span>
     <h1>Biblioteca de <em>Juegos</em></h1>
     <p class="lead">Juegos creados con cariño para jugar en familia. Mira de qué trata cada uno, juégalo en línea o descárgalo para jugar sin internet.</p>
@@ -123,7 +123,7 @@ footer b{color:var(--ink)}
 
   <div class="crossrow">
     <a class="cross" href="../"><span class="big">🔬</span><div><b>Biblioteca de Simuladores →</b><span>Física, astronomía e ingeniería.</span></div></a>
-    <a class="cross" href="../libros/"><span class="big">📖</span><div><b>Biblioteca de Libros →</b><span>La saga El Sastre de Grid.</span></div></a>
+    <a class="cross" href="https://neptaliagiphoyos.github.io/El-Sastre-del-Grid/libros/"><span class="big">📖</span><div><b>Biblioteca de Libros →</b><span>La saga El Sastre de Grid.</span></div></a>
   </div>
 </main>
 
@@ -153,7 +153,11 @@ const GAMES = [
   {t:"El Carro Rosa de Cattleya", cat:"Aventura", g:"🚗", c:["#ff5fa8","#ffb86b"],
    d:"Maneja el carro rosa de Cattleya nivel por nivel hasta llegar al castillo en la playa.",
    l:"Para niñas y niños. Los papás pueden cambiar las voces del juego desde su propio celular.",
-   tags:["Niñas y niños","Celular","Voces propias"], f:"carro-rosa-cattleya.html"}
+   tags:["Niñas y niños","Celular","Voces propias"], f:"carro-rosa-cattleya.html"},
+  {t:"El Sastre de Grid · RPG", cat:"Rol 16 bits", g:"🧵", c:["#1b2a4a","#e07a3a"],
+   d:"Videojuego de rol de 16 bits basado en la novela: recorre Barrios Altos, el Mercado de las Sombras y Barranco con Damián, «el Sastre».",
+   l:"Jóvenes y adultos lectores de la saga. Funciona en celular y computadora.",
+   tags:["RPG","Basado en la novela","Celular y PC"], f:"https://neptaliagiphoyos.github.io/El-Sastre-del-Grid/", ext:true}
 ];
 
 const $ = s => document.querySelector(s);
@@ -163,7 +167,7 @@ $("#nTotal").textContent = GAMES.length;
 
 function render(){
   $("#grid").innerHTML = GAMES.map(g => {
-    const on = ready.has(g.f);
+    const on = g.ext || ready.has(g.f);
     return `<article class="book" style="--c1:${g.c[0]};--c2:${g.c[1]}">
       <div class="jacket"><small>${g.cat}</small><span class="glyph" aria-hidden="true">${g.g}</span><h3>${g.t}</h3></div>
       <div class="body">
@@ -173,7 +177,7 @@ function render(){
         ${on ? "" : `<span class="soon">⏳ Muy pronto en la biblioteca</span>`}
         <div class="ver"><span>Juego</span>
           <a class="btn primary" href="${g.f}" target="_blank" rel="noopener" aria-disabled="${!on}">▶ Jugar</a>
-          <a class="btn" href="${g.f}" download aria-disabled="${!on}">⬇</a></div>
+          ${g.ext ? "" : `<a class="btn" href="${g.f}" download aria-disabled="${!on}">⬇</a>`}</div>
       </div></article>`;
   }).join("") + `<div class="ghost"><span class="big">🎁</span><b>Próximo juego…</b>
       <span>Se vienen más juegos. ¿Cuál quieres que sea?</span>
@@ -181,8 +185,8 @@ function render(){
 }
 render();
 
-Promise.all(GAMES.map(g => fetch(g.f, {method:"HEAD", cache:"no-store"}).then(r => { if (r.ok) ready.add(g.f); }).catch(() => {})))
-  .then(() => { $("#nReady").textContent = ready.size; render(); });
+Promise.all(GAMES.filter(g => !g.ext).map(g => fetch(g.f, {method:"HEAD", cache:"no-store"}).then(r => { if (r.ok) ready.add(g.f); }).catch(() => {})))
+  .then(() => { $("#nReady").textContent = ready.size + GAMES.filter(g => g.ext).length; render(); });
 
 const msg = encodeURIComponent("Hola Miguel, le escribo desde la Biblioteca de Juegos: ");
 $("#wa").href = "https://wa.me/51975525627?text=" + msg;
