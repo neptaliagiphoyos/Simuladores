@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Armamos Juntos · LEGO en familia</title>
+</head><body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;700;800&display=swap">
+<style>
+/* Layout: una pantalla por modelo, pasos apilados en tarjetas, barra de pestañas fija abajo */
+:root{
+  --bg:#eef3fa; --card:#ffffff; --ink:#1b2333; --muted:#5a6478; --line:#d5dcea;
+  --accent:#d8342b; --hl:#1b2333; --chip:#e4ebf6;
+  --papa:#2f6fde; --hijo:#f28c28; --hija:#ec6fa9;
+  --display:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --body:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121822; --card:#1c2431; --ink:#eef2f8; --muted:#a3adc0; --line:#2f3b4f;
+  --accent:#ff6a5c; --hl:#ffffff; --chip:#273246; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121822; --card:#1c2431; --ink:#eef2f8; --muted:#a3adc0; --line:#2f3b4f;
+  --accent:#ff6a5c; --hl:#ffffff; --chip:#273246; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:16px calc(96px + env(safe-area-inset-bottom,0px))}
+main{max-width:640px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:2.1rem;font-weight:800}
+h2{font-size:1.55rem;font-weight:800}
+h3{font-size:1.2rem;font-weight:700}
+p{margin:0}
+section{display:flex;flex-direction:column;gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.muted{color:var(--muted)}
+.eyebrow{font-size:.8rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.hero{display:flex;flex-direction:column;gap:10px;padding-top:4px}
+.family{display:flex;align-items:flex-end;gap:14px}
+.family figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:2px;font-weight:800;font-size:.85rem}
+.roles{display:grid;gap:10px}
+.role{display:grid;grid-template-columns:52px 1fr;gap:10px;align-items:center;padding:10px;border-radius:12px;background:var(--chip)}
+.role b{display:block}
+.role .who{display:flex;justify-content:center}
+.step{display:flex;flex-direction:column;gap:10px}
+.stephead{display:flex;gap:12px;align-items:flex-start}
+.num{flex:none;width:40px;height:40px;border-radius:10px;background:var(--accent);color:#fff;font-family:var(--display);font-weight:800;font-size:1.3rem;display:grid;place-items:center}
+.draw{overflow-x:auto;background:var(--bg);border-radius:12px;padding:8px;display:flex;justify-content:center}
+.draw svg{display:block;max-width:100%;height:auto}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--chip);border-radius:999px;padding:4px 10px;font-size:.9rem;font-weight:700}
+.sw{width:14px;height:14px;border-radius:3px;border:1px solid rgba(0,0,0,.25);flex:none}
+.plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.plist button{width:100%;min-height:48px;display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:10px;text-align:left;
+  background:var(--chip);border:2px solid transparent;border-radius:12px;padding:8px 12px;font:inherit;color:inherit;cursor:pointer}
+.plist button[aria-pressed="true"]{border-color:#3fa05a}
+.plist .qty{font-family:var(--display);font-weight:800;font-size:1.2rem;font-variant-numeric:tabular-nums}
+.plist .ok{font-size:.8rem;font-weight:800;color:#3fa05a}
+.plist .sw{width:22px;height:22px}
+.alts{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.reto{display:grid;gap:8px}
+.reto div{display:grid;grid-template-columns:12px 1fr;gap:10px;align-items:start}
+.reto i{width:12px;height:12px;border-radius:50%;margin-top:7px}
+.done{min-height:52px;border:0;border-radius:14px;background:var(--accent);color:#fff;font:800 1.1rem var(--display);cursor:pointer}
+.done[aria-pressed="true"]{background:#3fa05a}
+.grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.piece{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--chip);border-radius:12px;padding:10px 6px;text-align:center;font-weight:700;font-size:.9rem}
+.piece svg{max-width:100%;height:auto}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.compare figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:800;font-size:.9rem}
+.models{display:grid;gap:10px}
+.mlink{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-height:56px}
+.mlink b{font-family:var(--display);font-size:1.2rem}
+.stars{color:#f5b400;font-size:1.1rem;letter-spacing:2px}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--card);border-top:1px solid var(--line);
+  padding:6px max(6px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px));
+  display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+nav a{min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:10px;
+  text-decoration:none;color:var(--muted);font-weight:800;font-size:.75rem}
+nav a .sw{width:18px;height:12px}
+nav a[aria-current="page"]{background:var(--chip);color:var(--ink)}
+a:focus-visible,button:focus-visible{outline:3px solid var(--papa);outline-offset:2px}
+.newline{stroke:var(--hl);stroke-dasharray:6 4;animation:march 1s linear infinite}
+@keyframes march{to{stroke-dashoffset:-20}}
+@media (prefers-reduced-motion:reduce){.newline{animation:none}}
+
+/* ===== Versión computadora: menú de modelos a la izquierda, contenido en 2 columnas ===== */
+.vsw{--surface:var(--card)}
+body{font-size:17px;padding:24px 32px 40px 252px}
+main{max-width:1180px}
+.vsw{max-width:1180px!important}
+section{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+section>.hero,section>.done{grid-column:1/-1}
+.hero{flex-direction:row;flex-wrap:wrap;align-items:flex-end;justify-content:space-between}
+.hero>.eyebrow,.hero>h1,.hero>p{flex-basis:100%}
+h1{font-size:2.8rem}
+.models{grid-column:1/-1;grid-template-columns:repeat(5,1fr)}
+.mlink{min-height:90px}
+.mlink:hover{border-color:var(--accent)}
+.done{max-width:420px;justify-self:center;width:100%;min-height:60px;font-size:1.3rem}
+.draw svg{width:100%;max-width:560px}
+.grid2{grid-template-columns:repeat(3,1fr)}
+nav{left:0;top:0;bottom:0;right:auto;width:220px;border-top:0;border-right:1px solid var(--line);
+  display:flex;flex-direction:column;gap:6px;padding:24px 14px}
+nav::before{content:"Armamos juntos";font:800 1.35rem var(--display);padding:0 8px 14px;color:var(--ink)}
+nav a{flex-direction:row;justify-content:flex-start;gap:12px;min-height:50px;padding:0 14px;font-size:1.05rem}
+nav a .sw{width:22px;height:16px}
+nav a:hover{background:var(--chip);color:var(--ink)}
+@media (max-width:900px){body{padding-left:24px;padding-bottom:110px}nav{top:auto;width:auto;right:0;flex-direction:row;padding:6px;border-right:0;border-top:1px solid var(--line)}nav::before{display:none}nav a{flex:1;flex-direction:column;justify-content:center;gap:3px;font-size:.8rem;padding:0}}
+</style>
+
+<div class="vsw" style="max-width:1200px;margin:0 auto 10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font:700 14px system-ui,sans-serif"><a href="./" style="text-decoration:none;padding:8px 12px;border-radius:99px;border:1px solid var(--line);color:inherit;background:var(--surface,var(--card))">← Biblioteca de Simuladores</a><span style="flex:1"></span><span style="color:var(--muted)">Versión 💻 Computadora</span><a href="armamos-juntos-lego-celular.html" style="text-decoration:none;padding:8px 12px;border-radius:99px;background:var(--accent);color:#fff">Cambiar a 📱 Celular</a></div>
+<main id="app"></main>
+<nav id="nav" aria-label="Modelos"></nav>
+
+<script>
+/* ---------- Colores de piezas ---------- */
+const C={rojo:['#d8342b','#9e2019'],amarillo:['#f5c431','#b98e10'],azul:['#2f6fde','#1d4ea3'],verde:['#3fa05a','#25703b'],
+ blanco:['#f6f6f2','#9a9d96'],gris:['#a3abb5','#6e7681'],negro:['#3a3d42','#16181b'],transparente:['#a9dcf2','#5ba6c8'],
+ naranja:['#f28c28','#b8600f'],rosado:['#ef7fb3','#bf4d82'],marron:['#8a5a3b','#5e3b25']};
+const FAM={papa:'#2f6fde',hijo:'#f28c28',hija:'#ec6fa9'};
+
+/* ---------- Pieza: x,y en botones y en "pisos de placa" (ladrillo = 3, placa = 1) ---------- */
+const B=(n,c,x,y,w,extra)=>Object.assign({n,c,x,y,w,h:3},extra||{});
+const PL=(n,c,x,y,w,extra)=>Object.assign({n,c,x,y,w,h:1},extra||{});
+const WH=(cx)=>({t:'wheel',n:'Rueda',c:'negro',cx,y:0,q:2});
+const DECO=(c,x,y,w,h)=>({t:'deco',c,x,y,w,h});
+
+/* ---------- Los 5 modelos ---------- */
+const MODELS=[
+{id:'carro',name:'Carro',color:'rojo',time:'15 min',level:1,
+ intro:'Un carrito rojo con techo azul y faro amarillo. Visto de costado: la nariz mira a la derecha.',
+ roles:{papa:'Encaja las ruedas abajo (es lo que más fuerza necesita).',hijo:'Sigue los pasos y arma el cuerpo y la cabina.',hija:'Elige los colores y pone el faro amarillo al final.'},
+ steps:[
+  {t:'Pon las dos placas con ruedas en la mesa, separadas.',p:[PL('Placa 2x2 con ruedas','gris',1,2,2),PL('Placa 2x2 con ruedas','gris',5,2,2),WH(2),WH(6)]},
+  {t:'Encima pon la placa larga 2x8. Es el piso del carro.',p:[PL('Placa 2x8','gris',0,3,8)]},
+  {t:'Pon el ladrillo 2x4 atrás y el 2x2 adelante. En el hueco del medio va el conductor.',p:[B('Ladrillo 2x4','rojo',0,4,4),B('Ladrillo 2x2','rojo',6,4,2)]},
+  {t:'Arriba: techo azul, parabrisas y faro.',p:[B('Ladrillo 2x2','azul',0,7,2),B('Ladrillo 1x2','transparente',2,7,2),B('Ladrillo 1x2','amarillo',7,7,1)]}
+ ],
+ alts:['Sin ruedas: usen 4 ladrillos redondos o tapitas de botella pegadas con plastilina. También puede ser un carro “de exhibición” sin ruedas.','Sin placa 2x8: junten dos placas 2x4 y únanlas con un ladrillo 2x4 encima de la unión.','Sin parabrisas transparente: cualquier ladrillo 1x2 sirve.'],
+ reto:{t:'Carrera de rampa',papa:'Hace una rampa con un libro y marca la meta con cinta.',hijo:'Suelta su carro y mide con pasos hasta dónde llegó. ¿Puede mejorarlo para que llegue más lejos?',hija:'Dice “¡3, 2, 1, ya!” y gana una estrella cada vez que un carro pasa la meta.'}},
+
+{id:'casa',name:'Casa',color:'blanco',time:'25 min',level:2,
+ intro:'El frente de una casa con puerta, dos ventanas y techo rojo en escalera.',
+ roles:{papa:'Arma la base y deja el hueco de la puerta.',hijo:'Sube las paredes “trabadas” como ladrillos de verdad.',hija:'Pone las ventanas y los ladrillos rojos del techo.'},
+ steps:[
+  {t:'Pon la placa verde grande. Es el jardín.',p:[PL('Placa grande (o 2 placas 2x8)','verde',0,0,10)]},
+  {t:'Primera fila: un 2x4 a cada lado. Dejen 2 botones libres en el medio: ahí va la puerta.',p:[DECO('marron',4,1,2,9),B('Ladrillo 2x4','blanco',0,1,4),B('Ladrillo 2x4','blanco',6,1,4)]},
+  {t:'Segunda fila con ventanas: 2x2 en las puntas y piezas transparentes al lado de la puerta.',p:[B('Ladrillo 2x2','blanco',0,4,2),B('Ladrillo 1x2','transparente',2,4,2),B('Ladrillo 1x2','transparente',6,4,2),B('Ladrillo 2x2','blanco',8,4,2)]},
+  {t:'Tercera fila: cierra la pared. El 2x2 del medio queda sobre la puerta.',p:[B('Ladrillo 2x4','blanco',0,7,4),B('Ladrillo 2x2','blanco',4,7,2),B('Ladrillo 2x4','blanco',6,7,4)]},
+  {t:'Techo: una fila larga roja y encima otra más corta.',p:[B('Ladrillo 2x4','rojo',0,10,4),B('Ladrillo 2x2','rojo',4,10,2),B('Ladrillo 2x4','rojo',6,10,4),B('Ladrillo 2x4','rojo',1,13,4),B('Ladrillo 2x4','rojo',5,13,4)]},
+  {t:'Punta del techo y chimenea.',p:[B('Ladrillo 2x4','rojo',3,16,4),B('Ladrillo 1x2','gris',7,16,1)]}
+ ],
+ alts:['Sin piezas transparentes: usen cualquier color o dejen el hueco vacío.','Sin placa grande: armen sobre la mesa; la pared igual se para porque los ladrillos tienen 2 filas de botones.','Si les sobran piezas, armen las otras 3 paredes igual y tendrán una casa completa.'],
+ reto:{t:'Casa completa',papa:'Ayuda a unir las esquinas para que las 4 paredes queden firmes.',hijo:'Diseña el cuarto de adentro: cama, mesa o lo que se le ocurra.',hija:'Pone un muñeco o juguete pequeño “a vivir” en la casa y le pone nombre.'}},
+
+{id:'avion',name:'Avión',color:'azul',time:'15 min',level:1,
+ intro:'Un avión blanco con alas azules. Al final hay un dibujo visto desde arriba para ver las alas.',
+ roles:{papa:'Pone la placa larga de las alas bien cruzada y apretada.',hijo:'Arma el cuerpo del avión.',hija:'Pone la cola roja y el parabrisas.'},
+ steps:[
+  {t:'Cuerpo: dos 2x4 blancos en fila y un 2x2 rojo de nariz.',p:[B('Ladrillo 2x4','blanco',0,0,4),B('Ladrillo 2x4','blanco',4,0,4),B('Ladrillo 2x2','rojo',8,0,2)]},
+  {t:'Encima: un 2x4 atrás, la placa 2x8 CRUZADA en el medio (son las alas) y el parabrisas adelante.',p:[B('Ladrillo 2x4','blanco',0,3,4),PL('Placa 2x8','azul',4,3,2),B('Ladrillo 1x2','transparente',7,3,2)]},
+  {t:'Cola: una placa 2x4 cruzada atrás y dos ladrillos 1x2 rojos parados hacia arriba.',p:[PL('Placa 2x4','azul',0,6,2),B('Ladrillo 1x2','rojo',0,7,1),B('Ladrillo 1x2','rojo',0,10,1)]}
+ ],
+ top:[{x:0,y:3,w:10,d:2,c:'blanco'},{x:8,y:3,w:2,d:2,c:'rojo'},{x:4,y:0,w:2,d:8,c:'azul'},{x:0,y:2,w:2,d:4,c:'azul'},{x:7,y:3,w:1,d:2,c:'transparente'},{x:0,y:3.5,w:1,d:1,c:'rojo'}],
+ alts:['Sin placa 2x8: pongan dos placas 2x4 (una a cada lado) o dos ladrillos 2x4 cruzados.','Sin ladrillos rojos para la cola: cualquier color.','Alas más largas: unan dos placas por debajo con otra placa.'],
+ reto:{t:'Vuelo por la casa',papa:'Cuenta los segundos de cada viaje con el reloj del celular.',hijo:'Hace un recorrido “volando” el avión sin que se le caiga ninguna pieza.',hija:'Lleva el avión al “aeropuerto” (una caja) y gana una estrella por cada aterrizaje.'}},
+
+{id:'torre',name:'Torre',color:'naranja',time:'20 min',level:1,
+ intro:'Un edificio de 3 pisos: cada uno arma su propio piso con su color.',
+ roles:{papa:'Arma el primer piso (azul) y la base.',hijo:'Arma el segundo piso (naranja).',hija:'Arma el tercer piso (rosado) con ayuda, y pone la antena.'},
+ steps:[
+  {t:'Base gris para el edificio.',p:[PL('Placa 2x6','gris',0,0,6)]},
+  {t:'Piso de papá: un 2x4 y encima la fila con ventana.',p:[B('Ladrillo 2x4','azul',1,1,4),B('Ladrillo 1x2','azul',1,4,1),B('Ladrillo 1x2','transparente',2,4,2),B('Ladrillo 1x2','azul',4,4,1)]},
+  {t:'Piso del hijo: igual, en naranja.',p:[B('Ladrillo 2x4','naranja',1,7,4),B('Ladrillo 1x2','naranja',1,10,1),B('Ladrillo 1x2','transparente',2,10,2),B('Ladrillo 1x2','naranja',4,10,1)]},
+  {t:'Piso de la hija: igual, en rosado.',p:[B('Ladrillo 2x4','rosado',1,13,4),B('Ladrillo 1x2','rosado',1,16,1),B('Ladrillo 1x2','transparente',2,16,2),B('Ladrillo 1x2','rosado',4,16,1)]},
+  {t:'Techo y antena.',p:[PL('Placa 2x4','gris',1,19,4),B('Ladrillo 1x1','amarillo',2.5,20,1),B('Ladrillo 1x1','amarillo',2.5,23,1)]}
+ ],
+ alts:['Sin esos colores: cada uno escoge “su color” con lo que haya.','Sin ventanas transparentes: usen un ladrillo 1x2 de otro color o dejen el hueco.','Sin 1x1 para la antena: un 1x2 parado o nada.'],
+ reto:{t:'La torre más alta',papa:'Pone las reglas: un piso por turno y nadie empuja.',hijo:'Agrega pisos “trabados” para que la torre no se caiga.',hija:'Cuenta los pisos en voz alta y gana una estrella por cada piso nuevo que aguanta.'}},
+
+{id:'barco',name:'Barco',color:'rojo',time:'20 min',level:2,
+ intro:'Un barco rojo con cubierta blanca, cabina y chimenea amarilla.',
+ roles:{papa:'Arma el casco (la parte de abajo) bien firme.',hijo:'Pone la cubierta y la cabina.',hija:'Pone la chimenea y elige quién es el capitán.'},
+ steps:[
+  {t:'Fondo del casco: un 2x4 y un 2x2 en fila.',p:[B('Ladrillo 2x4','rojo',2,0,4),B('Ladrillo 2x2','rojo',6,0,2)]},
+  {t:'Segunda fila más larga, trabando las uniones de abajo.',p:[B('Ladrillo 2x4','rojo',0,3,4),B('Ladrillo 2x4','rojo',4,3,4),B('Ladrillo 2x2','rojo',8,3,2)]},
+  {t:'Cubierta: la placa blanca 2x8 encima.',p:[PL('Placa 2x8','blanco',1,6,8)]},
+  {t:'Cabina con ventana y chimenea de dos pisos.',p:[B('Ladrillo 2x2','blanco',2,7,2),B('Ladrillo 1x2','transparente',2,10,2),B('Ladrillo 1x2','amarillo',6,7,1),B('Ladrillo 1x2','amarillo',6,10,1)]}
+ ],
+ water:true,
+ alts:['Sin placa 2x8: pongan dos placas 2x4 o una fila de ladrillos 2x4.','Sin rojo: el casco puede ser de cualquier color.','Sin transparente: cualquier 1x2.'],
+ reto:{t:'¿Flota?',papa:'Llena un balde o la bañera con poca agua y cuida a la niña.',hijo:'Prueba si flota y cambia piezas para que flote mejor.',hija:'Sube un “pasajero” (una pieza) por turno y cuenta cuántos aguanta. Al final sequen las piezas con una toalla.'}}
+];
+
+/* ---------- Dibujo de costado ---------- */
+const S=22,P=9,STUD=5,PAD=12;
+function sideSVG(pieces,newSet,opts={}){
+  const real=pieces;
+  let maxX=0,maxY=0;
+  real.forEach(p=>{if(p.t==='wheel'){maxX=Math.max(maxX,p.cx+1);}else{maxX=Math.max(maxX,p.x+p.w);maxY=Math.max(maxY,p.y+p.h);}});
+  const W=maxX*S+PAD*2, H=Math.max(maxY,4)*P+STUD+PAD*2+6;
+  const Y0=H-PAD-2; const px=x=>PAD+x*S; const py=y=>Y0-y*P;
+  const ord=[...real].sort((a,b)=>(a.t==='deco'?-1:0)-(b.t==='deco'?-1:0)||(a.y-b.y));
+  let s='';
+  s+=`<line x1="4" x2="${W-4}" y1="${Y0+1}" y2="${Y0+1}" stroke="var(--line)" stroke-width="3" stroke-linecap="round"/>`;
+  for(const p of ord){
+    const [f,st]=C[p.c]; const op=p.c==='transparente'?' fill-opacity="0.8"':'';
+    if(p.t==='wheel'){const cx=px(p.cx),cy=Y0-16;s+=`<circle cx="${cx}" cy="${cy}" r="16" fill="${f}" stroke="${st}" stroke-width="2"/><circle cx="${cx}" cy="${cy}" r="6" fill="#c9ced6"/>`;continue;}
+    if(p.t==='deco'){s+=`<rect x="${px(p.x)+3}" y="${py(p.y+p.h)}" width="${p.w*S-6}" height="${p.h*P}" rx="4" fill="${f}" stroke="${st}" stroke-width="1.5"/><circle cx="${px(p.x+p.w)-10}" cy="${py(p.y+p.h/2)}" r="2.5" fill="${C.amarillo[0]}"/>`;continue;}
+    const n=Math.round(p.w);
+    for(let i=0;i<n;i++) s+=`<rect x="${px(p.x+i)+5}" y="${py(p.y+p.h)-STUD}" width="12" height="${STUD+2}" rx="1.5" fill="${f}" stroke="${st}" stroke-width="1.5"${op}/>`;
+    s+=`<rect x="${px(p.x)+0.75}" y="${py(p.y+p.h)}" width="${p.w*S-1.5}" height="${p.h*P}" rx="2" fill="${f}" stroke="${st}" stroke-width="1.5"${op}/>`;
+  }
+  if(opts.water){s+=`<path d="M0 ${py(2)} q 11 -6 22 0 t 22 0 t 22 0 t 22 0 t 22 0 t 22 0 t 22 0 t 22 0 t 22 0 t 22 0 t 22 0 V ${H} H 0 Z" fill="#3aa0e0" fill-opacity="0.45"/>`;}
+  for(const p of real){ if(!newSet.has(p)||p.t==='deco') continue;
+    if(p.t==='wheel'){s+=`<circle class="newline" cx="${px(p.cx)}" cy="${Y0-16}" r="20" fill="none" stroke-width="2.5"/>`;continue;}
+    s+=`<rect class="newline" x="${px(p.x)-3}" y="${py(p.y+p.h)-STUD-3}" width="${p.w*S+6}" height="${p.h*P+STUD+6}" rx="4" fill="none" stroke-width="2.5"/>`;}
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W*1.35}" role="img" aria-label="Dibujo del paso">${s}</svg>`;
+}
+/* ---------- Dibujo visto desde arriba ---------- */
+function topSVG(list){
+  const T=16; let mx=0,my=0; list.forEach(p=>{mx=Math.max(mx,p.x+p.w);my=Math.max(my,p.y+p.d)});
+  const W=mx*T+16,H=my*T+16; let s='';
+  for(const p of list){const [f,st]=C[p.c];
+    s+=`<rect x="${8+p.x*T}" y="${8+p.y*T}" width="${p.w*T}" height="${p.d*T}" rx="2" fill="${f}" stroke="${st}" stroke-width="1.5"/>`;
+    for(let i=0;i<p.w;i++)for(let j=0;j<p.d;j++) s+=`<circle cx="${8+(p.x+i+.5)*T}" cy="${8+(p.y+j+.5)*T}" r="4.5" fill="${f}" stroke="${st}" stroke-width="1"/>`;}
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W*1.4}" role="img" aria-label="Avión visto desde arriba">${s}</svg>`;
+}
+/* ---------- Figuras de la familia ---------- */
+function fig(who,s=1){const col=FAM[who];
+  const dress=who==='hija'?`<path d="M20 26 L9 46 H31 Z" fill="${col}"/>`:'';
+  return `<svg viewBox="0 0 40 64" width="${40*s}" height="${64*s}" aria-hidden="true"><circle cx="20" cy="10" r="8" fill="${col}"/>${dress}<path d="M20 18v22M20 24l-12 8M20 24l12 8M20 40l-8 20M20 40l8 20" stroke="${col}" stroke-width="5" stroke-linecap="round" fill="none"/></svg>`;}
+const WHO={papa:['Papá',1],hijo:['Hijo (10)',.82],hija:['Hija (4)',.66]};
+
+/* ---------- Guardado local (solo en esta computadora) ---------- */
+const store={get(k,d){try{const v=localStorage.getItem('armamos:'+k);return v?JSON.parse(v):d}catch(e){return d}},
+ set(k,v){try{localStorage.setItem('armamos:'+k,JSON.stringify(v))}catch(e){}}};
+
+function partsOf(m){const map=new Map();
+  m.steps.forEach(st=>st.p.forEach(p=>{if(p.t==='deco')return;const k=p.n+'|'+p.c;map.set(k,(map.get(k)||0)+(p.q||1))}));
+  return [...map].map(([k,q])=>{const [n,c]=k.split('|');return {k,n,c,q}});}
+const sw=c=>`<span class="sw" style="background:${C[c][0]}"></span>`;
+const stars=n=>'★'.repeat(n)+'☆'.repeat(3-n);
+
+/* ---------- Pantallas ---------- */
+function home(){
+  const done=store.get('done',{});
+  const basics=[['Ladrillo 2x4',B('','rojo',0,0,4)],['Ladrillo 2x2',B('','azul',0,0,2)],['Ladrillo 1x2',B('','amarillo',0,0,2)],['Ladrillo 1x1',B('','verde',0,0,1)],['Placa 2x4 (delgada)',PL('','gris',0,0,4)],['Placa con ruedas',null]];
+  const basicHTML=basics.map(([n,p])=>`<div class="piece">${p?sideSVG([p],new Set()):sideSVG([PL('','gris',1,2,2),WH(2)],new Set())}<span>${n}</span></div>`).join('');
+  const bad=[B('','rojo',0,0,2),B('','rojo',0,3,2),B('','rojo',0,6,2),B('','azul',2,0,2),B('','azul',2,3,2),B('','azul',2,6,2)];
+  const good=[B('','rojo',0,0,2),B('','azul',2,0,2),B('','amarillo',1,3,2),B('','rojo',0,6,2),B('','azul',2,6,2)];
+  return `<section>
+  <div class="hero"><span class="eyebrow">Guía para armar en familia</span><h1>Armamos juntos</h1>
+   <p class="muted">5 modelos fáciles con piezas que casi todos tienen en casa. Cada modelo tiene un trabajo para papá, otro para el hijo y otro para la hija.</p>
+   <div class="family">${['papa','hijo','hija'].map(w=>`<figure>${fig(w,WHO[w][1])}<figcaption style="color:${FAM[w]}">${WHO[w][0]}</figcaption></figure>`).join('')}</div></div>
+  <div class="models">${MODELS.map(m=>`<a class="mlink" href="#${m.id}"><span><b>${m.name}</b><br><span class="muted">${m.time} · ${m.steps.length} pasos · dificultad ${'●'.repeat(m.level)}${'○'.repeat(2-m.level)}</span></span><span class="stars" aria-label="${done[m.id]?'Armado':'Pendiente'}">${done[m.id]?'★':'☆'}</span></a>`).join('')}</div>
+  <div class="card"><h2>Cómo usar la guía</h2>
+   <ol class="alts"><li>Elijan un modelo en el menú de la izquierda.</li><li>Busquen las piezas de la lista y hagan clic en cada una cuando la encuentren.</li><li>Sigan los pasos. La pieza nueva de cada paso tiene un <b>borde punteado que se mueve</b>.</li><li>Al final hagan el reto los tres juntos y hagan clic en “¡Lo armamos!”.</li></ol></div>
+  <div class="card"><h2>Las piezas básicas</h2><p class="muted">“2x4” quiere decir 2 filas de 4 botones. Las placas son delgadas: 3 placas miden lo mismo que 1 ladrillo.</p><div class="grid2">${basicHTML}</div></div>
+  <div class="card"><h2>El truco más importante</h2><p>Pongan las piezas como los ladrillos de una pared de verdad: cada pieza de arriba pisa la unión de dos piezas de abajo. Así nada se cae.</p>
+   <div class="compare"><figure>${sideSVG(bad,new Set())}<figcaption>Se separa</figcaption></figure><figure>${sideSVG(good,new Set())}<figcaption style="color:#3fa05a">Queda firme</figcaption></figure></div></div>
+  <div class="card"><h2>Si les falta una pieza</h2><div style="overflow-x:auto"><table><thead><tr><th>Falta</th><th>Usen</th></tr></thead><tbody>
+   <tr><td>Ladrillo 2x4</td><td>Dos 2x2 lado a lado, y un 2x4 o 2x2 encima de la unión.</td></tr>
+   <tr><td>Ladrillo 2x2</td><td>Dos 1x2 juntos.</td></tr>
+   <tr><td>Placa</td><td>Un ladrillo del mismo tamaño. Queda más alto, pero funciona igual.</td></tr>
+   <tr><td>Ruedas</td><td>Ladrillos redondos, tapitas de botella, o un carro sin ruedas.</td></tr>
+   <tr><td>Pieza transparente</td><td>Cualquier color.</td></tr>
+   <tr><td>El color exacto</td><td>Cualquier color. ¡Su carro puede ser verde!</td></tr></tbody></table></div></div>
+  <div class="card"><h2>Antes de empezar: juego de colores</h2>
+   <div class="reto"><div><i style="background:${FAM.hija}"></i><p><b>Hija:</b> es la jefa de colores. Pone en montoncitos las piezas rojas, azules, amarillas… Gana una estrella por cada color completo.</p></div>
+   <div><i style="background:${FAM.hijo}"></i><p><b>Hijo:</b> separa por tamaño: 2x4, 2x2, 1x2 y placas.</p></div>
+   <div><i style="background:${FAM.papa}"></i><p><b>Papá:</b> busca las piezas difíciles (ruedas, transparentes, placas largas).</p></div></div></div>
+  <div class="card"><h2>Cuidado con la más pequeña</h2><p>Las piezas chiquitas (1x1 y 1x2) solo con papá cerca, y nunca a la boca. Al terminar jueguen a “rescatar piezas”: quien guarda más en la caja, gana.</p></div>
+  </section>`;
+}
+function model(m){
+  const have=store.get('have:'+m.id,{}); const done=store.get('done',{});
+  let acc=[]; const steps=m.steps.map((st,i)=>{acc=acc.concat(st.p);const ns=new Set(st.p);
+    const chips={};st.p.forEach(p=>{if(p.t==='deco')return;const k=p.n+' '+p.c;chips[k]=chips[k]||{c:p.c,q:0};chips[k].q+=(p.q||1)});
+    return `<div class="card step"><div class="stephead"><span class="num">${i+1}</span><p>${st.t}</p></div>
+     <div class="draw">${sideSVG(acc,ns,{water:m.water})}</div>
+     <div class="chips">${Object.entries(chips).map(([k,v])=>`<span class="chip">${sw(v.c)}${v.q} × ${k}</span>`).join('')}</div></div>`;}).join('');
+  const parts=partsOf(m);
+  return `<section>
+   <div class="hero"><span class="eyebrow">${m.time} · ${m.steps.length} pasos</span><h1>${m.name}</h1><p class="muted">${m.intro}</p></div>
+   <div class="card"><h2>Quién hace qué</h2><div class="roles">${['papa','hijo','hija'].map(w=>`<div class="role"><span class="who">${fig(w,.7)}</span><p><b style="color:${FAM[w]}">${WHO[w][0]}</b>${m.roles[w]}</p></div>`).join('')}</div></div>
+   <div class="card"><h2>Piezas</h2><p class="muted">Hagan clic en cada pieza cuando la encuentren.</p>
+    <ul class="plist">${parts.map(p=>`<li><button type="button" id="h-${m.id}-${p.k.replace(/\W/g,'')}" data-k="${p.k}" aria-pressed="${!!have[p.k]}">${sw(p.c)}<span>${p.n} <span class="muted">${p.c}</span>${have[p.k]?' <span class="ok">✓ la tenemos</span>':''}</span><span class="qty">${p.q}</span></button></li>`).join('')}</ul></div>
+   ${steps}
+   ${m.top?`<div class="card"><h3>Así se ve desde arriba</h3><div class="draw">${topSVG(m.top)}</div><p class="muted">Las alas y la cola están cruzadas sobre el cuerpo.</p></div>`:''}
+   <div class="card"><h2>Si les falta algo</h2><ul class="alts">${m.alts.map(a=>`<li>${a}</li>`).join('')}</ul></div>
+   <div class="card"><h2>Reto: ${m.reto.t}</h2><div class="reto">${['papa','hijo','hija'].map(w=>`<div><i style="background:${FAM[w]}"></i><p><b>${WHO[w][0]}:</b> ${m.reto[w]}</p></div>`).join('')}</div></div>
+   <button type="button" class="done" id="done-${m.id}" aria-pressed="${!!done[m.id]}">${done[m.id]?'★ ¡Ya lo armamos!':'¡Lo armamos!'}</button>
+  </section>`;
+}
+function navHTML(cur){
+  const items=[{id:'inicio',name:'Inicio',color:'verde'},...MODELS];
+  return items.map(m=>`<a href="#${m.id}" ${m.id===cur?'aria-current="page"':''}><span class="sw" style="background:${C[m.color][0]}"></span>${m.name}</a>`).join('');
+}
+function render(){
+  const id=(location.hash||'#inicio').slice(1); const m=MODELS.find(x=>x.id===id);
+  const cur=m?id:'inicio';
+  document.getElementById('app').innerHTML=m?model(m):home();
+  document.getElementById('nav').innerHTML=navHTML(cur);
+  if(m){
+    document.querySelectorAll('.plist button').forEach(b=>b.onclick=()=>{const h=store.get('have:'+m.id,{});h[b.dataset.k]=!h[b.dataset.k];store.set('have:'+m.id,h);render();});
+    const d=document.getElementById('done-'+m.id);d.onclick=()=>{const dn=store.get('done',{});dn[m.id]=!dn[m.id];store.set('done',dn);render();};
+  }
+}
+let lastHash=location.hash;
+window.addEventListener('hashchange',()=>{render();if(location.hash!==lastHash){window.scrollTo(0,0);lastHash=location.hash;}});
+render();
+</script>
+</body></html>

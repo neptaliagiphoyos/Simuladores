@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Inventario de Fichas LEGO</title>
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head><body>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+<style>
+/* Layout: una columna tipo app de celular; selector de color arriba, catálogo en filas, barra de totales fija abajo */
+:root{
+  --bg:#f3f5f9; --surface:#ffffff; --fg:#1b2333; --muted:#5d6779; --line:#dde2ec;
+  --accent:#d81e1e; --accent-fg:#ffffff; --chip:#e9edf4; --ok:#1f7a3f;
+  --display:"Fredoka","Trebuchet MS",system-ui,sans-serif;
+  --body:"Nunito Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12161f; --surface:#1b212d; --fg:#eef1f7; --muted:#9aa4b6; --line:#2c3545;
+  --accent:#ff4a3d; --accent-fg:#ffffff; --chip:#252d3b; --ok:#5fd08a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12161f; --surface:#1b212d; --fg:#eef1f7; --muted:#9aa4b6; --line:#2c3545;
+  --accent:#ff4a3d; --accent-fg:#ffffff; --chip:#252d3b; --ok:#5fd08a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 120px;display:flex;flex-direction:column;gap:16px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;font-weight:600}
+h1{font-size:1.6rem;letter-spacing:.2px}
+h2{font-size:1.15rem}
+.sub{color:var(--muted);margin:4px 0 0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+details.card summary{font-family:var(--display);font-weight:600;font-size:1.05rem;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.card summary::after{content:"+";font-size:1.4rem;color:var(--muted)}
+details[open].card summary::after{content:"–"}
+.steps{margin:12px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:8px}
+.steps b{font-weight:700}
+.label{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.colors{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px;scrollbar-width:thin}
+.sw{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:0;padding:2px;width:64px}
+.sw i{display:block;width:40px;height:40px;border-radius:10px;border:2px solid var(--line);box-shadow:inset 0 -6px 0 rgba(0,0,0,.18)}
+.sw span{font-size:.72rem;color:var(--muted);text-align:center;line-height:1.15}
+.sw[aria-pressed="true"] i{outline:3px solid var(--fg);outline-offset:2px}
+.sw[aria-pressed="true"] span{color:var(--fg);font-weight:700}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.tab{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 13px;font-weight:600;font-size:.88rem}
+.tab[aria-selected="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.search{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:inherit}
+.list{display:flex;flex-direction:column;gap:8px}
+.row{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.row svg{width:56px;height:44px}
+.info{min-width:0}
+.name{font-weight:700;line-height:1.2}
+.code{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.hint{font-size:.78rem;color:var(--muted)}
+.ctr{display:flex;align-items:center;gap:4px}
+.ctr button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--chip);font-size:1.2rem;font-weight:700;line-height:1}
+.ctr button.plus{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.ctr .n{min-width:34px;text-align:center;font-family:var(--display);font-size:1.15rem;font-variant-numeric:tabular-nums}
+.ctr .n.zero{color:var(--muted)}
+.ctr button.ten{width:auto;padding:0 8px;font-size:.8rem}
+.inv-group{display:flex;flex-direction:column;gap:6px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;padding:2px 8px;border-radius:999px;background:var(--chip)}
+.pill i{width:12px;height:12px;border-radius:3px;display:inline-block;border:1px solid var(--line)}
+.empty{text-align:center;color:var(--muted);padding:24px 8px}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.form input,.form select{padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:inherit;min-width:0}
+.form .full{grid-column:1/-1}
+.btn{border:0;border-radius:10px;padding:11px 14px;font-weight:700;background:var(--accent);color:var(--accent-fg)}
+.btn.ghost{background:var(--chip);color:var(--fg)}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:5}
+.bar-in{max-width:720px;margin:0 auto;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.tot{display:flex;gap:16px}
+.tot div{display:flex;flex-direction:column}
+.tot b{font-family:var(--display);font-size:1.3rem;font-variant-numeric:tabular-nums;line-height:1}
+.tot span{font-size:.72rem;color:var(--muted)}
+.status{font-size:.78rem;color:var(--muted)}
+.status.ok{color:var(--ok)}
+textarea{width:100%;min-height:150px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font-family:ui-monospace,Menlo,monospace;font-size:.82rem;padding:10px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.cam{display:flex;flex-direction:column;gap:10px}
+.cam-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.shot{display:flex;gap:8px;flex-wrap:wrap}
+.shot label.btn{display:inline-flex;align-items:center;gap:8px}
+.shot input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+#prev{max-height:220px;border-radius:10px;object-fit:contain;background:var(--chip);width:100%}
+.found{display:flex;flex-direction:column;gap:8px}
+.frow{display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--bg)}
+.frow input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
+.fgrid{display:grid;grid-template-columns:1fr 1fr 70px;gap:6px;min-width:0}
+.fgrid input,.fgrid select{padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:inherit;min-width:0;width:100%}
+.fgrid .nm{grid-column:1/-1}
+.conf{font-size:.75rem;color:var(--muted)}
+@media (max-width:420px){.fgrid{grid-template-columns:1fr 1fr}.fgrid .q{grid-column:1/-1}}
+.hdr-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.infoBtn{flex:0 0 auto;width:38px;height:38px;border-radius:50%;border:2px solid var(--fg);background:var(--surface);font-family:var(--display);font-weight:700;font-size:1.15rem}
+.infoBtn[aria-expanded="true"]{background:var(--fg);color:var(--bg)}
+.info{display:flex;flex-direction:column;gap:10px}
+.crow{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:10px}
+.cinfo{display:flex;flex-direction:column;min-width:0}
+.cval{font-weight:700;overflow-wrap:anywhere;user-select:all}
+a.btn{text-decoration:none;display:inline-block}
+a{color:var(--accent)}
+@media (prefers-reduced-motion:no-preference){.ctr .n{transition:transform .12s}.ctr .n.bump{transform:scale(1.25)}}
+
+/* ===== Versión computadora: panel izquierdo de herramientas + catálogo a la derecha ===== */
+body{font-size:16px}
+.wrap{max-width:1240px;display:grid;grid-template-columns:400px 1fr;gap:18px 24px;align-items:start;padding-inline:24px;padding-bottom:110px}
+.wrap>.vsw,.wrap>.hdr{grid-column:1/-1;width:100%}
+.side,.cat{display:flex;flex-direction:column;gap:16px;min-width:0}
+#exportCard{grid-column:1/-1!important}
+h1{font-size:2.1rem}
+.colors{flex-wrap:wrap;overflow:visible}
+.tabs{flex-wrap:wrap;overflow:visible}
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:10px}
+.row{grid-template-columns:64px 1fr auto;padding:10px 12px}
+.row svg{width:64px;height:50px}
+.row:hover{border-color:var(--muted)}
+.bar-in{max-width:1240px}
+.tot b{font-size:1.6rem}
+textarea{min-height:220px}
+#prev{max-height:300px}
+</style>
+
+<div class="wrap">
+<div class="vsw" style="max-width:1200px;margin:0 auto 10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font:700 14px system-ui,sans-serif"><a href="./" style="text-decoration:none;padding:8px 12px;border-radius:99px;border:1px solid var(--line);color:inherit;background:var(--surface,var(--card))">← Biblioteca de Simuladores</a><span style="flex:1"></span><span style="color:var(--muted)">Versión 💻 Computadora</span><a href="inventario-lego-celular.html" style="text-decoration:none;padding:8px 12px;border-radius:99px;background:var(--accent);color:#fff">Cambiar a 📱 Celular</a></div>
+  <header class="hdr">
+    <div class="hdr-top"><h1>Inventario de Fichas LEGO</h1><button class="infoBtn" id="infoBtn" type="button" aria-expanded="false" aria-controls="infoCard" aria-label="Información y sugerencias">i</button></div>
+    <p class="sub">Toma una foto de tus piezas para reconocerlas, o elige un color y haz clic en <b>+</b> cada vez que cuentes una. Se guarda sola.</p>
+  </header>
+
+  <aside class="side">
+  <section class="card info" id="infoCard" hidden>
+    <h2>¿Tienes una sugerencia?</h2>
+    <p class="hint">Escríbeme con ideas para mejorar el contador o modelos para armar.</p>
+    <div class="crow" id="cMail"><div class="cinfo"><span class="label">Correo</span><span class="cval" id="mailTxt"></span></div>
+      <div class="actions"><a class="btn" id="mailLink" target="_blank" rel="noopener">Escribir</a><button class="btn ghost" type="button" data-copy="mail">Copiar</button></div></div>
+    <div class="crow" id="cWa" hidden><div class="cinfo"><span class="label">WhatsApp</span><span class="cval" id="waTxt"></span></div>
+      <div class="actions"><a class="btn" id="waLink" target="_blank" rel="noopener">Abrir WhatsApp</a><button class="btn ghost" type="button" data-copy="wa">Copiar</button></div></div>
+    <p class="status" id="infoMsg"></p>
+  </section>
+
+  <details class="card" id="guia">
+    <summary>Cómo clasificar en familia (5 pasos)</summary>
+    <ol class="steps">
+      <li><b>Separa por tipo primero</b>, no por color: ladrillos, placas, lisas, inclinadas, ruedas, ventanas y "raras". Los niños pueden hacer esta parte con tazones o tápers.</li>
+      <li><b>Dentro de cada tipo, separa por tamaño.</b> Cuenta los "puntitos" (studs): un 2x4 tiene 2 filas de 4.</li>
+      <li><b>Al final, por color.</b> Haz una fila de cada color sobre la mesa.</li>
+      <li><b>Cuenta de 10 en 10</b> y usa el botón <b>+10</b>. Un niño cuenta, otro hace clic en la pantalla.</li>
+      <li><b>Exporta a Rebrickable</b> con el botón de abajo. Ahí verás qué modelos puedes armar con lo que tienes.</li>
+    </ol>
+    <p class="hint">Tip: no hace falta terminar en un día. Haz una caja por fin de semana.</p>
+  </details>
+
+  <section class="card" aria-labelledby="colLbl">
+    <div class="label" id="colLbl">Color que estás contando</div>
+    <div class="colors" id="colors" role="group" aria-labelledby="colLbl"></div>
+  </section>
+
+  <section class="card cam" id="camCard">
+    <div class="cam-head">
+      <div><h2>Reconocer con foto</h2>
+      <p class="hint" id="camHint">Pon de 1 a 15 piezas separadas sobre una mesa lisa y clara, con buena luz. Toma la foto desde arriba.</p></div>
+    </div>
+    <div class="shot">
+      <label class="btn" for="photo">Tomar foto (cámara web)</label>
+      <input id="photo" type="file" accept="image/*" capture="environment">
+      <label class="btn ghost" for="photoGal">Subir imagen</label>
+      <input id="photoGal" type="file" accept="image/*">
+    </div>
+    <img id="prev" alt="Foto de las piezas" hidden>
+    <div class="actions"><button class="btn" id="recBtn" type="button" hidden>Reconocer piezas</button><button class="btn ghost" id="stopBtn" type="button" hidden>Detener</button></div>
+    <p class="status" id="camMsg"></p>
+    <div class="found" id="found"></div>
+    <div class="actions"><button class="btn" id="addFound" type="button" hidden>Sumar las marcadas al inventario</button></div>
+  </section>
+
+  </aside>
+  <div class="cat">
+  <div class="tabs" id="tabs" role="tablist"></div>
+  <input class="search" id="q" type="search" placeholder="Buscar: 2x4, rueda, ventana o el código 3001" autocomplete="off">
+
+  <div class="list" id="list"></div>
+
+  <section class="card" id="otraPieza">
+    <h2>¿No encuentras una pieza?</h2>
+    <p class="hint">Búscala en <a href="https://rebrickable.com/parts/" target="_blank" rel="noopener">rebrickable.com/parts</a> o mira el número pequeño grabado en la pieza. Agrégala aquí con su código.</p>
+    <form class="form" id="addForm">
+      <input id="addCode" placeholder="Código (ej. 3001)" required>
+      <input id="addQty" type="number" min="1" value="1" inputmode="numeric" aria-label="Cantidad">
+      <input id="addName" class="full" placeholder="Nombre para recordarla (opcional)">
+      <button class="btn full" type="submit">Agregar en el color elegido</button>
+    </form>
+  </section>
+
+  </div>
+  <section class="card" id="exportCard" hidden>
+    <h2>Exportar a Rebrickable</h2>
+    <p class="hint">En Rebrickable: <b>My LEGO → My Parts → Import Parts</b>, elige "CSV" y pega o sube este archivo. Los colores ya van con el código que usa Rebrickable.</p>
+    <textarea id="csv" readonly aria-label="Archivo CSV"></textarea>
+    <div class="actions">
+      <button class="btn" id="copyBtn" type="button">Copiar</button>
+      <button class="btn ghost" id="dlBtn" type="button" hidden>Descargar archivo</button>
+      <button class="btn ghost" id="closeExp" type="button">Cerrar</button>
+    </div>
+    <p class="status" id="expMsg"></p>
+  </section>
+</div>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="tot">
+      <div><b id="tTotal">0</b><span>piezas</span></div>
+      <div><b id="tDistinct">0</b><span>tipos y colores</span></div>
+    </div>
+    <span class="status" id="saveState">Conectando…</span>
+    <button class="btn" id="expBtn" type="button">Exportar</button>
+  </div>
+</div>
+
+<script>
+(function(){
+// Colores con su número en Rebrickable
+const COLORS=[
+ {id:4,n:"Rojo",h:"#C91A09"},{id:1,n:"Azul",h:"#0055BF"},{id:14,n:"Amarillo",h:"#F2CD37"},
+ {id:2,n:"Verde",h:"#237841"},{id:0,n:"Negro",h:"#05131D"},{id:15,n:"Blanco",h:"#FFFFFF"},
+ {id:71,n:"Gris claro",h:"#A0A5A9"},{id:72,n:"Gris oscuro",h:"#6C6E68"},{id:25,n:"Naranja",h:"#FE8A18"},
+ {id:70,n:"Marrón",h:"#582A12"},{id:19,n:"Beige",h:"#E4CD9E"},{id:28,n:"Beige oscuro",h:"#958A73"},
+ {id:27,n:"Lima",h:"#BBE90B"},{id:10,n:"Verde claro",h:"#4B9F4A"},{id:288,n:"Verde oscuro",h:"#184632"},
+ {id:272,n:"Azul oscuro",h:"#0A3463"},{id:73,n:"Azul medio",h:"#5A93DB"},{id:320,n:"Rojo oscuro",h:"#720E0F"},
+ {id:5,n:"Rosado oscuro",h:"#C870A0"},{id:13,n:"Rosado",h:"#FC97AC"},{id:47,n:"Transparente",h:"#E8F3F6"},
+ {id:36,n:"Transp. rojo",h:"#E06A64"},{id:46,n:"Transp. amarillo",h:"#F5CD2F"},{id:33,n:"Transp. azul",h:"#5C8FD1"}
+];
+const CAT={lad:"Ladrillos",pla:"Placas",lis:"Lisas",inc:"Inclinadas",veh:"Ruedas y vehículos",ven:"Ventanas y puertas",esp:"Especiales",tec:"Technic"};
+// [código, nombre, categoría, forma, ancho, largo]
+const P=[
+ ["3001","Ladrillo 2x4","lad","brick",2,4],["3003","Ladrillo 2x2","lad","brick",2,2],["3004","Ladrillo 1x2","lad","brick",1,2],
+ ["3005","Ladrillo 1x1","lad","brick",1,1],["3622","Ladrillo 1x3","lad","brick",1,3],["3010","Ladrillo 1x4","lad","brick",1,4],
+ ["3009","Ladrillo 1x6","lad","brick",1,6],["3008","Ladrillo 1x8","lad","brick",1,8],["3002","Ladrillo 2x3","lad","brick",2,3],
+ ["2456","Ladrillo 2x6","lad","brick",2,6],["3007","Ladrillo 2x8","lad","brick",2,8],["2357","Ladrillo esquina 2x2","lad","corner",2,2],
+ ["3245c","Ladrillo 1x2x2 (alto)","lad","brick",1,2],["3062b","Ladrillo redondo 1x1","lad","round",1,1],
+ ["3024","Placa 1x1","pla","plate",1,1],["3023","Placa 1x2","pla","plate",1,2],["3623","Placa 1x3","pla","plate",1,3],
+ ["3710","Placa 1x4","pla","plate",1,4],["3666","Placa 1x6","pla","plate",1,6],["3460","Placa 1x8","pla","plate",1,8],
+ ["3022","Placa 2x2","pla","plate",2,2],["3021","Placa 2x3","pla","plate",2,3],["3020","Placa 2x4","pla","plate",2,4],
+ ["3795","Placa 2x6","pla","plate",2,6],["3034","Placa 2x8","pla","plate",2,8],["3832","Placa 2x10","pla","plate",2,10],
+ ["3031","Placa 4x4","pla","plate",4,4],["3032","Placa 4x6","pla","plate",4,6],["3035","Placa 4x8","pla","plate",4,8],
+ ["3958","Placa 6x6","pla","plate",6,6],["3036","Placa 6x8","pla","plate",6,8],["4073","Placa redonda 1x1","pla","round",1,1],
+ ["15573","Placa 1x2 con 1 punto (jumper)","pla","jumper",1,2],["3811","Base grande 32x32","pla","plate",8,8],
+ ["3070b","Lisa 1x1","lis","tile",1,1],["3069b","Lisa 1x2","lis","tile",1,2],["63864","Lisa 1x3","lis","tile",1,3],
+ ["2431","Lisa 1x4","lis","tile",1,4],["3068b","Lisa 2x2","lis","tile",2,2],["87079","Lisa 2x4","lis","tile",2,4],
+ ["2412b","Rejilla 1x2","lis","grille",1,2],
+ ["3040","Inclinada 45° 2x1","inc","slope",1,2],["3039","Inclinada 45° 2x2","inc","slope",2,2],["3038","Inclinada 45° 2x3","inc","slope",3,2],
+ ["3037","Inclinada 45° 2x4","inc","slope",4,2],["3665","Inclinada invertida 2x1","inc","slope",1,2],["3660","Inclinada invertida 2x2","inc","slope",2,2],
+ ["54200","Inclinada 30° 1x1 (tejita)","inc","slope",1,1],["4286","Inclinada 33° 3x1","inc","slope",1,3],["3298","Inclinada 33° 3x2","inc","slope",2,3],
+ ["3044","Techo doble 45° 2x1 (cumbrera)","inc","slope",1,2],
+ ["4600","Placa 2x2 con ejes de rueda","veh","axle",2,2],["6157","Placa 2x2 con soporte ancho","veh","axle",2,2],
+ ["4624","Rueda chica 8mm","veh","wheel",1,1],["3641","Llanta chica","veh","tire",1,1],
+ ["6014","Rueda mediana 11mm","veh","wheel",1,1],["6015","Llanta mediana","veh","tire",1,1],
+ ["4070","Ladrillo 1x1 con faro","veh","brick",1,1],["3829","Volante con base","veh","wheel",1,1],
+ ["3823","Parabrisas 2x4x2","veh","window",2,4],
+ ["60592","Ventana 1x2x2","ven","window",1,2],["60593","Ventana 1x2x3","ven","window",1,2],["60594","Ventana 1x4x3","ven","window",1,4],
+ ["60596","Marco de puerta 1x4x6","ven","window",1,4],["60616","Puerta 1x4x6","ven","door",1,4],["60601","Vidrio para ventana 1x2x2","ven","window",1,2],
+ ["4865","Panel 1x2x1","ven","window",1,2],
+ ["87087","Ladrillo 1x1 con punto al costado","esp","brick",1,1],["99781","Soporte en L 1x2-1x2","esp","plate",1,2],
+ ["44728","Soporte en L 1x2-2x2","esp","plate",1,2],["3937","Bisagra base 1x2","esp","plate",1,2],["3938","Bisagra tapa 1x2","esp","plate",1,2],
+ ["2453","Columna 1x1x5","esp","brick",1,1],["2454","Columna 1x2x5","esp","brick",1,2],["3741","Tallo de flor","esp","round",1,1],
+ ["3700","Technic ladrillo 1x2 con hueco","tec","tbrick",1,2],["3701","Technic ladrillo 1x4 con huecos","tec","tbrick",1,4],
+ ["3702","Technic ladrillo 1x8 con huecos","tec","tbrick",1,8],["2780","Pin negro con fricción","tec","pin",1,1],
+ ["3713","Buje (bush)","tec","round",1,1],["3705","Eje 4","tec","pin",1,4]
+];
+const PARTS=P.map(a=>({code:a[0],name:a[1],cat:a[2],shape:a[3],w:a[4],l:a[5]}));
+const byCode=Object.fromEntries(PARTS.map(p=>[p.code,p]));
+const colorById=Object.fromEntries(COLORS.map(c=>[c.id,c]));
+
+const state={color:4,tab:"lad",q:"",inv:{},extra:{}}; // inv: key -> {part,color,qty,name}
+const $=s=>document.querySelector(s);
+function key(part,color){return (part+"_"+color).replace(/[^\w.-]/g,"-")}
+function shade(hex,f){const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;const m=v=>Math.max(0,Math.min(255,Math.round(f<0?v*(1+f):v+(255-v)*f)));return "#"+[m(r),m(g),m(b)].map(v=>v.toString(16).padStart(2,"0")).join("")}
+
+function icon(p,hex){
+  const W=56,H=44,stroke=shade(hex,-.35),top=hex,side=shade(hex,-.2),hi=shade(hex,.25);
+  const cols=Math.min(p.l,8),rows=Math.min(p.w,4);
+  const cs=Math.min(48/cols,34/rows),bw=cs*cols,bh=cs*rows,x0=(W-bw)/2,y0=(H-bh)/2;
+  let s=`<svg viewBox="0 0 ${W} ${H}" aria-hidden="true">`;
+  const studs=()=>{let o="";for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)o+=`<circle cx="${x0+cs*(c+.5)}" cy="${y0+cs*(r+.5)}" r="${cs*.3}" fill="${hi}" stroke="${stroke}" stroke-width="1"/>`;return o};
+  const box=(extraH)=>`<rect x="${x0}" y="${y0+extraH}" width="${bw}" height="${bh}" rx="2" fill="${side}" stroke="${stroke}"/><rect x="${x0}" y="${y0}" width="${bw}" height="${bh}" rx="2" fill="${top}" stroke="${stroke}"/>`;
+  switch(p.shape){
+    case "brick":case "tbrick":s+=box(4)+studs();if(p.shape==="tbrick")for(let c=0;c<cols;c++)s+=`<circle cx="${x0+cs*(c+.5)}" cy="${y0+bh+1}" r="1.6" fill="${stroke}"/>`;break;
+    case "plate":s+=box(2)+studs();break;
+    case "tile":s+=box(2);break;
+    case "grille":s+=box(2);for(let i=1;i<5;i++)s+=`<line x1="${x0+3}" x2="${x0+bw-3}" y1="${y0+bh*i/5}" y2="${y0+bh*i/5}" stroke="${stroke}"/>`;break;
+    case "jumper":s+=box(2)+`<circle cx="${W/2}" cy="${H/2}" r="${cs*.3}" fill="${hi}" stroke="${stroke}"/>`;break;
+    case "corner":s+=`<path d="M${x0} ${y0}h${bw}v${bh/2}h${-bw/2}v${bh/2}h${-bw/2}z" fill="${top}" stroke="${stroke}"/>`;
+      [[0,0],[1,0],[0,1]].forEach(([c,r])=>s+=`<circle cx="${x0+cs*(c+.5)}" cy="${y0+cs*(r+.5)}" r="${cs*.3}" fill="${hi}" stroke="${stroke}"/>`);break;
+    case "round":s+=`<circle cx="${W/2}" cy="${H/2}" r="15" fill="${top}" stroke="${stroke}"/><circle cx="${W/2}" cy="${H/2}" r="7" fill="${hi}" stroke="${stroke}"/>`;break;
+    case "slope":{s+=`<defs><linearGradient id="g${p.code}${hex.slice(1)}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${hi}"/><stop offset="1" stop-color="${side}"/></linearGradient></defs>`;
+      s+=`<rect x="${x0}" y="${y0}" width="${bw}" height="${bh}" rx="2" fill="url(#g${p.code}${hex.slice(1)})" stroke="${stroke}"/>`;
+      s+=`<rect x="${x0}" y="${y0}" width="${bw}" height="${cs}" fill="${top}" stroke="${stroke}"/>`;
+      for(let c=0;c<cols;c++)s+=`<circle cx="${x0+cs*(c+.5)}" cy="${y0+cs*.5}" r="${cs*.28}" fill="${hi}" stroke="${stroke}"/>`;break}
+    case "wheel":s+=`<circle cx="${W/2}" cy="${H/2}" r="16" fill="${top}" stroke="${stroke}" stroke-width="1.5"/><circle cx="${W/2}" cy="${H/2}" r="5" fill="${stroke}"/>`;break;
+    case "tire":s+=`<circle cx="${W/2}" cy="${H/2}" r="18" fill="${top}" stroke="${stroke}" stroke-width="1.5"/><circle cx="${W/2}" cy="${H/2}" r="10" fill="var(--surface)" stroke="${stroke}"/>`;break;
+    case "axle":s+=box(2)+studs()+`<rect x="${x0-6}" y="${H/2-2}" width="${bw+12}" height="4" fill="${stroke}"/>`;break;
+    case "window":s+=`<rect x="${x0}" y="${y0-2}" width="${bw}" height="${bh+6}" rx="2" fill="${top}" stroke="${stroke}"/><rect x="${x0+4}" y="${y0+2}" width="${bw-8}" height="${bh-2}" fill="#bfe3f2" opacity=".8" stroke="${stroke}"/>`;break;
+    case "door":s+=`<rect x="${x0}" y="${y0-2}" width="${bw}" height="${bh+6}" rx="2" fill="${top}" stroke="${stroke}"/><circle cx="${x0+bw-6}" cy="${H/2+2}" r="2" fill="${stroke}"/>`;break;
+    case "pin":s+=`<rect x="8" y="${H/2-4}" width="40" height="8" rx="4" fill="${top}" stroke="${stroke}"/><line x1="28" x2="28" y1="${H/2-5}" y2="${H/2+5}" stroke="${stroke}" stroke-width="2"/>`;break;
+    default:s+=box(3)+studs();
+  }
+  return s+"</svg>";
+}
+
+// ---------- Guardado ----------
+let db=null,col=null,canWrite=true;
+const pending={},inflight={};
+function setStatus(t,ok){const el=$("#saveState");el.textContent=t;el.classList.toggle("ok",!!ok)}
+function localSave(){try{localStorage.setItem("lego-inv",JSON.stringify(state.inv))}catch(e){}}
+function localLoad(){try{const v=JSON.parse(localStorage.getItem("lego-inv")||"{}");if(v&&typeof v==="object")state.inv=v}catch(e){}}
+function queueWrite(k){
+  pending[k]=true;localSave();
+  if(!col)return;
+  clearTimeout(queueWrite["t"+k]);
+  queueWrite["t"+k]=setTimeout(()=>flush(k),500);
+}
+async function flush(k){
+  if(inflight[k]||!pending[k])return;
+  pending[k]=false;inflight[k]=true;setStatus("Guardando…");
+  const e=state.inv[k];
+  try{
+    if(!e||e.qty<=0)await col.doc(k).delete();
+    else await col.doc(k).set({part:e.part,color:e.color,qty:e.qty,name:e.name||"",updated:Date.now()});
+    setStatus("Guardado",true);
+  }catch(err){
+    setStatus(err&&err.code==="not_granted"?"Solo lectura":"No se pudo guardar. Revisa tu conexión.");
+  }finally{inflight[k]=false;if(pending[k])flush(k)}
+}
+
+function change(part,color,delta,name){
+  const k=key(part,color);
+  const e=state.inv[k]||{part,color,qty:0,name:name||""};
+  e.qty=Math.max(0,(e.qty||0)+delta);
+  if(name)e.name=name;
+  if(e.qty===0)delete state.inv[k];else state.inv[k]=e;
+  queueWrite(k);render();
+  const n=document.querySelector(`[data-n="${CSS.escape(k)}"]`);
+  if(n){n.classList.add("bump");setTimeout(()=>n.classList.remove("bump"),130)}
+}
+
+// ---------- Interfaz ----------
+function renderColors(){
+  $("#colors").innerHTML=COLORS.map(c=>`<button class="sw" type="button" data-color="${c.id}" aria-pressed="${c.id===state.color}"><i style="background:${c.h}"></i><span>${c.n}</span></button>`).join("");
+}
+function renderTabs(){
+  const tabs=Object.entries(CAT).concat([["inv","Mi inventario"]]);
+  $("#tabs").innerHTML=tabs.map(([k,v])=>`<button class="tab" role="tab" type="button" data-tab="${k}" aria-selected="${k===state.tab}">${v}</button>`).join("");
+}
+function counter(k,part,color,qty){
+  return `<div class="ctr"><button type="button" data-act="-1" data-part="${part}" data-color="${color}" aria-label="Quitar uno">−</button><span class="n ${qty?"":"zero"}" data-n="${k}">${qty}</span><button type="button" class="plus" data-act="1" data-part="${part}" data-color="${color}" aria-label="Sumar uno">+</button><button type="button" class="ten" data-act="10" data-part="${part}" data-color="${color}" aria-label="Sumar diez">+10</button></div>`;
+}
+function partInfo(code){return byCode[code]||{code,name:(Object.values(state.inv).find(e=>e.part===code)||{}).name||"Pieza "+code,shape:"brick",w:1,l:2}}
+function render(){
+  const list=$("#list");const q=state.q.trim().toLowerCase();
+  if(state.tab==="inv"){
+    const entries=Object.entries(state.inv).filter(([k,e])=>!q||(partInfo(e.part).name+" "+e.part).toLowerCase().includes(q))
+      .sort((a,b)=>partInfo(a[1].part).name.localeCompare(partInfo(b[1].part).name)||a[1].color-b[1].color);
+    list.innerHTML=entries.length?entries.map(([k,e])=>{const p=partInfo(e.part),c=colorById[e.color]||{n:"Color "+e.color,h:"#999999"};
+      return `<div class="row">${icon(p,c.h)}<div class="info"><div class="name">${esc(p.name)}</div><div class="code">${esc(e.part)} · <span class="pill"><i style="background:${c.h}"></i>${c.n}</span></div></div>${counter(k,e.part,e.color,e.qty)}</div>`}).join("")
+      :`<div class="empty">Todavía no hay piezas contadas. Elige un tipo arriba y haz clic en <b>+</b>.</div>`;
+  }else{
+    const c=colorById[state.color];
+    const parts=PARTS.filter(p=>q?(p.name+" "+p.code).toLowerCase().includes(q):p.cat===state.tab);
+    list.innerHTML=parts.length?parts.map(p=>{const k=key(p.code,state.color),qty=(state.inv[k]||{}).qty||0;const all=Object.values(state.inv).filter(e=>e.part===p.code).reduce((s,e)=>s+e.qty,0);
+      return `<div class="row">${icon(p,c.h)}<div class="info"><div class="name">${esc(p.name)}</div><div class="code">Código ${p.code}${all?` · <span class="hint">${all} en todos los colores</span>`:""}</div></div>${counter(k,p.code,state.color,qty)}</div>`}).join("")
+      :`<div class="empty">No encontré "${esc(state.q)}". Agrégala abajo con su código.</div>`;
+  }
+  const vals=Object.values(state.inv);
+  $("#tTotal").textContent=vals.reduce((s,e)=>s+e.qty,0).toLocaleString("es-PE");
+  $("#tDistinct").textContent=vals.length.toLocaleString("es-PE");
+}
+function esc(s){return String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]))}
+function csv(){return "Part,Color,Quantity\n"+Object.values(state.inv).filter(e=>e.qty>0).map(e=>`${e.part},${e.color},${e.qty}`).join("\n")}
+
+document.addEventListener("click",ev=>{
+  const sw=ev.target.closest(".sw");if(sw){state.color=+sw.dataset.color;renderColors();render();return}
+  const tb=ev.target.closest(".tab");if(tb){state.tab=tb.dataset.tab;state.q="";$("#q").value="";renderTabs();render();return}
+  const b=ev.target.closest("[data-act]");if(b){change(b.dataset.part,+b.dataset.color,+b.dataset.act);return}
+});
+$("#q").addEventListener("input",e=>{state.q=e.target.value;render()});
+$("#addForm").addEventListener("submit",e=>{e.preventDefault();
+  const code=$("#addCode").value.trim();const n=Math.max(1,parseInt($("#addQty").value,10)||1);
+  if(!code)return;change(code,state.color,n,$("#addName").value.trim());
+  $("#addCode").value="";$("#addName").value="";$("#addQty").value=1;state.tab="inv";renderTabs();render();
+});
+$("#expBtn").addEventListener("click",()=>{$("#csv").value=csv();$("#exportCard").hidden=false;$("#expMsg").textContent="";$("#exportCard").scrollIntoView({behavior:"smooth"})});
+$("#closeExp").addEventListener("click",()=>{$("#exportCard").hidden=true});
+$("#copyBtn").addEventListener("click",()=>{const t=$("#csv").value;
+  try{navigator.clipboard.writeText(t).then(()=>{$("#expMsg").textContent="Copiado. Pégalo en Rebrickable."},()=>{$("#csv").select();$("#expMsg").textContent="Texto seleccionado: cópialo con Ctrl+C."})}
+  catch(e){$("#csv").select();$("#expMsg").textContent="Texto seleccionado: cópialo con Ctrl+C."}});
+let downloads=null;
+$("#dlBtn").addEventListener("click",async()=>{
+  if(!downloads){try{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([$("#csv").value],{type:"text/csv"}));a.download="mis-legos-rebrickable.csv";document.body.appendChild(a);a.click();a.remove();$("#expMsg").textContent="Archivo descargado."}catch(e){$("#expMsg").textContent="No se descargó. Usa el botón Copiar."}return}
+  try{await downloads.save({filename:"mis-legos-rebrickable.csv",data:$("#csv").value});$("#expMsg").textContent="Archivo listo."}
+  catch(e){$("#expMsg").textContent="No se descargó. Usa el botón Copiar."}});
+
+// ---------- Reconocer con foto ----------
+let sample=null,photoBlob=null,ctl=null;
+const colorOpts=id=>COLORS.map(c=>`<option value="${c.id}"${c.id===id?" selected":""}>${c.n}</option>`).join("");
+function onPhoto(e){const f=e.target.files&&e.target.files[0];if(!f)return;photoBlob=f;
+  const img=$("#prev");img.src=URL.createObjectURL(f);img.hidden=false;$("#recBtn").hidden=false;$("#found").innerHTML="";$("#addFound").hidden=true;$("#camMsg").textContent="Foto lista. Toca Reconocer piezas.";e.target.value=""}
+$("#photo").addEventListener("change",onPhoto);$("#photoGal").addEventListener("change",onPhoto);
+const PROMPT=()=>`Eres experto en piezas LEGO. La imagen es una foto de piezas LEGO sueltas sobre una mesa, tomada para hacer un inventario.
+Identifica cada pieza visible. Agrupa las iguales (misma pieza y mismo color) y cuéntalas.
+Para el código usa el número de pieza de Rebrickable/BrickLink. Prefiere estos códigos cuando apliquen: ${PARTS.map(p=>p.code+"="+p.name).join("; ")}.
+Para el color usa SOLO uno de estos IDs de Rebrickable: ${COLORS.map(c=>c.id+"="+c.n).join(", ")}.
+Responde SOLO con JSON: {"piezas":[{"code":"3001","name":"nombre corto en español","color":4,"qty":2,"conf":"alta|media|baja"}]}
+Si no ves piezas LEGO, responde {"piezas":[]}.`;
+$("#recBtn").addEventListener("click",()=>{if(!photoBlob)return;if(sample)recClaude();else recBrick()});
+function showFound(list){
+  $("#found").innerHTML=list.map((x,i)=>{const code=String(x.code).trim(),cid=colorById[+x.color]?+x.color:state.color,p=byCode[code];
+    return `<div class="frow" data-i="${i}"><input type="checkbox" ${i===0||x.checked?"checked":""} aria-label="Sumar esta pieza"><div class="fgrid">
+    ${x.img?`<img src="${esc(x.img)}" alt="" style="grid-column:1/-1;max-height:70px;width:auto;justify-self:start;background:#fff;border-radius:6px">`:""}
+    <input class="nm" value="${esc(p?p.name:(x.name||"Pieza "+code))}" aria-label="Nombre">
+    <input class="cd" value="${esc(code)}" aria-label="Código">
+    <select class="cl" aria-label="Color">${colorOpts(cid)}</select>
+    <input class="q" type="number" min="1" inputmode="numeric" value="${Math.max(1,parseInt(x.qty,10)||1)}" aria-label="Cantidad"></div>
+    <span></span><span class="conf">${esc(x.note||("Seguridad: "+(x.conf||"media")))}${p?"":" · pieza fuera de la lista, revisa el código"}</span></div>`}).join("");
+  $("#addFound").hidden=false;
+}
+function shrink(blob,max){return new Promise(res=>{const img=new Image();img.onload=()=>{const k=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement("canvas");c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext("2d").drawImage(img,0,0,c.width,c.height);c.toBlob(b=>res(b||blob),"image/jpeg",.85)};img.onerror=()=>res(blob);img.src=URL.createObjectURL(blob)})}
+async function recBrick(){
+  ctl=new AbortController();$("#recBtn").disabled=true;$("#stopBtn").hidden=false;$("#found").innerHTML="";
+  $("#camMsg").textContent="Buscando la pieza en Brickognize… unos segundos.";
+  try{
+    const fd=new FormData();fd.append("query_image",await shrink(photoBlob,1024),"foto.jpg");
+    const r=await fetch("https://api.brickognize.com/predict/parts/",{method:"POST",body:fd,signal:ctl.signal});
+    if(!r.ok)throw new Error("http "+r.status);
+    const j=await r.json();const items=(j&&Array.isArray(j.items)?j.items:[]).slice(0,3);
+    if(!items.length){$("#camMsg").textContent="No reconocí la pieza. Prueba con una sola pieza, de cerca y con buena luz.";return}
+    showFound(items.map(it=>({code:it.id,name:it.name,color:state.color,qty:1,img:it.img_url,note:`Parecido: ${Math.round((it.score||0)*100)}% · elige el color`})));
+    $("#camMsg").textContent="Marca la opción correcta, elige el color y la cantidad, y toca Sumar.";
+  }catch(e){
+    $("#camMsg").textContent=e&&e.name==="AbortError"?"Detenido.":"No pude conectar con el reconocedor. Revisa tu internet. Si sigue sin funcionar, abre la página dentro de Claude o cuenta con los botones +.";
+  }finally{$("#recBtn").disabled=false;$("#stopBtn").hidden=true}
+}
+async function recClaude(){
+  ctl=new AbortController();$("#recBtn").disabled=true;$("#stopBtn").hidden=false;$("#camMsg").textContent="Mirando la foto… puede tardar unos 20 a 40 segundos.";$("#found").innerHTML="";
+  try{
+    const r=await sample.json(PROMPT(),{images:[photoBlob],signal:ctl.signal});
+    const list=(r&&Array.isArray(r.piezas)?r.piezas:[]).filter(x=>x&&x.code);
+    if(!list.length){$("#camMsg").textContent="No reconocí piezas. Prueba con menos piezas, más separadas y con más luz.";return}
+    list.forEach(x=>x.checked=true);showFound(list);    $("#addFound").hidden=false;$("#camMsg").textContent="Revisa y corrige lo que haga falta. Desmarca lo que no sea correcto.";
+  }catch(e){
+    const m={cancelled:"Detenido.",not_granted:"Para reconocer fotos tienes que permitir que la página use Claude.",rate_limited:"Muchas fotos seguidas. Espera un minuto y vuelve a intentar.",image_rejected:"No pude abrir esa foto. Prueba con otra.",images_unavailable:"Aquí no se pueden enviar fotos. Abre la página en claude.ai."};
+    $("#camMsg").textContent=m[e&&e.code]||"No se pudo reconocer la foto. Intenta otra vez.";
+  }finally{$("#recBtn").disabled=false;$("#stopBtn").hidden=true}
+}
+$("#stopBtn").addEventListener("click",()=>ctl&&ctl.abort());
+$("#addFound").addEventListener("click",()=>{let n=0;
+  document.querySelectorAll("#found .frow").forEach(r=>{if(!r.querySelector("input[type=checkbox]").checked)return;
+    const code=r.querySelector(".cd").value.trim();if(!code)return;const q=Math.max(1,parseInt(r.querySelector(".q").value,10)||1);
+    change(code,+r.querySelector(".cl").value,q,byCode[code]?"":r.querySelector(".nm").value.trim());n+=q});
+  $("#found").innerHTML="";$("#addFound").hidden=true;$("#prev").hidden=true;$("#recBtn").hidden=true;photoBlob=null;
+  $("#camMsg").textContent=n?`Listo: sumé ${n} piezas. Toma la siguiente foto.`:"No había piezas marcadas.";
+});
+
+// ---------- Información y sugerencias ----------
+const CONTACT={email:"neptaliagiphoyos@gmail.com",whatsapp:"51975525627"}; // whatsapp: código de país + número, solo dígitos (ej. 51987654321)
+$("#mailTxt").textContent=CONTACT.email;
+$("#mailLink").href="mailto:"+CONTACT.email+"?subject="+encodeURIComponent("Sugerencia para el Inventario LEGO");
+if(CONTACT.whatsapp){$("#cWa").hidden=false;$("#waTxt").textContent="+"+CONTACT.whatsapp;$("#waLink").href="https://wa.me/"+CONTACT.whatsapp+"?text="+encodeURIComponent("Hola, tengo una sugerencia para el Inventario LEGO: ")}
+$("#infoBtn").addEventListener("click",()=>{const c=$("#infoCard");c.hidden=!c.hidden;$("#infoBtn").setAttribute("aria-expanded",String(!c.hidden))});
+$("#infoCard").addEventListener("click",e=>{const b=e.target.closest("[data-copy]");if(!b)return;
+  const t=b.dataset.copy==="mail"?CONTACT.email:"+"+CONTACT.whatsapp;
+  try{navigator.clipboard.writeText(t).then(()=>{$("#infoMsg").textContent="Copiado: "+t},()=>{$("#infoMsg").textContent="Mantén presionado el dato para copiarlo."})}catch(_){$("#infoMsg").textContent="Mantén presionado el dato para copiarlo."}});
+
+// ---------- Arranque ----------
+localLoad();renderColors();renderTabs();render();
+(async()=>{
+  const cl=window.claude;
+  const standaloneHint=()=>{$("#camHint").textContent="Fuera de Claude se reconoce UNA pieza por foto. Ponla sola, de cerca, sobre un fondo liso. Luego eliges el color.";$("#dlBtn").hidden=false};
+  if(!cl||!cl.use){setStatus("Guardado en esta computadora");standaloneHint();return}
+  cl.use("sample").then(async sm=>{if(!sm)return;const lim=await sm.limits().catch(()=>null);if(lim&&lim.images){sample=sm}else standaloneHint()}).catch(()=>standaloneHint());
+  cl.use("downloads").then(d=>{downloads=d;if(d)$("#dlBtn").hidden=false}).catch(()=>{});
+  try{db=await cl.use("db")}catch(e){db=null}
+  if(!db){setStatus("Guardado en esta computadora");return}
+  col=db.collection("inventario");
+  const timer=setTimeout(()=>setStatus("Sin conexión. Se guarda en esta computadora."),10000);
+  let first=true;
+  col.onSnapshot(snap=>{
+    if(!snap.metadata.fromCache)clearTimeout(timer);
+    const remote={};snap.docs.forEach(d=>{const v=d.data();if(v&&v.part!=null)remote[d.id]={part:String(v.part),color:+v.color,qty:+v.qty||0,name:v.name||""}});
+    // Si la nube está vacía y hay datos locales, súbelos una vez
+    if(first&&snap.empty&&!snap.metadata.fromCache&&Object.keys(state.inv).length){first=false;Object.keys(state.inv).forEach(k=>{pending[k]=true;flush(k)});return}
+    first=false;
+    for(const k in pending)if(pending[k]||inflight[k])remote[k]=state.inv[k];
+    Object.keys(remote).forEach(k=>{if(!remote[k])delete remote[k]});
+    state.inv=remote;localSave();render();
+    if(!snap.metadata.fromCache)setStatus("Guardado en tu cuenta",true);
+  },err=>{clearTimeout(timer);setStatus("Se guarda solo en esta computadora");col=null});
+})();
+})();
+</script>
+
+</body></html>
