@@ -126,7 +126,7 @@ select{font:inherit;color:var(--tx);background:#111827;border:1px solid #33415f;
 
 <script>
 const $=id=>document.getElementById(id);
-const cv=$('cv'),ctx=cv.getContext('2d'),W=360,H=780,OY=235;
+const cv=$('cv'),ctx=cv.getContext('2d'),W=360,H=840,OY=235;
 const wv=$('wv'),wc=wv.getContext('2d'),cr=$('cr'),rc=cr.getContext('2d');
 function fit(){const d=window.devicePixelRatio||1;cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0);
  for(const [c,x] of [[wv,wc],[cr,rc]]){const r=c.getBoundingClientRect();c.width=r.width*d;c.height=r.height*d;x.setTransform(d,0,0,d,0,0);}}
@@ -400,8 +400,17 @@ function upFb(){const t=encodeURIComponent('Comentario sobre el simulador Microc
  $('fbW').href='https://wa.me/51975525627?text='+t;$('fbM').href='mailto:neptaliagiphoyos@gmail.com?subject='+encodeURIComponent('Simulador Microcentral hidroeléctrica')+'&body='+t;}
 $('fbt').oninput=upFb;
 let last=performance.now(),uit=0;
+function drawStats(){
+ const y0=786;ctx.fillStyle='#141c2c';ctx.beginPath();ctx.roundRect(6,y0,348,50,10);ctx.fill();
+ const T=R.T||{u:0,v:1},it=[['P. útil',R.Po.toFixed(0),'W','#ffd84a'],[S.ac?'Frecuencia':'Pulsos/s',S.ac?R.fe.toFixed(1):(2*R.fe).toFixed(0),S.ac?'Hz':'',S.ac&&Math.abs(R.fe-60)<2?'#7dffb0':'#e8edf6'],
+  ['Generador',Math.round(S.w*60/(2*Math.PI)),'rpm','#e8edf6'],['u/v',(T.v>0.1?T.u/T.v:0).toFixed(2),'','#6fc3ff']];
+ ctx.textAlign='left';ctx.textBaseline='top';
+ it.forEach((v,i)=>{const cx=14+i*86;ctx.fillStyle='#93a0b8';ctx.font='10px system-ui';ctx.fillText(v[0],cx,y0+7);
+  ctx.fillStyle=v[3];ctx.font='bold 19px system-ui';ctx.fillText(v[1],cx,y0+21);const tw=ctx.measureText(v[1]).width;ctx.font='10px system-ui';ctx.fillStyle='#cfd8e8';ctx.fillText(v[2],cx+tw+3,y0+29);});
+ ctx.textBaseline='middle';
+}
 function loop(t){const dt=Math.min(0.05,(t-last)/1000);last=t;
- step(dt);S.th+=S.w*dt/S.slow;draw(dt);
+ step(dt);S.th+=S.w*dt/S.slow;draw(dt);drawStats();
  wave.push(vInst);if(wave.length>240)wave.shift();
  drawWave();uit+=dt;if(uit>0.15){uit=0;ui();drawCurve();}
  requestAnimationFrame(loop);}
