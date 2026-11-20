@@ -337,5 +337,54 @@ document.addEventListener("click", e => {
   if (e.target === sheet || e.target.id === "close") sheet.classList.remove("open");
 });
 </script>
+<!-- Botón de donaciones · Neptalí Agip -->
+<style>
+#don-btn{position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:9998;border:none;border-radius:99px;padding:13px 18px;background:#ffdd57;color:#2b2100;font:800 14px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.4);cursor:pointer}
+#don-btn:focus-visible{outline:3px solid #3b82f6;outline-offset:3px}
+#don-sheet{position:fixed;inset:0;z-index:9999;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.6);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#don-sheet.on{display:flex}
+#don-sheet .dc{width:100%;max-width:460px;background:#fffdf5;color:#1f1a0a;border-radius:20px 20px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(0,0,0,.35)}
+#don-sheet h3{margin:0 0 6px;font-size:21px}
+#don-sheet p{margin:0 0 16px;color:#5b5240}
+#don-sheet .opt{border:1px solid #eadfbf;border-radius:14px;padding:14px;margin-bottom:12px;background:#fff}
+#don-sheet .opt b{display:block;font-size:16px;margin-bottom:4px}
+#don-sheet .num{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#don-sheet .num span{font-size:22px;font-weight:800;letter-spacing:.04em}
+#don-sheet .db{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:12px;padding:11px 14px;font-weight:800;font-size:15px;text-decoration:none;border:1px solid #d9cfa9;background:#fff8dc;color:#2b2100;cursor:pointer}
+#don-sheet .db.pp{width:100%;background:#0070ba;border-color:#0070ba;color:#fff}
+#don-sheet .db.close{width:100%;background:transparent;margin-top:4px}
+#don-sheet small{color:#7a705a}
+@media(min-width:700px){#don-sheet{align-items:center}#don-sheet .dc{border-radius:20px}}
+</style>
+<button id="don-btn" type="button" aria-haspopup="dialog">☕ Apoya este proyecto</button>
+<div id="don-sheet" role="dialog" aria-modal="true" aria-labelledby="don-t">
+  <div class="dc">
+    <h3 id="don-t">☕ Apoya este proyecto</h3>
+    <p>Todo aquí es gratis. Con tu aporte, por pequeño que sea, seguimos creando más simuladores, juegos y libros. ¡Gracias!</p>
+    <div class="opt">
+      <b>📱 Plin (Perú)</b>
+      <div class="num"><span>975 525 627</span><button class="db" id="don-copy" type="button">📋 Copiar número</button></div>
+      <small>Abre tu app Plin o la de tu banco y envía al número.</small>
+    </div>
+    <div class="opt">
+      <b>🌎 PayPal (desde cualquier país)</b>
+      <a class="db pp" href="https://www.paypal.com/ncp/payment/G85LGAJYFAEKC" target="_blank" rel="noopener">Donar con PayPal o tarjeta</a>
+    </div>
+    <button class="db close" id="don-close" type="button">Cerrar</button>
+  </div>
+</div>
+<script>
+(function(){
+  var s=document.getElementById('don-sheet');
+  document.getElementById('don-btn').onclick=function(){s.classList.add('on')};
+  document.getElementById('don-close').onclick=function(){s.classList.remove('on')};
+  s.addEventListener('click',function(e){if(e.target===s)s.classList.remove('on')});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')s.classList.remove('on')});
+  document.getElementById('don-copy').onclick=function(){
+    var b=this,ok=function(){b.textContent='✅ Copiado'; setTimeout(function(){b.textContent='📋 Copiar número'},2000)};
+    try{navigator.clipboard.writeText('975525627').then(ok,ok)}catch(e){ok()}
+  };
+})();
+</script>
 </body>
 </html>
