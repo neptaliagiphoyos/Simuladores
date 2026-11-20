@@ -362,12 +362,7 @@ document.addEventListener("click", e => {
     <h3 id="don-t">☕ Apoya este proyecto</h3>
     <p>Todo aquí es gratis. Con tu aporte, por pequeño que sea, seguimos creando más simuladores, juegos y libros. ¡Gracias!</p>
     <div class="opt">
-      <b>📱 Plin (Perú)</b>
-      <div class="num"><span>975 525 627</span><button class="db" id="don-copy" type="button">📋 Copiar número</button></div>
-      <small>Abre tu app Plin o la de tu banco y envía al número.</small>
-    </div>
-    <div class="opt">
-      <b>🌎 PayPal (desde cualquier país)</b>
+      <b>🌎 PayPal o tarjeta (desde cualquier país)</b>
       <a class="db pp" href="https://www.paypal.com/ncp/payment/G85LGAJYFAEKC" target="_blank" rel="noopener">Donar con PayPal o tarjeta</a>
     </div>
     <button class="db close" id="don-close" type="button">Cerrar</button>
@@ -380,10 +375,6 @@ document.addEventListener("click", e => {
   document.getElementById('don-close').onclick=function(){s.classList.remove('on')};
   s.addEventListener('click',function(e){if(e.target===s)s.classList.remove('on')});
   document.addEventListener('keydown',function(e){if(e.key==='Escape')s.classList.remove('on')});
-  document.getElementById('don-copy').onclick=function(){
-    var b=this,ok=function(){b.textContent='✅ Copiado'; setTimeout(function(){b.textContent='📋 Copiar número'},2000)};
-    try{navigator.clipboard.writeText('975525627').then(ok,ok)}catch(e){ok()}
-  };
 })();
 </script>
 </body>
