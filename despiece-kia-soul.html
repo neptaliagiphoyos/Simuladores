@@ -1,0 +1,769 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Despiece Kia Soul 2013</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: lienzo 3D arriba (o a la izquierda en computadora) + panel de taller con pestañas abajo */
+:root{
+  --bg:#eef1f3; --surface:#ffffff; --surface2:#f4f6f8; --line:#d5dbe0;
+  --fg:#18222b; --muted:#5b6873; --accent:#1f6f9c; --accent-fg:#ffffff;
+  --bad:#c8372d; --warn:#b97a0b; --ok:#2f8a4c; --wear:#7646c4; --scene:#dfe5ea;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171c; --surface:#1a2128; --surface2:#212a32; --line:#2e3943;
+  --fg:#e6ebef; --muted:#97a4ae; --accent:#5fb0de; --accent-fg:#0d1a22;
+  --bad:#ef6b5f; --warn:#e4a83a; --ok:#5cc07c; --wear:#a98be8; --scene:#1b232a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171c; --surface:#1a2128; --surface2:#212a32; --line:#2e3943;
+  --fg:#e6ebef; --muted:#97a4ae; --accent:#5fb0de; --accent-fg:#0d1a22;
+  --bad:#ef6b5f; --warn:#e4a83a; --ok:#5cc07c; --wear:#a98be8; --scene:#1b232a; color-scheme:dark}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:14px;overflow:hidden}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{height:100%;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  background:var(--surface);border-bottom:1px solid var(--line)}
+header h1{font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:.01em;margin:0;line-height:1.1;text-wrap:balance}
+header h1 small{display:block;font-family:var(--body);font-weight:500;font-size:11.5px;color:var(--muted);letter-spacing:.02em}
+.seg{display:grid;grid-auto-flow:column;gap:2px;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:2px;margin-left:auto}
+.seg button{border:0;background:transparent;padding:0 12px;min-height:38px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.main{flex:1;min-height:0;display:flex;flex-direction:column}
+.stage{position:relative;flex:1 1 52%;min-height:0;background:var(--scene);touch-action:none}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hint{position:absolute;top:8px;left:max(12px,env(safe-area-inset-left,0px));font-size:11.5px;color:var(--muted);background:color-mix(in srgb,var(--surface) 80%,transparent);padding:4px 8px;border-radius:6px;pointer-events:none}
+.legend{position:absolute;top:8px;right:max(12px,env(safe-area-inset-right,0px));display:flex;gap:8px;font-size:11px;background:color-mix(in srgb,var(--surface) 85%,transparent);padding:4px 8px;border-radius:6px;pointer-events:none}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+.card{max-height:calc(100% - 20px);overflow-y:auto;position:absolute;left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));bottom:10px;max-width:440px;
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 12px 10px;box-shadow:0 6px 24px rgba(0,0,0,.18)}
+.card h2{font-family:var(--display);font-size:21px;font-weight:700;margin:0 28px 0 0;line-height:1.1}
+.card .en{color:var(--muted);font-size:12.5px;margin-top:2px}
+.card .close{position:absolute;top:4px;right:4px;width:40px;height:40px;border:0;background:transparent;font-size:22px;cursor:pointer;color:var(--muted)}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:12.5px}
+.meta b{font-weight:600}
+.oem{font-family:var(--mono);font-weight:500;background:var(--surface2);border:1px solid var(--line);padding:1px 6px;border-radius:5px;font-size:12.5px;overflow-wrap:anywhere}
+.alt{font-size:12px;color:var(--muted);margin-top:4px}
+.cardnote{font-size:12.5px;color:var(--muted);margin:8px 0 0;line-height:1.45}
+.status{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.status button{min-height:40px;border-radius:8px;border:1px solid var(--line);background:var(--surface2);font-weight:600;font-size:13px;cursor:pointer}
+.status button[data-s="danada"][aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:#fff}
+.status button[data-s="desgaste"][aria-pressed="true"]{background:var(--wear);border-color:var(--wear);color:#fff}
+.status button[data-s="revisar"][aria-pressed="true"]{background:var(--warn);border-color:var(--warn);color:#fff}
+.status button[data-s="ok"][aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
+.cardlinks{display:flex;gap:14px;margin-top:8px;font-size:12.5px;flex-wrap:wrap}
+a{color:var(--accent)}
+.panel{flex:1 1 48%;min-height:0;display:flex;flex-direction:column;background:var(--surface);border-top:1px solid var(--line)}
+.ctrl{display:flex;align-items:center;gap:10px;padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));border-bottom:1px solid var(--line)}
+.ctrl label{font-weight:600;font-size:13px;white-space:nowrap}
+.ctrl input[type=range]{flex:1;min-width:0;height:32px;accent-color:var(--accent)}
+.ctrl .btn{min-height:40px}
+.scroll{flex:1;min-height:0;overflow-y:auto;padding-block:10px 16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);background:var(--surface);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.tabs button{border:0;border-top:3px solid transparent;background:transparent;min-height:50px;font-weight:600;font-size:13.5px;cursor:pointer;color:var(--muted)}
+.tabs button[aria-selected="true"]{border-top-color:var(--accent);color:var(--fg)}
+h3{font-family:var(--display);font-size:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+h3:first-child{margin-top:2px}
+.row{display:grid;grid-template-columns:12px 1fr auto;align-items:center;gap:10px;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:transparent;padding:9px 2px;min-height:48px;cursor:pointer}
+.row:hover{background:var(--surface2)}
+.row[aria-current="true"]{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.dot.danada{background:var(--bad)}.dot.desgaste{background:var(--wear)}.dot.revisar{background:var(--warn)}.dot.ok{background:var(--ok)}
+.row .nm{min-width:0}
+.row .nm span{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .step{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.btn{min-height:44px;padding:0 14px;border-radius:9px;border:1px solid var(--line);background:var(--surface2);font-weight:600;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.stepnav{display:grid;grid-template-columns:44px 1fr 44px;gap:8px;align-items:center}
+.stepnav .btn{padding:0;font-size:18px}
+.stepnav .lbl{text-align:center;font-family:var(--display);font-size:18px;font-weight:600}
+.steptitle{font-family:var(--display);font-size:24px;font-weight:700;margin:12px 0 4px;line-height:1.1;text-wrap:balance}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chip{border:1px solid var(--line);background:var(--surface2);border-radius:999px;padding:0 10px;min-height:34px;font-size:12.5px;font-weight:500;cursor:pointer}
+ol.inst{margin:6px 0 0;padding-left:20px;line-height:1.55;max-width:65ch}
+ol.inst li{margin:3px 0}
+.tools{font-size:12.5px;color:var(--muted);margin-top:8px}
+.warnbox{margin-top:10px;border-left:3px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent);padding:8px 10px;border-radius:0 8px 8px 0;font-size:13px;line-height:1.45}
+.dots{display:flex;gap:4px;flex-wrap:wrap;margin-top:10px}
+.dots button{width:28px;height:28px;border-radius:6px;border:1px solid var(--line);background:var(--surface2);font-family:var(--mono);font-size:11px;cursor:pointer;padding:0}
+.dots button.done{background:color-mix(in srgb,var(--accent) 22%,var(--surface2))}
+.dots button[aria-current="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fields label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--muted)}
+.fields input,.fields select{min-height:42px;font-size:16px;border:1px solid var(--line);border-radius:8px;background:var(--surface2);color:var(--fg);padding:0 10px;width:100%;min-width:0}
+.filt{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}
+.filt button{min-height:38px;border-radius:8px;border:1px solid var(--line);background:var(--surface2);font-size:12.5px;font-weight:600;cursor:pointer}
+.filt button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.q{border-bottom:1px solid var(--line);padding:9px 0;display:grid;grid-template-columns:1fr auto;gap:2px 10px}
+.q .es{font-weight:600}
+.q .enl{font-size:12px;color:var(--muted)}
+.q .pr{text-align:right;font-variant-numeric:tabular-nums;font-size:13px}
+.q .sub{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--muted);align-items:center}
+.total{display:flex;justify-content:space-between;font-weight:600;padding:10px 0;font-variant-numeric:tabular-nums}
+.small{font-size:12px;color:var(--muted);line-height:1.5;max-width:65ch}
+.copyrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.toast{position:absolute;left:50%;top:44px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600}
+textarea.fallback{width:100%;height:140px;font-family:var(--mono);font-size:12px;margin-top:8px;background:var(--surface2);color:var(--fg);border:1px solid var(--line);border-radius:8px}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lab{position:absolute;transform:translate(-50%,calc(-100% - 6px));pointer-events:auto;cursor:pointer;border:1px solid var(--line);background:color-mix(in srgb,var(--surface) 88%,transparent);color:var(--fg);font:600 11.5px/1 var(--body);padding:6px 8px;border-radius:999px;white-space:nowrap;min-height:28px}
+.lab::after{content:"";position:absolute;left:50%;top:100%;width:1px;height:6px;background:var(--muted)}
+.lab.key{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-size:12.5px}
+.lab[aria-current="true"]{outline:2px solid var(--accent);outline-offset:1px}
+.labtoggle{position:absolute;top:40px;left:max(12px,env(safe-area-inset-left,0px));min-height:34px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:color-mix(in srgb,var(--surface) 85%,transparent);font-size:12px;font-weight:600;cursor:pointer}
+.labtoggle[aria-pressed="false"]{color:var(--muted)}
+.err{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:var(--muted)}
+@media (min-width:900px){
+  .main{flex-direction:row}
+  .stage{flex:1 1 auto}
+  .panel{flex:0 0 400px;border-top:0;border-left:1px solid var(--line)}
+  .tabs{order:-1;border-top:0;border-bottom:1px solid var(--line)}
+  .tabs button{border-top:0;border-bottom:3px solid transparent}
+  .tabs button[aria-selected="true"]{border-bottom-color:var(--accent)}
+}
+@media (max-width:899px){
+  .stage{flex-basis:50%}
+  .main.has-card .stage{flex-basis:64%}
+  .main.has-card .panel{flex-basis:36%}
+  .card{bottom:8px;padding:10px 10px 8px;max-height:52%}
+  .card .cardnote{display:none}
+  .card .meta{margin-top:4px;gap:4px 12px}
+  .card .status{margin-top:6px}
+  .card h2{font-size:19px}
+  .status button{min-height:38px}
+  .cardnote{margin-top:6px}
+  .legend{display:none}
+}
+@media (max-width:420px){ header h1{font-size:19px} .seg button{padding:0 9px;font-size:12.5px} }
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="app">
+  <header>
+    <h1>Kia Soul 2013 · Despiece<small>Motor 1.6 · choque delantero derecho y piezas por desgaste</small></h1>
+    <div class="seg" role="group" aria-label="Qué mostrar">
+      <button id="mZona" aria-pressed="true">Zona dañada</button>
+      <button id="mDesg" aria-pressed="false">Desgaste</button>
+      <button id="mTodo" aria-pressed="false">Todo el carro</button>
+    </div>
+  </header>
+  <div class="main">
+    <div class="stage" id="stage">
+      <canvas id="cv" aria-label="Modelo 3D del Kia Soul"></canvas>
+      <div class="hint" id="hint">Arrastra para girar · pellizca para acercar · toca una pieza</div>
+      <div class="legend" id="legend" hidden><span><i style="background:var(--bad)"></i>Dañada</span><span><i style="background:var(--wear)"></i>Desgaste</span><span><i style="background:var(--warn)"></i>Revisar</span><span><i style="background:var(--ok)"></i>OK</span></div>
+      <div id="labels"></div>
+      <button class="labtoggle" id="labToggle" aria-pressed="true">Etiquetas</button>
+      <div class="card" id="card" hidden>
+        <button class="close" id="cardClose" aria-label="Cerrar">×</button>
+        <h2 id="cName"></h2>
+        <div class="en" id="cEn"></div>
+        <div class="meta">
+          <span><b>Código OEM</b> <span class="oem" id="cOem"></span></span>
+          <span><b>Lado</b> <span id="cSide"></span></span>
+          <span id="cPriceWrap"><b>Ref.</b> <span id="cPrice"></span></span>
+          <span id="cStepWrap"><b>Paso</b> <span id="cStep"></span></span>
+        </div>
+        <div class="alt" id="cAlt"></div>
+        <p class="cardnote" id="cNote"></p>
+        <div class="status" id="cStatus" role="group" aria-label="Estado de la pieza">
+          <button data-s="danada" aria-pressed="false">Dañada</button>
+          <button data-s="desgaste" aria-pressed="false">Desgaste</button>
+          <button data-s="revisar" aria-pressed="false">Revisar</button>
+          <button data-s="ok" aria-pressed="false">OK</button>
+        </div>
+        <div class="cardlinks"><a id="cLink" href="#" target="_blank" rel="noopener">Ver en catálogo OEM</a><span id="cCopyWrap"><a href="#" id="cCopy">Copiar código</a></span></div>
+      </div>
+      <div class="toast" id="toast" hidden></div>
+    </div>
+    <div class="panel">
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tPiezas" aria-selected="true">Piezas</button>
+        <button role="tab" id="tPasos" aria-selected="false">Desmontaje</button>
+        <button role="tab" id="tCot" aria-selected="false">Cotizar</button>
+      </div>
+      <div class="ctrl" id="ctrlExplode">
+        <label for="explode">Separar piezas</label>
+        <input type="range" id="explode" min="0" max="100" value="35">
+        <button class="btn" id="reset">Armar</button>
+      </div>
+      <div class="scroll" id="vPiezas"></div>
+      <div class="scroll" id="vPasos" hidden></div>
+      <div class="scroll" id="vCot" hidden></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/RoundedBoxGeometry.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/environments/RoomEnvironment.js"></script>
+<script>
+(function(){
+"use strict";
+const KPN = "https://www.kiapartsnow.com/oem-2013-kia-soul-";
+// ---------- Datos de piezas (OEM de KiaPartsNow, nov. 2026; confirmar con VIN) ----------
+// side: lado del carro. Derecho = copiloto en Perú.
+const P = [
+ // Frente y luces
+ {id:"bumper", es:"Parachoques delantero (cubierta)", en:"Front bumper cover", oem:"86511-2K500", side:"Centro", usd:260.77, url:KPN+"bumper.html", grp:"Frente y luces", zone:1, step:4, dir:[1,0,0], d:.95,
+  note:"Viene en imprimante, sin pintar. Súmale el costo de pintura al color del carro."},
+ {id:"grille", es:"Rejilla del radiador (parrilla)", en:"Radiator grille assembly", oem:"86350-2K500", alt:"86350-2K550 según versión", side:"Centro", usd:75.51, url:KPN+"grille.html", grp:"Frente y luces", zone:1, step:4, dir:[1,.15,0], d:1.25},
+ {id:"lgrille", es:"Rejilla inferior del parachoques", en:"Front bumper lower grille (mesh)", oem:"86561-2K510", side:"Centro", usd:29.54, url:KPN+"grille.html", grp:"Frente y luces", zone:1, step:4, dir:[1,-.12,0], d:1.3},
+ {id:"fogR", es:"Neblinero delantero derecho", en:"Front fog lamp assembly RH", oem:"92202-2K510", side:"Derecho", usd:82.46, url:KPN+"fog_light.html", grp:"Frente y luces", zone:1, step:4, dir:[1,0,.35], d:1.15},
+ {id:"headR", es:"Faro delantero derecho", en:"Headlamp assembly RH", oem:"92102-2K540", alt:"92102-2K620 en la versión más equipada", side:"Derecho", usd:331.50, url:KPN+"headlight.html", grp:"Frente y luces", zone:1, step:5, dir:[.8,.45,.4], d:.75,
+  note:"Hay dos versiones de faro. Compara la foto con el tuyo o confirma con el VIN antes de comprar."},
+ // Carrocería
+ {id:"hood", es:"Capó", en:"Hood panel assembly", oem:"66400-2K510", side:"Centro", usd:516.26, url:KPN+"hood.html", grp:"Carrocería", zone:1, step:7, dir:[.15,1,0], d:.85,
+  note:"Si solo está abollado en la esquina, un planchador puede repararlo más barato que uno nuevo."},
+ {id:"hingeR", es:"Bisagra del capó derecha", en:"Hood hinge assembly RH", oem:"79120-2K000", side:"Derecho", usd:20.03, url:KPN+"hood_hinge.html", grp:"Carrocería", zone:1, step:7, dir:[-.15,1,.35], d:.6},
+ {id:"fenderR", es:"Guardafango delantero derecho", en:"Front fender panel RH", oem:"66321-2K300", side:"Derecho", usd:229.08, url:KPN+"fender.html", grp:"Carrocería", zone:1, step:8, dir:[0,.12,1], d:.75},
+ {id:"linerR", es:"Guardabarros interior derecho (pasarruedas)", en:"Front wheel guard / fender liner RH", oem:"Pedir con VIN", side:"Derecho", usd:null, url:"https://7zap.com/cs/catalog/cars/kia/canada/soul-am-parts-catalog/", grp:"Carrocería", zone:1, step:3, dir:[.1,0,1], d:1.15,
+  note:"Pieza plástica con clips. Si solo se soltó, a veces basta con clips nuevos."},
+ {id:"absorber", es:"Absorbedor de impacto (espuma)", en:"Front bumper energy absorber", oem:"Pedir con VIN", side:"Centro", usd:null, url:"https://7zap.com/cs/catalog/cars/kia/canada/soul-am-parts-catalog/", grp:"Carrocería", zone:1, step:6, dir:[1,.1,0], d:.7},
+ {id:"beam", es:"Viga del parachoques (refuerzo)", en:"Front bumper beam / reinforcement", oem:"Pedir con VIN", side:"Centro", usd:null, url:"https://7zap.com/cs/catalog/cars/kia/canada/soul-am-parts-catalog/", grp:"Carrocería", zone:1, step:6, dir:[1,-.15,0], d:.55,
+  note:"Es la pieza de acero que recibe el golpe. Si está doblada, cámbiala: no se endereza."},
+ // Enfriamiento
+ {id:"cond", es:"Condensador del aire acondicionado", en:"A/C condenser assembly", oem:"97606-2K600", side:"Centro", usd:412.00, url:KPN+"a_c_condenser.html", grp:"Enfriamiento", zone:1, step:9, dir:[.5,1,0], d:.6,
+  note:"Antes de soltarlo, el gas del A/C se recupera en un taller con máquina. No lo liberes al aire."},
+ {id:"rad", es:"Radiador", en:"Radiator assembly", oem:"25310-3X011", alt:"25310-3X101 (reemplazado por 25310-3X151)", side:"Centro", usd:306.75, url:KPN+"radiator.html", grp:"Enfriamiento", zone:1, step:9, dir:[.35,1,0], d:.8},
+ {id:"fan", es:"Electroventilador con carcasa", en:"Radiator fan & shroud assembly", oem:"Pedir con VIN", side:"Centro", usd:null, url:KPN+"radiator.html", grp:"Enfriamiento", zone:1, step:9, dir:[-.3,1,0], d:.95},
+ {id:"support", es:"Soporte (travesaño) del radiador", en:"Radiator support (member assembly)", oem:"64101-2K050", side:"Centro", usd:351.11, url:KPN+"radiator_support.html", grp:"Enfriamiento", zone:1, step:10, dir:[.2,1,0], d:1.25},
+ // Suspensión y dirección
+ {id:"wheelR", es:"Llanta y aro delantero derecho", en:"Front wheel & tire RH", oem:"Ver medida en la llanta", side:"Derecho", usd:null, url:"", grp:"Suspensión y dirección", zone:1, step:2, dir:[0,0,1], d:1.5,
+  note:"La medida está escrita en el costado de la llanta (por ejemplo 205/55 R16). Revisa también el aro por golpes o rajaduras."},
+ {id:"linkR", es:"Bieleta de barra estabilizadora derecha", en:"Front stabilizer (sway bar) link RH", oem:"54840-2K000", side:"Derecho", usd:42.43, url:KPN+"sway_bar_link.html", grp:"Suspensión y dirección", zone:1, step:11, dir:[-.3,.15,1], d:.6},
+ {id:"tieR", es:"Terminal de dirección derecho", en:"Outer tie rod end RH", oem:"56820-2K050", side:"Derecho", usd:57.17, url:KPN+"tie_rod_end.html", grp:"Suspensión y dirección", zone:1, step:11, dir:[-.5,0,1], d:.55},
+ {id:"armR", es:"Brazo inferior derecho (trapecio / tijera)", en:"Front lower control arm RH", oem:"54501-2K600", side:"Derecho", usd:190.72, url:KPN+"control_arm.html", grp:"Suspensión y dirección", zone:1, step:12, dir:[0,-.5,1], d:.55,
+  note:"Si el golpe fue en la rueda, revisa que no esté doblado comparándolo con el lado izquierdo."},
+ {id:"ballR", es:"Rótula inferior delantera", en:"Front lower ball joint", oem:"54530-2K000", side:"Igual ambos lados", usd:39.55, url:KPN+"ball_joint.html", grp:"Suspensión y dirección", zone:1, step:12, dir:[0,-.35,1], d:.75},
+ {id:"shaftR", es:"Palier derecho (eje de transmisión)", en:"Front drive shaft (CV axle) RH", oem:"Pedir con VIN", side:"Derecho", usd:null, url:"https://7zap.com/cs/catalog/cars/kia/canada/soul-am-parts-catalog/", grp:"Suspensión y dirección", zone:1, step:13, dir:[0,-1,.25], d:.4,
+  note:"Cambia según el motor y si la caja es mecánica o automática."},
+ {id:"knuckleR", es:"Mangueta (muñón) delantera derecha", en:"Front axle knuckle RH", oem:"51716-2K500", side:"Derecho", usd:205.66, url:KPN+"steering_knuckle.html", grp:"Suspensión y dirección", zone:1, step:13, dir:[0,.1,1], d:.9},
+ {id:"bearingR", es:"Rodamiento de rueda delantero", en:"Front wheel hub bearing", oem:"51720-2K000", side:"Igual ambos lados", usd:69.61, url:KPN+"wheel_bearing.html", grp:"Suspensión y dirección", zone:1, step:13, dir:[0,0,1], d:1.2,
+  note:"La maza (cubo) va aparte: 51750-2K000."},
+ {id:"strutR", es:"Amortiguador delantero derecho", en:"Front strut (shock absorber) RH", oem:"54660-2K820", side:"Derecho", usd:145.67, url:KPN+"shock_absorber.html", grp:"Suspensión y dirección", zone:1, step:14, dir:[0,1,.55], d:.65,
+  note:"El resorte está comprimido. Compra el conjunto completo armado o usa un compresor de resortes de calidad."},
+ // Estructura
+ {id:"railR", es:"Larguero delantero derecho", en:"Front side member (frame rail) RH", oem:"Solo taller de planchado", side:"Derecho", usd:null, url:"", grp:"Estructura", zone:1, step:15, dir:[0,.2,1], d:.35,
+  note:"Va soldado al monocasco. Si está doblado, se mide y endereza en banco. No se cambia en casa."},
+ {id:"mirrorR", es:"Espejo retrovisor exterior derecho", en:"Outside rear view mirror assembly RH", oem:"Pedir con VIN", alt:"87620-2K311, -2K341, -2K831, -2K851, -2K861 o -2K871, según equipamiento", side:"Derecho", usd:156.95, url:KPN+"car_mirror.html", grp:"Carrocería", zone:1, step:8, dir:[0,.25,1], d:.55,
+  note:"Hay 6 versiones según si tiene direccional, calefacción o plegado eléctrico. El precio es el de la más simple; la más equipada cuesta unos US$ 307. Si solo se rompió el vidrio, pide solo la luna del espejo, que es mucho más barata. La carcasa viene sin pintar o negra."},
+ {id:"washer", es:"Tanque del limpiaparabrisas", en:"Windshield washer reservoir", oem:"98620-2K500", alt:"98610-2K500 tanque con bomba (US$ 117.83)", side:"Derecho (delante, detrás del parachoques)", usd:21.65, url:KPN+"washer_reservoir.html", grp:"Carrocería", zone:1, step:5, dir:[.35,.45,1], d:.7,
+  note:"Si la bomba también se rompió, pide el conjunto con bomba. Antes de sacarlo, vacíalo en un balde y desconecta el conector de la bomba y la manguera."},
+ {id:"battery", es:"Batería", en:"Battery", oem:"Ver etiqueta de la batería", side:"Izquierdo", usd:null, url:"", grp:"Motor", zone:1, step:1, dir:[0,1,-.2], d:.7,
+  note:"No suele dañarse en este choque, pero se desconecta primero para trabajar seguro."},
+ // Resto del carro (contexto)
+ {id:"shell", es:"Carrocería y cabina (monocasco)", en:"Body shell", oem:"—", side:"—", usd:null, url:"", grp:"Resto del carro", zone:0, dir:[0,0,0], d:0},
+ {id:"wind", es:"Parabrisas", en:"Windshield glass", oem:"Pedir con VIN", side:"Centro", usd:null, url:"", grp:"Resto del carro", zone:0, dir:[.4,1,0], d:.5},
+ {id:"doorFR", es:"Puerta delantera derecha", en:"Front door RH", oem:"Pedir con VIN", side:"Derecho", usd:null, url:"", grp:"Resto del carro", zone:0, dir:[0,0,1], d:.6,
+  note:"Revisa que abra y cierre bien: si roza con el guardafango, el golpe pudo mover la bisagra."},
+ {id:"doorRR", es:"Puerta trasera derecha", en:"Rear door RH", oem:"Pedir con VIN", side:"Derecho", usd:null, url:"", grp:"Resto del carro", zone:0, dir:[0,0,1], d:.6},
+ {id:"doorFL", es:"Puerta delantera izquierda", en:"Front door LH", oem:"Pedir con VIN", side:"Izquierdo", usd:null, url:"", grp:"Resto del carro", zone:0, dir:[0,0,-1], d:.6},
+ {id:"doorRL", es:"Puerta trasera izquierda", en:"Rear door LH", oem:"Pedir con VIN", side:"Izquierdo", usd:null, url:"", grp:"Resto del carro", zone:0, dir:[0,0,-1], d:.6},
+ {id:"tailgate", es:"Portón trasero", en:"Tailgate", oem:"Pedir con VIN", side:"Centro", usd:null, url:"", grp:"Resto del carro", zone:0, dir:[-1,.2,0], d:.6},
+ {id:"rbumper", es:"Parachoques trasero", en:"Rear bumper cover", oem:"86611-2K500", side:"Centro", usd:250.85, url:KPN+"bumper.html", grp:"Resto del carro", zone:0, dir:[-1,0,0], d:.8},
+ {id:"fenderL", es:"Guardafango delantero izquierdo", en:"Front fender panel LH", oem:"66311-2K300", side:"Izquierdo", usd:229.08, url:KPN+"fender.html", grp:"Resto del carro", zone:0, dir:[0,.12,-1], d:.75},
+ {id:"headL", es:"Faro delantero izquierdo", en:"Headlamp assembly LH", oem:"92101-2K540", alt:"92101-2K620 en la versión más equipada", side:"Izquierdo", usd:331.50, url:KPN+"headlight.html", grp:"Resto del carro", zone:0, dir:[.8,.45,-.4], d:.75},
+ {id:"fogL", es:"Neblinero delantero izquierdo", en:"Front fog lamp assembly LH", oem:"92201-2K510", side:"Izquierdo", usd:92.54, url:KPN+"fog_light.html", grp:"Resto del carro", zone:0, dir:[1,0,-.35], d:1.15},
+ {id:"suspL", es:"Suspensión delantera izquierda", en:"Front suspension LH", oem:"Ver piezas del lado derecho (códigos LH)", side:"Izquierdo", usd:null, url:KPN+"control_arm.html", grp:"Resto del carro", zone:0, dir:[0,0,-1], d:.9,
+  note:"Códigos del lado izquierdo: amortiguador 54650-2K820, brazo 54500-2K600, bieleta 54830-2K000, terminal 56820-2K000, mangueta 51715-2K500."},
+ {id:"shaftL", es:"Palier izquierdo (eje de transmisión)", en:"Front drive shaft (CV axle) LH", oem:"Pedir con VIN", side:"Izquierdo", usd:null, url:"https://7zap.com/cs/catalog/cars/kia/canada/soul-am-parts-catalog/", grp:"Resto del carro", zone:0, dir:[0,-1,-.25], d:.4,
+  note:"Es más corto que el derecho porque la caja de cambios está a este lado. Cambia según si la caja es mecánica o automática."},
+ {id:"sunroof", es:"Techo solar (vidrio del sunroof)", en:"Sunroof glass", oem:"Pedir con VIN", side:"Centro", usd:null, url:"", grp:"Resto del carro", zone:0, dir:[0,1,0], d:.35,
+  note:"Tu Soul tiene sunroof. Si cotizas faros, compara la foto: las versiones con sunroof a veces traen el faro más equipado (-2K620)."},
+ {id:"railL", es:"Larguero delantero izquierdo", en:"Front side member LH", oem:"Solo taller de planchado", side:"Izquierdo", usd:null, url:"", grp:"Resto del carro", zone:0, dir:[0,.2,-1], d:.35},
+ {id:"engine", es:"Motor 1.6 Gamma (gasolina)", en:"Engine assembly 1.6 Gamma", oem:"Pedir con VIN", side:"Centro", usd:null, url:"", grp:"Resto del carro", zone:0, dir:[-.2,1,.1], d:1.25,
+  note:"Motor confirmado: 1.6 a gasolina (1,591 cc)."},
+ {id:"trans", es:"Caja de cambios", en:"Transaxle", oem:"Pedir con VIN", side:"Izquierdo", usd:null, url:"", grp:"Resto del carro", zone:0, dir:[-.2,.6,-1], d:.7},
+ {id:"wheelFL", es:"Llanta delantera izquierda", en:"Front wheel LH", oem:"—", side:"Izquierdo", usd:null, url:"", grp:"Resto del carro", zone:0, dir:[0,0,-1], d:1.4},
+ {id:"wheelRL", es:"Llanta trasera izquierda", en:"Rear wheel LH", oem:"—", side:"Izquierdo", usd:null, url:"", grp:"Resto del carro", zone:0, dir:[0,0,-1], d:1.4},
+ {id:"wheelRR", es:"Llanta trasera derecha", en:"Rear wheel RH", oem:"—", side:"Derecho", usd:null, url:"", grp:"Resto del carro", zone:0, dir:[0,0,1], d:1.4},
+ {id:"rshock", es:"Amortiguadores traseros (par)", en:"Rear shock absorbers (pair)", oem:"55300-2K820", side:"Izquierdo y derecho (mismo código)", usd:169.60, qty:2, url:KPN+"shock_absorber.html", grp:"Suspensión trasera", zone:0, dir:[0,.35,0], d:.45,
+  note:"El técnico indicó que están desgastados. Se cambian siempre los dos. Van empernados abajo a la viga trasera y arriba a la carrocería."},
+ {id:"rbeam", es:"Eje trasero (viga de torsión) y resortes", en:"Rear torsion beam axle & coil springs", oem:"Pedir con VIN", side:"Centro", usd:null, url:"https://7zap.com/cs/catalog/cars/kia/canada/soul-am-parts-catalog/", grp:"Resto del carro", zone:0, dir:[0,-1,0], d:.12,
+  note:"El Soul 2013 lleva atrás una viga de torsión con resortes separados de los amortiguadores."},
+];
+const byId = {}; P.forEach(p=>byId[p.id]=p);
+
+const STEPS = [
+ {t:"Antes de empezar", parts:[], inst:["Toma fotos del daño desde varios ángulos: te sirven para cotizar y para el seguro.","Trabaja en piso plano, con el freno de mano puesto y el motor frío.","Afloja la tuerca central del palier derecho y las tuercas de la rueda con el carro todavía en el piso."], tools:"Gata, 2 torres (caballetes), llave de ruedas, dado para tuerca de palier, removedor de clips, juego de dados métricos, torquímetro.", warn:"Nunca te metas debajo del carro sostenido solo por la gata."},
+ {t:"Desconectar la batería", parts:["battery"], inst:["Abre el capó y suelta primero el borne negativo (−).","Aíslalo con un trapo para que no toque el borne."], tools:"Llave o dado de 10 mm.", warn:"El faro y los neblineros tienen conectores: trabajar sin corriente evita cortos."},
+ {t:"Quitar la rueda delantera derecha", parts:["wheelR"], inst:["Levanta el lado derecho con la gata en el punto de apoyo del manual.","Coloca la torre bajo el chasis y baja la gata hasta que el carro descanse en ella.","Saca las tuercas y la llanta."], tools:"Gata, torre, llave de ruedas.", warn:"Al rearmar: tuercas de rueda a 80 lb-pie (108 N·m), en cruz."},
+ {t:"Quitar el guardabarros interior", parts:["linerR"], inst:["Saca los clips y tornillos que lo unen al guardafango y al parachoques.","Retíralo hacia afuera por el pasarruedas."], tools:"Removedor de clips, dados métricos.", warn:"Guarda los clips en una bolsa: suelen romperse y conviene tener repuestos."},
+ {t:"Desmontar el parachoques delantero", parts:["bumper","grille","lgrille","fogR"], inst:["Saca los tornillos y clips de la parte de arriba (bajo el capó), los de abajo y los de cada pasarruedas.","Tira suavemente de las esquinas hacia afuera para soltar las guías laterales.","Antes de separarlo del todo, desconecta los neblineros.","Con la cubierta en el suelo, separa la parrilla, la rejilla inferior y el neblinero si los vas a cambiar."], tools:"Removedor de clips, desarmador, dados métricos.", warn:"Pide ayuda: entre dos se evita rayar la pintura o romper las guías."},
+ {t:"Sacar el faro derecho y el tanque del limpiaparabrisas", parts:["headR","washer"], inst:["Saca los tornillos que fijan el faro al soporte del radiador y al guardafango.","Tira del faro hacia adelante y desconecta el conector por detrás.","Vacía el tanque del limpiaparabrisas en un balde.","Desconecta el conector de la bomba y la manguera, saca los pernos del tanque y retíralo junto con su cuello de llenado."], tools:"Dados métricos con extensión.", warn:"Al poner el faro nuevo, haz regular la altura de las luces."},
+ {t:"Quitar absorbedor y viga", parts:["absorber","beam"], inst:["Retira la espuma del absorbedor.","Saca las tuercas que unen la viga a los dos largueros y retírala."], tools:"Dados métricos.", warn:"Si la viga está doblada, cambia también sus pernos."},
+ {t:"Desmontar el capó", parts:["hood","hingeR"], inst:["Marca con lápiz el contorno de las bisagras para volver a alinearlo igual.","Desconecta la manguera del lavaparabrisas.","Entre dos personas, saca los pernos de las bisagras y levanta el capó.","Si la bisagra derecha está doblada, sácala de la carrocería."], tools:"Dados métricos, lápiz o cinta de pintor.", warn:"El capó es pesado y se raya fácil: apóyalo sobre cartón."},
+ {t:"Quitar el guardafango derecho y el espejo", parts:["fenderR","mirrorR"], inst:["Espejo: por dentro de la puerta derecha, retira la tapa plástica triangular junto al espejo (en algunas versiones hay que soltar el panel de la puerta), desconecta el conector y saca sus tuercas sosteniendo el espejo.","Saca los pernos de la parte de arriba (a lo largo del borde del capó).","Abre la puerta derecha y saca el perno de atrás, junto a la bisagra.","Saca el perno de abajo, detrás del pasarruedas, y retira el guardafango."], tools:"Dados métricos con extensión.", warn:"Pon cinta de pintor en el borde de la puerta para no rayarla."},
+ {t:"Sacar condensador, ventilador y radiador", parts:["cond","fan","rad"], inst:["Lleva el carro a un taller de A/C para recuperar el gas antes de soltar las tuberías del condensador.","Drena el refrigerante con el motor frío, en un balde.","Desconecta el ventilador, saca sus pernos y retíralo.","Suelta las mangueras del radiador y retíralo junto con el condensador."], tools:"Balde, alicate para abrazaderas, dados métricos.", warn:"El refrigerante es tóxico para personas y mascotas. Al rearmar, llénalo y purga el aire."},
+ {t:"Revisar el soporte del radiador", parts:["support"], inst:["Revisa si está doblado o fisurado comparando con el lado izquierdo.","Si hay que cambiarlo, confirma en el manual o con el taller cómo va fijado en tu carro."], tools:"Wincha, linterna.", warn:"Si está muy doblado, déjalo al planchador: también revisará los largueros."},
+ {t:"Soltar bieleta y terminal de dirección", parts:["linkR","tieR"], inst:["Saca la tuerca de la bieleta en el amortiguador y retírala.","Saca la tuerca del terminal de dirección y sepáralo de la mangueta con el separador."], tools:"Llaves 14/17 mm, separador de rótulas.", warn:"Al rearmar: bieleta a 87 lb-pie (118 N·m). Cuenta las vueltas del terminal para no perder la alineación."},
+ {t:"Sacar brazo inferior y rótula", parts:["armR","ballR"], inst:["Saca el perno de la rótula en la mangueta.","Saca los pernos del brazo al subchasis y retíralo.","Si solo cambias la rótula, sácala del brazo."], tools:"Llaves 17/19/21 mm, palanca, separador de rótulas.", warn:"Aprieta los pernos del brazo con el carro apoyado en sus ruedas, no colgando."},
+ {t:"Sacar palier, mangueta y rodamiento", parts:["shaftR","knuckleR","bearingR"], inst:["Saca la tuerca central del palier (ya aflojada en el paso 0) y la mordaza del freno; cuélgala con un alambre.","Saca el disco de freno.","Saca los pernos de la mangueta al amortiguador y retira la mangueta.","Saca el palier de la caja con una palanca, sin dañar el retén."], tools:"Dados métricos, palanca, alambre, prensa (para el rodamiento).", warn:"El rodamiento se cambia con prensa. Si no tienes, lleva la mangueta a una tornería."},
+ {t:"Sacar el amortiguador derecho", parts:["strutR"], inst:["Bajo el capó, saca las tuercas superiores de la torre.","Retira el conjunto de amortiguador y resorte."], tools:"Dados métricos, compresor de resortes (si separas el resorte).", warn:"Al rearmar: pernos inferiores a 130 lb-pie (176 N·m), tuerca superior a 44 lb-pie (60 N·m). Después haz alineación."},
+ {t:"Cambiar los amortiguadores traseros", parts:["rshock"], inst:["Afloja un poco las tuercas de las ruedas traseras con el carro en el piso.","Levanta la parte trasera y apóyala en dos torres bajo los puntos de apoyo del manual. Saca las ruedas traseras.","Pon la gata bajo la viga trasera, cerca del amortiguador, y súbela apenas hasta que sostenga el peso: así el resorte no empuja.","Saca el perno de abajo (en la viga) y luego los de arriba (en la carrocería). Retira el amortiguador.","Instala el nuevo, pon los pernos a mano y repite en el otro lado.","Aprieta los pernos con la gata subiendo la viga a la altura normal del carro, o con el carro ya en el piso, para que el buje no quede torcido."], tools:"Gata, 2 torres, llave de ruedas, dados y llaves métricas, torquímetro, lubricante penetrante.", warn:"Cambia los dos al mismo tiempo. Los pernos viejos suelen estar oxidados: echa lubricante penetrante la noche antes. Como referencia de este diseño, mira el video de 1A Auto del Soul 2014–2019 (es la siguiente generación, similar pero no igual)."},
+ {t:"Revisar la estructura", parts:["railR"], inst:["Con todo desmontado, revisa el larguero derecho: arrugas, pintura saltada o soldaduras rotas son señal de daño.","Mide en diagonal entre puntos iguales de los dos lados; una diferencia de más de unos milímetros indica que se movió."], tools:"Wincha, linterna.", warn:"Si el larguero o la torre del amortiguador se movieron, lleva el carro a un taller de planchado con banco de medición."},
+];
+STEPS.forEach((s,i)=>s.parts.forEach(id=>{ if(byId[id]) byId[id].step=i; }));
+
+// ---------- Estado guardado (solo en este navegador) ----------
+const LS="soul2013-despiece-v1";
+let saved={}; try{ saved=JSON.parse(localStorage.getItem(LS)||"{}")||{}; }catch(e){ saved={}; }
+const status = saved.status || {};
+P.forEach(p=>{ if(p.zone && !status[p.id]) status[p.id] = p.id==="battery" ? "ok" : "revisar"; });
+// Indicado por Miguel (19 nov 2026): cambio por desgaste
+if(!saved.wearV1){ ["rshock","headR","headL"].forEach(id=>status[id]="desgaste"); }
+if(!saved.washerV1){ status.washer="danada"; }
+if(!saved.mirrorV1){ status.mirrorR="danada"; }
+let vin = saved.vin||"", motor = (saved.motor && saved.motor!=="No sé") ? saved.motor : "1.6 Gamma";
+function save(){ try{ localStorage.setItem(LS, JSON.stringify({status,vin,motor,wearV1:1,washerV1:1,mirrorV1:1})); }catch(e){} }
+save();
+
+const ST_LABEL={danada:"Dañada",desgaste:"Desgaste",revisar:"Revisar",ok:"OK"};
+const $=s=>document.querySelector(s);
+const fmt=n=>n==null?"—":"US$ "+n.toFixed(2);
+
+// ---------- UI estado ----------
+let mode="zona", tab="piezas", curStep=0, selected=null, explode=.35;
+
+// ---------- 3D ----------
+const stage=$("#stage"), canvas=$("#cv");
+if(!window.THREE){ stage.insertAdjacentHTML("beforeend",'<div class="err">No se pudo cargar el visor 3D. Revisa tu conexión y recarga la página. Las listas de piezas y pasos siguen funcionando abajo.</div>'); }
+const T=window.THREE;
+let renderer, scene, camera, controls, groups={}, pickables=[];
+const cssVar=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+function initThree(){
+  renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.75));
+  renderer.outputEncoding=T.sRGBEncoding;
+  renderer.toneMapping=T.ACESFilmicToneMapping; renderer.toneMappingExposure=.95;
+  renderer.shadowMap.enabled=true; renderer.shadowMap.type=T.PCFSoftShadowMap;
+  scene=new T.Scene();
+  if(T.RoomEnvironment){ const pm=new T.PMREMGenerator(renderer); scene.environment=pm.fromScene(new T.RoomEnvironment(),.04).texture; pm.dispose(); }
+  camera=new T.PerspectiveCamera(38,1,.05,100);
+  controls=new T.OrbitControls(camera,canvas);
+  controls.enableDamping=true; controls.dampingFactor=.12; controls.minDistance=1.2; controls.maxDistance=14;
+  controls.maxPolarAngle=Math.PI*.495;
+  scene.add(new T.HemisphereLight(0xffffff,0x5a6470,.35));
+  const d1=new T.DirectionalLight(0xffffff,2.2); d1.position.set(3,7,4); d1.castShadow=true;
+  d1.shadow.mapSize.set(1024,1024); Object.assign(d1.shadow.camera,{left:-3.5,right:3.5,top:3.5,bottom:-3.5,near:1,far:20}); d1.shadow.radius=4; d1.shadow.bias=-.0005;
+  scene.add(d1);
+  const d2=new T.DirectionalLight(0xdfe8ff,.45); d2.position.set(-5,3,-4); scene.add(d2);
+  const shadowFloor=new T.Mesh(new T.PlaneGeometry(12,12), new T.ShadowMaterial({opacity:.28}));
+  shadowFloor.rotation.x=-Math.PI/2; shadowFloor.receiveShadow=true; scene.add(shadowFloor);
+  const grid=new T.GridHelper(10,20,0x888888,0x888888); grid.material.transparent=true; grid.material.opacity=.08; grid.position.y=.002; scene.add(grid);
+  buildCar();
+  resize(); new ResizeObserver(resize).observe(stage);
+  setView(true);
+  setupPicking();
+  renderer.setAnimationLoop(tick);
+  applyTheme();
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",applyTheme);
+  new MutationObserver(applyTheme).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+}
+function applyTheme(){ if(scene) scene.background=new T.Color(cssVar("--scene")||"#dfe5ea"); }
+function resize(){
+  const w=stage.clientWidth,h=stage.clientHeight; if(!w||!h) return;
+  renderer.setSize(w,h,false); camera.aspect=w/h;
+  // En celular, con la ficha abierta, sube la imagen para que la pieza no quede tapada
+  if(selected && w<900 && window.innerWidth<900){ camera.setViewOffset(w,h,0,h*.24,w,h); } else camera.clearViewOffset();
+  camera.updateProjectionMatrix();
+}
+
+// materiales (PBR: pintura con barniz, vidrio, cromo, caucho)
+const M={
+  paint:{phys:1,color:0x121316,metalness:.55,roughness:.3,clearcoat:1,clearcoatRoughness:.04,env:.9},
+  roof:{phys:1,color:0x121316,metalness:.55,roughness:.3,clearcoat:1,clearcoatRoughness:.04,env:.9},
+  black:{color:0x141618,metalness:.2,roughness:.55,env:.25},
+  gloss:{phys:1,color:0x0d0f11,metalness:.3,roughness:.25,clearcoat:.8,clearcoatRoughness:.1},
+  primer:{color:0x8f979e,metalness:.05,roughness:.75},
+  steel:{color:0x8e979e,metalness:.85,roughness:.38},
+  dark:{color:0x30363c,metalness:.6,roughness:.45},
+  alu:{color:0xc9d0d5,metalness:.9,roughness:.28},
+  chrome:{color:0xe8edf0,metalness:1,roughness:.08},
+  foam:{color:0x4a86bf,metalness:0,roughness:.95},
+  glass:{phys:1,color:0x0b1115,metalness:.3,roughness:.04,transparent:true,opacity:.8,clearcoat:1,env:.8},
+  tint:{phys:1,color:0x1b2730,metalness:.1,roughness:.03,transparent:true,opacity:.42,clearcoat:1},
+  lens:{phys:1,color:0xf4f8fb,metalness:0,roughness:.02,transparent:true,opacity:.35,clearcoat:1},
+  tank:{color:0xece6d6,metalness:0,roughness:.45,transparent:true,opacity:.88},
+  cap:{color:0x2a6fd1,metalness:0,roughness:.4},
+  amber:{color:0xf0a63a,metalness:.1,roughness:.3,emissive:0x3a2200},
+  red:{phys:1,color:0xa3141c,metalness:.1,roughness:.15,clearcoat:1,emissive:0x2a0000},
+  rubber:{color:0x1a1c1e,metalness:0,roughness:.9,env:.15},
+  rim:{color:0xb9c1c7,metalness:.85,roughness:.22},
+  spring:{color:0xb42e25,metalness:.45,roughness:.4},
+  plastic:{color:0x202327,metalness:.05,roughness:.7,env:.25},
+  engine:{color:0x707a82,metalness:.7,roughness:.4},
+  bulb:{color:0xffffff,metalness:0,roughness:.2,emissive:0xbfd6ff,emissiveIntensity:.6},
+};
+function mat(k){ const d=Object.assign({},M[k]); const ph=d.phys; delete d.phys;
+  const env=d.env; delete d.env;
+  const m= ph ? new T.MeshPhysicalMaterial(d) : new T.MeshStandardMaterial(d);
+  m.color.convertSRGBToLinear(); m.emissive.convertSRGBToLinear();
+  m.envMapIntensity = env!=null ? env : (m.metalness>.5 ? 1 : .45);
+  m.userData.baseOpacity=m.opacity; m.userData.baseTransparent=m.transparent; m.userData.baseEmissive=m.emissive.getHex(); m.userData.baseEI=m.emissiveIntensity; return m; }
+const RB = T.RoundedBoxGeometry;
+function rbox(g,k,x1,x2,y1,y2,z1,z2,r){ const w=x2-x1,h=y2-y1,d=z2-z1; const rr=Math.min(r==null?.015:r, Math.min(w,h,d)/2*.98);
+  const geo = RB ? new RB(w,h,d,3,rr) : new T.BoxGeometry(w,h,d);
+  const m=new T.Mesh(geo,mat(k)); m.position.set((x1+x2)/2,(y1+y2)/2,(z1+z2)/2); g.add(m); return m; }
+const box=rbox;
+function cylX(g,k,r,len,x,y,z){ const geo=new T.CylinderGeometry(r,r,len,32); geo.rotateZ(Math.PI/2); const m=new T.Mesh(geo,mat(k)); m.position.set(x,y,z); g.add(m); return m; }
+function cylZ(g,k,r,len,x,y,z,seg){ const geo=new T.CylinderGeometry(r,r,len,seg||32); geo.rotateX(Math.PI/2); const m=new T.Mesh(geo,mat(k)); m.position.set(x,y,z); g.add(m); return m; }
+function cylY(g,k,r,y1,y2,x,z){ const m=new T.Mesh(new T.CylinderGeometry(r,r,y2-y1,24),mat(k)); m.position.set(x,(y1+y2)/2,z); g.add(m); return m; }
+function sphere(g,k,r,x,y,z){ const m=new T.Mesh(new T.SphereGeometry(r,24,16),mat(k)); m.position.set(x,y,z); g.add(m); return m; }
+function arcPts(cx,cy,r,x1,x2,n){ const out=[]; const a1=Math.acos((x1-cx)/r), a2=Math.acos((x2-cx)/r); for(let i=0;i<=n;i++){ const a=a1+(a2-a1)*i/n; out.push([cx+r*Math.cos(a), cy+r*Math.sin(a)]); } return out; }
+// Extruye un perfil lateral (x,y) entre z1 y z2 con bordes redondeados (bisel)
+function extrudeShape(g,k,shape,z1,z2,bev){ const b=bev||0; const depth=Math.max(.001,(z2-z1)-2*b);
+  const geo=new T.ExtrudeGeometry(shape,{depth,bevelEnabled:b>0,bevelThickness:b,bevelSize:b*.8,bevelSegments:4,curveSegments:24});
+  geo.translate(0,0,z1+b); const m=new T.Mesh(geo,mat(k)); g.add(m); return m; }
+function shapeFrom(pts){ const s=new T.Shape(); pts.forEach((p,i)=>i?s.lineTo(p[0],p[1]):s.moveTo(p[0],p[1])); return s; }
+
+const FX=1.27, RX=-1.28, WR=.32, WZ=.765;
+// Rueda: llanta con perfil redondeado (torno) + aro de 5 rayos
+function wheel(g,x,z){
+  const side = z>0?1:-1; const w=.21, r=WR;
+  const prof=[]; const n=14;
+  for(let i=0;i<=n;i++){ const a=-Math.PI/2+Math.PI*i/n; prof.push(new T.Vector2(r-.045+.045*Math.cos(a), (w/2)*Math.sin(a))); }
+  prof.unshift(new T.Vector2(.205,-w/2*.92)); prof.push(new T.Vector2(.205,w/2*.92));
+  const tg=new T.LatheGeometry(prof,48); tg.rotateX(Math.PI/2);
+  const tire=new T.Mesh(tg,mat("rubber")); tire.position.set(x,r,z); g.add(tire);
+  const face=z+side*.07;
+  cylZ(g,"dark",.205,.16,x,r,z,40);
+  const dish=cylZ(g,"rim",.2,.02,x,r,face,40);
+  cylZ(g,"chrome",.045,.03,x,r,face+side*.012,24);
+  for(let i=0;i<5;i++){ const a=i*Math.PI*2/5; const s=new T.Mesh(RB?new RB(.17,.045,.025,2,.01):new T.BoxGeometry(.17,.045,.025),mat("rim"));
+    s.position.set(x+Math.cos(a)*.1, r+Math.sin(a)*.1, face+side*.013); s.rotation.z=a; g.add(s); }
+  dish.material.color.set(0x2b3136);
+  cylZ(g,"dark",.12,.02,x,r,z-side*.02,32);
+}
+function fenderShape(){
+  const s=new T.Shape(); s.moveTo(.82,.42); s.lineTo(FX-.405,.42);
+  s.absarc(FX,.32,.41,Math.PI-Math.asin(.10/.41),Math.asin(.10/.41),true);
+  s.lineTo(1.90,.42); s.quadraticCurveTo(1.95,.44,1.95,.52); s.lineTo(1.95,.74); s.quadraticCurveTo(1.94,.93,1.84,.97);
+  s.quadraticCurveTo(1.3,1.02,.86,1.03); s.lineTo(.82,1.0); s.lineTo(.82,.42); return s;
+}
+function buildCar(){
+  const mk=id=>{ const g=new T.Group(); g.userData.pid=id; scene.add(g); groups[id]=g; return g; };
+  let g;
+  // Carrocería: parte baja con arco trasero + techo flotante y cristales
+  g=mk("shell");
+  { const s=new T.Shape(); s.moveTo(.82,.42); s.lineTo(.82,1.0); s.lineTo(1.0,1.04); s.lineTo(-2.0,1.07);
+    s.quadraticCurveTo(-2.05,1.06,-2.05,.98); s.lineTo(-2.04,.52); s.quadraticCurveTo(-2.03,.42,-1.94,.42);
+    s.lineTo(RX-.398,.42); s.absarc(RX,.32,.41,Math.PI-Math.asin(.10/.41),Math.asin(.10/.41),true); s.lineTo(.82,.42);
+    extrudeShape(g,"paint",s,-.875,.875,.05);
+    const gh=new T.Shape(); gh.moveTo(.98,1.04); gh.lineTo(.44,1.52); gh.quadraticCurveTo(.36,1.59,.22,1.60); gh.lineTo(-1.80,1.62);
+    gh.quadraticCurveTo(-1.97,1.62,-1.99,1.48); gh.lineTo(-2.01,1.06); gh.lineTo(.98,1.04);
+    extrudeShape(g,"glass",gh,-.80,.80,.06);
+    rbox(g,"roof",-1.86,.26,1.60,1.66,-.78,.78,.04);
+    rbox(g,"black",-.68,.18,1.655,1.668,-.50,.50,.03);
+    [[.06,.16],[-.97,-.88],[-1.86,-1.70]].forEach(([a,b])=>{ rbox(g,"gloss",a,b,1.05,1.61,.78,.815,.02); rbox(g,"gloss",a,b,1.05,1.61,-.815,-.78,.02); });
+    rbox(g,"red",-2.07,-2.0,.95,1.42,.62,.80,.03); rbox(g,"red",-2.07,-2.0,.95,1.42,-.80,-.62,.03);
+    rbox(g,"plastic",-1.95,.80,.36,.44,-.86,.86,.03);
+  }
+  // Parabrisas (cristal propio, encima del de la cabina)
+  g=mk("wind"); { const m=rbox(g,"tint",-.38,.38,-.008,.008,-.74,.74,.006); m.rotation.z=-.73; m.position.set(.715,1.285,0); }
+  // Puertas (paneles exteriores con manija y espejo)
+  const door=(id,x1,x2,zs,mirror)=>{ const gg=mk(id); const z1=zs>0?.872:-.902, z2=zs>0?.902:-.872;
+    rbox(gg,"paint",x1,x2,.44,1.07,z1,z2,.012);
+    rbox(gg,"chrome",x2-.22,x2-.10,.92,.95,zs>0?.900:-.910,zs>0?.910:-.900,.008);
+    if(mirror){ rbox(gg,"paint",.58,.76,1.06,1.16,zs>0?.86:-1.02,zs>0?1.02:-.86,.04); rbox(gg,"gloss",.60,.66,1.04,1.07,zs>0?.86:-.96,zs>0?.96:-.86,.01); } };
+  door("doorFR",-.13,.80,1,false);
+  g=mk("mirrorR"); rbox(g,"paint",.58,.76,1.06,1.16,.86,1.02,.04); rbox(g,"chrome",.585,.60,1.07,1.15,.88,1.0,.02); rbox(g,"gloss",.60,.66,1.04,1.07,.86,.96,.01); door("doorRR",-1.0,-.15,1,false); door("doorFL",-.13,.80,-1,true); door("doorRL",-1.0,-.15,-1,false);
+  g=mk("tailgate"); rbox(g,"paint",-2.10,-2.04,.70,1.10,-.62,.62,.02); rbox(g,"glass",-2.03,-1.99,1.12,1.50,-.58,.58,.02); rbox(g,"chrome",-2.11,-2.10,.86,.90,-.18,.18,.01);
+  g=mk("rbumper"); rbox(g,"paint",-2.14,-1.98,.26,.70,-.87,.87,.06); rbox(g,"plastic",-2.15,-2.05,.26,.38,-.70,.70,.03);
+  g=mk("wheelRL"); wheel(g,RX,-WZ); g=mk("wheelRR"); wheel(g,RX,WZ);
+  g=mk("rshock"); [.60,-.60].forEach(z=>{ const x=RX-.16; cylY(g,"gloss",.032,.27,.60,x,z); cylY(g,"chrome",.011,.60,.84,x,z); cylY(g,"gloss",.036,.70,.76,x,z); cylZ(g,"rubber",.022,.06,x,.26,z,16); rbox(g,"steel",x-.04,x+.04,.84,.87,z-.04,z+.04,.008); });
+  g=mk("rbeam"); [.62,-.62].forEach(z=>{ rbox(g,"gloss",RX-.12,RX+.48,.27,.33,z-.03,z+.03,.02); cylZ(g,"rubber",.04,.06,RX+.48,.31,z,16); rbox(g,"steel",RX-.06,RX+.06,.24,.40,z*1.02-.015,z*1.02+.015,.01);
+      const pts=[]; for(let i=0;i<=120;i++){ const a=i/120*Math.PI*2*4.5; pts.push(new T.Vector3(RX+.02+.06*Math.cos(a), .33+.26*i/120, z*.82+.06*Math.sin(a))); }
+      g.add(new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts),180,.01,6,false),mat("spring"))); });
+    rbox(g,"gloss",RX+.10,RX+.20,.26,.34,-.62,.62,.03);
+  g=mk("engine"); rbox(g,"engine",1.03,1.53,.46,.91,-.24,.40,.04); rbox(g,"gloss",1.08,1.48,.91,.97,-.18,.34,.03); cylX(g,"black",.05,.32,1.28,.98,.10); rbox(g,"chrome",1.15,1.2,.70,.85,.40,.46,.01);
+  g=mk("trans"); rbox(g,"dark",1.05,1.47,.40,.74,-.62,-.25,.06);
+  g=mk("battery"); rbox(g,"black",1.33,1.58,.72,.92,-.74,-.54,.015); cylY(g,"red",.015,.92,.95,1.38,-.69); cylY(g,"black",.015,.92,.95,1.52,-.69);
+  // Lado izquierdo (contexto)
+  g=mk("fenderL"); extrudeShape(g,"paint",fenderShape(),-.89,-.832,.02);
+  const headlamp=(gg,zs)=>{ const a=zs>0?.42:-.84, b=zs>0?.84:-.42;
+    rbox(gg,"chrome",1.80,1.97,.76,.96,a,b,.04); rbox(gg,"lens",1.86,2.0,.765,.955,a+.005,b-.005,.05);
+    cylX(gg,"chrome",.06,.03,1.95,.86,zs*.56); cylX(gg,"bulb",.03,.02,1.97,.86,zs*.56); rbox(gg,"amber",1.94,1.985,.79,.83,zs>0?.70:-.80,zs>0?.80:-.70,.01); };
+  g=mk("headL"); headlamp(g,-1);
+  g=mk("fogL"); cylX(g,"chrome",.055,.03,2.07,.40,-.66); cylX(g,"lens",.05,.03,2.09,.40,-.66);
+  g=mk("wheelFL"); wheel(g,FX,-WZ);
+  g=mk("suspL"); cylY(g,"dark",.035,.50,.98,FX-.04,-.56); rbox(g,"steel",1.02,1.48,.20,.23,-.60,-.22,.01);
+  g=mk("railL"); rbox(g,"steel",.86,1.88,.40,.52,-.60,-.50,.015);
+  // ---- Zona dañada ----
+  g=mk("bumper"); { rbox(g,"paint",1.96,2.10,.25,.77,-.86,.86,.07); rbox(g,"paint",1.84,2.0,.30,.77,.79,.88,.04); rbox(g,"paint",1.84,2.0,.30,.77,-.88,-.79,.04); rbox(g,"plastic",2.0,2.11,.24,.30,-.78,.78,.03); }
+  g=mk("grille"); { rbox(g,"gloss",2.04,2.12,.74,.87,-.42,.42,.04); for(let i=0;i<3;i++) rbox(g,"chrome",2.115,2.125,.765+i*.035,.775+i*.035,-.36,.36,.004); rbox(g,"chrome",2.12,2.13,.79,.83,-.07,.07,.015); }
+  g=mk("lgrille"); { rbox(g,"gloss",2.06,2.12,.31,.50,-.47,.47,.05); for(let i=0;i<4;i++) rbox(g,"black",2.118,2.124,.33+i*.042,.345+i*.042,-.42,.42,.004); }
+  g=mk("fogR"); cylX(g,"chrome",.055,.03,2.07,.40,.66); cylX(g,"lens",.05,.03,2.09,.40,.66); rbox(g,"gloss",2.06,2.11,.33,.47,.57,.75,.03);
+  g=mk("headR"); headlamp(g,1);
+  g=mk("washer"); rbox(g,"tank",1.62,1.84,.50,.78,.68,.82,.03); cylY(g,"tank",.022,.78,.96,1.80,.74); cylY(g,"cap",.03,.96,.99,1.80,.74); cylY(g,"black",.012,.42,.50,1.70,.78);
+  g=mk("sunroof"); rbox(g,"tint",-.64,.14,1.665,1.678,-.46,.46,.025);
+  g=mk("hood"); { const geo=RB?new RB(1.03,.035,1.62,3,.015):new T.BoxGeometry(1.03,.035,1.62);
+    const pos=geo.attributes.position; for(let i=0;i<pos.count;i++){ const zz=pos.getZ(i)/.81, xx=(pos.getX(i)+.515)/1.03; pos.setY(i,pos.getY(i)+.03*(1-zz*zz)*(.4+.6*xx)); } geo.computeVertexNormals();
+    const m=new T.Mesh(geo,mat("paint")); m.rotation.z=-.07; m.position.set(1.48,1.0,0); g.add(m); }
+  g=mk("hingeR"); rbox(g,"steel",.86,1.0,.98,1.02,.70,.74,.008);
+  g=mk("fenderR"); extrudeShape(g,"paint",fenderShape(),.832,.89,.02);
+  g=mk("linerR"); { const geo=new T.CylinderGeometry(.37,.37,.18,32,1,true,0,Math.PI); geo.rotateX(Math.PI/2); geo.rotateZ(Math.PI/2); const m=new T.Mesh(geo,mat("plastic")); m.material.side=T.DoubleSide; m.position.set(FX,.32,.73); g.add(m); }
+  g=mk("absorber"); rbox(g,"foam",1.94,1.98,.40,.60,-.70,.70,.015);
+  g=mk("beam"); rbox(g,"steel",1.88,1.94,.40,.58,-.74,.74,.02); rbox(g,"steel",1.82,1.88,.42,.54,.48,.62,.01); rbox(g,"steel",1.82,1.88,.42,.54,-.62,-.48,.01);
+  g=mk("cond"); rbox(g,"alu",1.80,1.825,.44,.86,-.56,.56,.006); rbox(g,"black",1.79,1.83,.44,.86,.56,.59,.006);
+  g=mk("rad"); rbox(g,"alu",1.69,1.735,.43,.88,-.58,.58,.008); rbox(g,"black",1.685,1.74,.43,.88,.58,.65,.01); rbox(g,"black",1.685,1.74,.43,.88,-.65,-.58,.01); cylY(g,"black",.03,.88,.94,1.71,.45);
+  g=mk("fan"); rbox(g,"plastic",1.60,1.63,.45,.86,-.52,.52,.02); [.25,-.25].forEach(z=>{ cylX(g,"black",.17,.03,1.645,.655,z); cylX(g,"dark",.05,.06,1.59,.655,z); for(let i=0;i<7;i++){ const b=new T.Mesh(new T.BoxGeometry(.006,.15,.05),mat("black")); const a=i*Math.PI*2/7; b.position.set(1.665,.655+Math.sin(a)*.08,z+Math.cos(a)*.08); b.rotation.x=-a; b.rotation.y=.4; g.add(b);} });
+  g=mk("support"); rbox(g,"steel",1.745,1.79,.90,.95,-.74,.74,.01); rbox(g,"steel",1.745,1.79,.36,.41,-.64,.64,.01); rbox(g,"steel",1.745,1.79,.36,.95,.61,.67,.01); rbox(g,"steel",1.745,1.79,.36,.95,-.67,-.61,.01); rbox(g,"steel",1.745,1.79,.62,.95,-.03,.03,.008);
+  g=mk("railR"); rbox(g,"steel",.86,1.84,.40,.52,.50,.60,.015);
+  g=mk("wheelR"); wheel(g,FX,WZ);
+  g=mk("bearingR"); cylZ(g,"steel",.075,.07,FX,.32,.655,32); cylZ(g,"dark",.035,.08,FX,.32,.66,16); cylZ(g,"steel",.13,.012,FX,.32,.69,40);
+  g=mk("knuckleR"); rbox(g,"dark",FX-.05,FX+.05,.22,.52,.585,.625,.02); rbox(g,"dark",FX-.16,FX-.04,.33,.36,.59,.62,.01);
+  g=mk("strutR"); { cylY(g,"dark",.035,.50,.98,FX-.04,.56); cylY(g,"chrome",.012,.70,1.0,FX-.04,.56); cylY(g,"dark",.09,.96,.99,FX-.04,.56);
+     const pts=[]; for(let i=0;i<=160;i++){ const a=i/160*Math.PI*2*5.5; pts.push(new T.Vector3(FX-.04+.075*Math.cos(a), .62+.32*i/160, .56+.075*Math.sin(a))); }
+     g.add(new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts),260,.011,8,false),mat("spring"))); }
+  g=mk("armR"); { const s=new T.Shape(); s.moveTo(FX-.05,.60); s.lineTo(1.00,.22); s.quadraticCurveTo(1.03,.15,1.10,.17); s.quadraticCurveTo(1.22,.26,FX+.02,.40); s.quadraticCurveTo(1.36,.26,1.47,.19); s.quadraticCurveTo(1.53,.19,1.53,.25); s.quadraticCurveTo(1.40,.36,FX+.05,.60); s.quadraticCurveTo(FX,.64,FX-.05,.60);
+     const geo=new T.ExtrudeGeometry(s,{depth:.03,bevelEnabled:true,bevelThickness:.008,bevelSize:.008,bevelSegments:3,curveSegments:20}); geo.rotateX(Math.PI/2); geo.translate(0,.245,0); g.add(new T.Mesh(geo,mat("gloss"))); cylZ(g,"rubber",.03,.06,1.04,.22,.22,16); cylX(g,"rubber",.035,.07,1.48,.22,.23); }
+  g=mk("ballR"); sphere(g,"chrome",.035,FX,.24,.60); cylY(g,"dark",.012,.24,.30,FX,.60);
+  g=mk("linkR"); cylY(g,"steel",.011,.26,.56,FX-.12,.52); sphere(g,"dark",.02,FX-.12,.26,.52); sphere(g,"dark",.02,FX-.12,.56,.52);
+  g=mk("tieR"); cylZ(g,"steel",.014,.30,FX-.14,.345,.44,16); sphere(g,"dark",.025,FX-.14,.345,.59);
+  const axle=(gg,zIn,zOut)=>{ const sg=Math.sign(zOut-zIn), len=Math.abs(zOut-zIn);
+    cylZ(gg,"chrome",.026,len-.12,FX,.32,(zIn+zOut)/2,20);
+    cylZ(gg,"dark",.062,.07,FX,.32,zIn,24); cylZ(gg,"dark",.056,.06,FX,.32,zOut,24);
+    [zIn+sg*.07, zOut-sg*.065].forEach(zb=>{ for(let i=0;i<5;i++) cylZ(gg,"rubber",.052-i*.006,.018,FX,.32,zb+sg*(i-2)*.016*(zb===zIn+sg*.07?1:-1),20); }); };
+  g=mk("shaftR"); axle(g,.10,.60);
+  g=mk("shaftL"); axle(g,-.30,-.60);
+
+  P.forEach(p=>{ const gg=groups[p.id]; if(!gg) return;
+    const box3=new T.Box3().setFromObject(gg); p.center=box3.getCenter(new T.Vector3());
+    const v=new T.Vector3(...p.dir); if(v.lengthSq()) v.normalize(); p.vec=v.multiplyScalar(p.d||0);
+    gg.traverse(o=>{ if(o.isMesh){ o.userData.pid=p.id; o.castShadow=!o.material.transparent; pickables.push(o); } });
+  });
+}
+
+// ---------- Lógica de despiece ----------
+function partFactor(p){
+  if(tab==="pasos"){
+    if(p.step==null) return 0;
+    return (curStep>0 && p.step<=curStep) ? 1 : 0;
+  }
+  if(mode==="zona" && !p.zone) return 0;
+  if(mode==="desg" && status[p.id]!=="desgaste") return 0;
+  return explode;
+}
+const XRAY_F=["washer","armR","ballR","knuckleR","bearingR","linkR","tieR","shaftR","strutR","railR"], XRAY_FO=["wheelR","linerR","fenderR","bumper","doorFR"];
+const XRAY_L=["shaftL","suspL"], XRAY_LO=["wheelFL","fenderL","bumper","doorFL","trans"];
+const XRAY_R=["rshock","rbeam"], XRAY_RO=["shell","wheelRR","wheelRL","doorRR","doorRL","rbumper","tailgate","doorFR","doorFL"];
+function partOpacity(p){
+  if(selected && XRAY_F.includes(selected) && XRAY_FO.includes(p.id)) return .16;
+  if(selected && XRAY_R.includes(selected) && XRAY_RO.includes(p.id)) return .14;
+  if(selected && XRAY_L.includes(selected) && XRAY_LO.includes(p.id)) return .14;
+  if(tab==="pasos" && STEPS[curStep].parts.includes("rshock") && XRAY_RO.includes(p.id)) return .14;
+  if(tab==="pasos" && p.step!=null){ return p.step<curStep ? .28 : 1; }
+  if(mode==="zona" && !p.zone) return .13;
+  if(mode==="desg" && status[p.id]!=="desgaste") return .12;
+  return 1;
+}
+let t0=performance.now();
+function tick(now){
+  const t=(now-t0)/1000;
+  P.forEach(p=>{
+    const g=groups[p.id]; if(!g) return;
+    const f=partFactor(p);
+    const target=p.vec.clone().multiplyScalar(f);
+    g.position.lerp(target,.14);
+    const op=partOpacity(p);
+    let em=null, ei=0;
+    if(selected===p.id){ em=0x2a8cff; ei=.75+.25*Math.sin(t*5); }
+    else if(tab==="pasos" && p.step===curStep && curStep>0){ em=0xffa020; ei=.35+.25*Math.sin(t*4); }
+    else if(tab==="cot" && status[p.id]){ const s=status[p.id]; em= s==="danada"?0xff2a1a : s==="desgaste"?0x8a4dff : s==="revisar"?0xffaa00 : 0x22aa55; ei= s==="ok"?.12:.35; }
+    else if(mode==="desg" && status[p.id]==="desgaste"){ em=0x8a4dff; ei=.3+.15*Math.sin(t*3); }
+    g.traverse(o=>{ if(!o.isMesh) return; const m=o.material;
+      const want=Math.min(op,m.userData.baseOpacity);
+      const tr = want<1 || m.userData.baseTransparent;
+      if(m.transparent!==tr){ m.transparent=tr; m.needsUpdate=true; }
+      m.opacity=want; m.depthWrite = want>.5;
+      if(em!=null){ m.emissive.setHex(em); m.emissiveIntensity=ei; } else { m.emissive.setHex(m.userData.baseEmissive); m.emissiveIntensity=m.userData.baseEI; }
+    });
+  });
+  if(camGoal){ controls.target.lerp(camGoal.t,.08); camera.position.lerp(camGoal.p,.08); if(camera.position.distanceTo(camGoal.p)<.01) camGoal=null; }
+  controls.update();
+  renderer.render(scene,camera);
+  updateLabels();
+}
+let camGoal=null;
+function setView(instant){
+  const t = mode==="zona" ? new T.Vector3(1.5,.62,.3) : new T.Vector3(0,.75,0);
+  const k = camera.aspect<1 ? Math.pow(1/camera.aspect,.75) : 1;
+  const p = (mode==="zona" ? new T.Vector3(3.4,1.6,4.1) : new T.Vector3(5.6,3.0,5.6)).sub(t).multiplyScalar(k).add(t);
+  if(instant){ controls.target.copy(t); camera.position.copy(p); camGoal=null; } else camGoal={t,p};
+}
+function focusPart(id){
+  const p=byId[id]; if(!p||!p.center||!controls) return;
+  const c=p.center.clone().add(p.vec.clone().multiplyScalar(partFactor(p)));
+  const dir=camera.position.clone().sub(controls.target).normalize();
+  // mirar desde el lado donde está la pieza
+  if((p.center.z<-.2 && dir.z>0) || (p.center.z>.2 && dir.z<0)) dir.z*=-1;
+  if(XRAY_F.includes(id)||XRAY_L.includes(id)) dir.set(.35,.42,p.center.z<0?-1:1).normalize();
+  const k=camera.aspect<1?Math.pow(1/camera.aspect,.6):1; const dist=Math.max(camera.aspect<1?2.4:1.8,Math.min(3.6,camera.position.distanceTo(controls.target)))*k;
+  camGoal={t:c,p:c.clone().add(dir.multiplyScalar(dist))};
+}
+function setupPicking(){
+  const ray=new T.Raycaster(), v=new T.Vector2(); let down=null;
+  canvas.addEventListener("pointerdown",e=>{ down={x:e.clientX,y:e.clientY}; });
+  canvas.addEventListener("pointerup",e=>{
+    if(!down) return; const dx=e.clientX-down.x, dy=e.clientY-down.y; down=null;
+    if(dx*dx+dy*dy>64) return;
+    const r=canvas.getBoundingClientRect(); v.set(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
+    ray.setFromCamera(v,camera);
+    const hits=ray.intersectObjects(pickables.filter(o=>{ const p=byId[o.userData.pid]; return o.visible && (mode!=="zona"||p.zone) && p.id!=="shell"; }),false);
+    if(hits.length) select(hits[0].object.userData.pid,false); else select(null);
+  });
+}
+
+// ---------- Tarjeta de selección ----------
+const LABELS=[["armR","Trapecio"],["strutR","Amortiguador del."],["knuckleR","Mangueta"],["headR","Faro der."],["headL","Faro izq."],["fenderR","Guardafango"],["bumper","Parachoques"],["rad","Radiador"],["washer","Tanque limpiaparabrisas"],["mirrorR","Espejo der."],["shaftR","Palier der."],["shaftL","Palier izq."],["rshock","Amortiguadores traseros"],["rbeam","Eje trasero"]];
+const labEls={}; const labHost=document.getElementById("labels");
+LABELS.forEach(([id,t])=>{ const b=document.createElement("button"); b.className="lab"+(id==="armR"||id==="rshock"?" key":""); b.textContent=t; b.onclick=()=>select(id); labHost.appendChild(b); labEls[id]=b; });
+const _v=new (window.THREE?THREE.Vector3:Object)();
+function updateLabels(){
+  const w=stage.clientWidth,h=stage.clientHeight, placed=[];
+  // prioridad: claves, luego dañadas/desgaste, luego el resto; se ocultan las que se encimarían
+  const pr=id=>(id==="armR"||id==="rshock"?0:(status[id]==="danada"||status[id]==="desgaste")?1:2);
+  LABELS.slice().sort((a,b)=>pr(a[0])-pr(b[0])).forEach(([id])=>{ const p=byId[id], el=labEls[id], g=groups[id];
+    let show = labelsOn && g && selected!==id && (mode!=="zona" || p.zone) && partOpacity(p)>.2 && !(tab==="pasos");
+    let x=0,y=0;
+    if(show){ _v.copy(p.center).add(g.position); if(id==="armR") _v.set(1.25,.24,.5).add(g.position); _v.project(camera); show = _v.z<1 && Math.abs(_v.x)<1.05 && Math.abs(_v.y)<1.05; x=(_v.x+1)/2*w; y=(1-_v.y)/2*h; }
+    if(show){ if(!el._w){ el.hidden=false; el._w=el.offsetWidth; el._h=el.offsetHeight; }
+      const r={l:x-el._w/2-3,r:x+el._w/2+3,t:y-el._h-8,b:y-4};
+      if(placed.some(q=>r.l<q.r&&r.r>q.l&&r.t<q.b&&r.b>q.t)) show=false; else placed.push(r); }
+    el.hidden=!show; if(show){ el.style.left=x+"px"; el.style.top=y+"px"; el.setAttribute("aria-current",String(selected===id)); } });
+}
+let labelsOn=true;
+function select(id,focus){
+  selected=id; const card=$("#card");
+  if(!id){ card.hidden=true; document.querySelector('.main').classList.remove('has-card'); if(renderer) resize(); renderLists(); return; }
+  const p=byId[id];
+  $("#cName").textContent=p.es; $("#cEn").textContent=p.en;
+  $("#cOem").textContent=p.oem; $("#cAlt").textContent=p.alt?"Alternativa: "+p.alt:""; $("#cAlt").hidden=!p.alt;
+  $("#cSide").textContent=p.side;
+  $("#cPriceWrap").hidden=p.usd==null; $("#cPrice").textContent=fmt(p.usd)+(p.qty?" c/u × "+p.qty:"")+" (EE. UU.)";
+  $("#cStepWrap").hidden=!(p.zone&&p.step!=null); $("#cStep").textContent=p.step!=null?p.step+" · "+STEPS[p.step].t:"";
+  $("#cNote").textContent=p.note||""; $("#cNote").hidden=!p.note;
+  $("#cStatus").hidden=p.id==="shell";
+  $("#cStatus").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(status[id]===b.dataset.s)));
+  const l=$("#cLink"); l.hidden=!p.url; if(p.url) l.href=p.url; l.textContent=p.url.includes("7zap")?"Ver diagrama OEM (7zap)":"Ver en catálogo OEM";
+  $("#cCopyWrap").hidden=!/\d{5}-/.test(p.oem);
+  card.hidden=false; document.querySelector('.main').classList.add('has-card'); resize();
+  if(focus!==false) focusPart(id);
+  renderLists();
+}
+$("#cardClose").onclick=()=>select(null);
+$("#labToggle").onclick=()=>{ labelsOn=!labelsOn; $("#labToggle").setAttribute("aria-pressed",String(labelsOn)); };
+$("#cStatus").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b||!selected) return; status[selected]=b.dataset.s; save(); select(selected,false); });
+$("#cCopy").onclick=e=>{ e.preventDefault(); if(selected) copyText(byId[selected].oem); };
+
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>t.hidden=true,1800); }
+function copyText(txt,fallbackHost){
+  const done=()=>toast("Copiado");
+  const fb=()=>{ if(fallbackHost){ let ta=fallbackHost.querySelector("textarea"); if(!ta){ ta=document.createElement("textarea"); ta.className="fallback"; ta.id="fallbackText"; fallbackHost.appendChild(ta);} ta.value=txt; ta.focus(); ta.select(); toast("Selecciona y copia el texto"); } else toast("No se pudo copiar: "+txt); };
+  try{ navigator.clipboard.writeText(txt).then(done,fb); }catch(e){ fb(); }
+}
+
+// ---------- Listas ----------
+function renderPiezas(){
+  const v=$("#vPiezas"); const groupsOrder=["Frente y luces","Carrocería","Enfriamiento","Suspensión y dirección","Suspensión trasera","Estructura","Motor","Resto del carro"];
+  let h="";
+  const row=p=>{ const s=status[p.id]||""; return `<button class="row" data-id="${p.id}" aria-current="${selected===p.id}"><span class="dot ${s}" title="${ST_LABEL[s]||""}"></span><span class="nm">${p.es}<span>${p.en} · ${p.oem}</span></span><span class="step">${p.step!=null?"P"+p.step:""}</span></button>`; };
+  if(mode==="desg"){ const w=P.filter(p=>status[p.id]==="desgaste");
+    h+=`<h3>Cambio por desgaste (${w.length})</h3>`+(w.length?w.map(row).join(""):`<p class="small">Aún no marcaste ninguna pieza.</p>`);
+    h+=`<p class="small" style="margin-top:8px">Para agregar otra, tócala en esta lista o en el modelo y elige «Desgaste».</p><h3 style="margin-top:18px">Todas las piezas</h3>`; }
+  groupsOrder.forEach(gn=>{
+    const items=P.filter(p=>p.grp===gn && p.id!=="shell" && (mode!=="zona"||p.zone)); if(!items.length) return;
+    h+=`<h3>${gn}</h3>`;
+    items.forEach(p=>{ h+=row(p); });
+  });
+  if(mode==="zona") h+=`<p class="small">Las piezas por desgaste, como los amortiguadores traseros, están en el botón «Desgaste».</p>`;
+  v.innerHTML=h;
+}
+function renderPasos(){
+  const s=STEPS[curStep], v=$("#vPasos");
+  let h=`<div class="stepnav"><button class="btn" id="prevS" aria-label="Paso anterior" ${curStep===0?"disabled":""}>‹</button><div class="lbl">Paso ${curStep} de ${STEPS.length-1}</div><button class="btn primary" id="nextS" aria-label="Paso siguiente" ${curStep===STEPS.length-1?"disabled":""}>›</button></div>`;
+  h+=`<div class="steptitle">${s.t}</div>`;
+  if(s.parts.length) h+=`<div class="chips">${s.parts.map(id=>`<button class="chip" data-id="${id}">${byId[id].es}</button>`).join("")}</div>`;
+  h+=`<ol class="inst">${s.inst.map(x=>`<li>${x}</li>`).join("")}</ol>`;
+  h+=`<div class="tools"><b>Herramientas:</b> ${s.tools}</div>`;
+  if(s.warn) h+=`<div class="warnbox">${s.warn}</div>`;
+  h+=`<div class="dots" aria-label="Ir a un paso">${STEPS.map((x,i)=>`<button data-step="${i}" class="${i<curStep?"done":""}" aria-current="${i===curStep}" title="${x.t}">${i}</button>`).join("")}</div>`;
+  h+=`<p class="small" style="margin-top:12px">Para rearmar, sigue los pasos al revés y termina con una alineación. Los torques vienen de los videos de 1A Auto para el Soul 2010–2013; confírmalos con el manual de taller.</p>`;
+  v.innerHTML=h;
+  $("#prevS").onclick=()=>goStep(curStep-1); $("#nextS").onclick=()=>goStep(curStep+1);
+}
+function goStep(i){ curStep=Math.max(0,Math.min(STEPS.length-1,i)); if(selected) select(null); renderPasos(); $("#vPasos").scrollTop=0; const ids=STEPS[curStep].parts; if(ids.length){ focusStep(ids); } else setView(false); }
+function focusStep(ids){ if(!controls) return; const c=new T.Vector3(); ids.forEach(id=>{ const p=byId[id]; c.add(p.center.clone().add(p.vec)); }); c.multiplyScalar(1/ids.length);
+  const dir=camera.position.clone().sub(controls.target).normalize(); const k=camera.aspect<1?Math.pow(1/camera.aspect,.6):1; camGoal={t:c,p:c.clone().add(dir.multiplyScalar(3.2*k))}; }
+
+let qFilter="todo";
+const QF={choque:s=>s==="danada", desg:s=>s==="desgaste", ambos:s=>s==="danada"||s==="desgaste", todo:s=>s==="danada"||s==="desgaste"||s==="revisar"};
+function quoteItems(){ const order={danada:0,desgaste:1,revisar:2}; return P.filter(p=>p.id!=="battery" && p.id!=="shell" && QF[qFilter](status[p.id])).sort((a,b)=>order[status[a.id]]-order[status[b.id]]); }
+function renderCot(){
+  const v=$("#vCot"), items=quoteItems();
+  const tot=items.reduce((a,p)=>a+(p.usd||0)*(p.qty||1),0), sinP=items.filter(p=>p.usd==null).length;
+  let h=`<div class="fields"><label for="vin">VIN (17 caracteres)<input id="vin" maxlength="17" autocomplete="off" autocapitalize="characters" value="${vin.replace(/"/g,"")}" placeholder="Escribe tu VIN"></label>
+  <label for="motor">Motor<select id="motor">${["No sé","1.6 Gamma","2.0 Nu"].map(m=>`<option ${m===motor?"selected":""}>${m}</option>`).join("")}</select></label></div>`;
+  h+=`<div class="filt" role="group" aria-label="Qué piezas incluir">${[["choque","Choque"],["desg","Desgaste"],["ambos","Choque + desgaste"],["todo","Todo + revisar"]].map(([k,t])=>`<button data-f="${k}" aria-pressed="${qFilter===k}">${t}</button>`).join("")}</div>`;
+  if(!items.length) h+=`<p class="small">No hay piezas con ese estado. Toca una pieza en el modelo y márcala como «Dañada» o «Desgaste».</p>`;
+  items.forEach(p=>{ h+=`<div class="q"><div><div class="es">${p.es}</div><div class="enl">${p.en}</div></div><div class="pr">${p.qty&&p.usd!=null?p.qty+" × "+fmt(p.usd):fmt(p.usd)}</div>
+    <div class="sub"><span class="oem">${p.oem}</span><span>${p.side}</span>${p.alt?`<span>alt.: ${p.alt}</span>`:""}<span class="dot ${status[p.id]}" style="display:inline-block"></span><span>${ST_LABEL[status[p.id]]}</span></div></div>`; });
+  h+=`<div class="total"><span>Referencia EE. UU. (${items.length} piezas${sinP?`, ${sinP} sin precio`:""})</span><span>US$ ${tot.toFixed(2)}</span></div>`;
+  h+=`<div class="copyrow"><button class="btn primary" id="copyList">Copiar lista para proveedores</button></div><div id="fbHost"></div>`;
+  h+=`<p class="small">Precios de KiaPartsNow en dólares, sin envío ni impuestos, a noviembre de 2026. Sirven para comparar, no son precios en Lima. Pide siempre la cotización con tu VIN: el concesionario te confirma el código exacto aunque luego compres en otra tienda.</p>`;
+  v.innerHTML=h;
+  $("#vin").oninput=e=>{ vin=e.target.value.toUpperCase(); save(); };
+  $("#motor").onchange=e=>{ motor=e.target.value; save(); };
+  v.querySelectorAll(".filt button").forEach(b=>b.onclick=()=>{ qFilter=b.dataset.f; renderCot(); });
+  $("#copyList").onclick=()=>copyText(quoteText(), $("#fbHost"));
+}
+function quoteText(){
+  const items=quoteItems();
+  let s=`Hola, quisiera cotizar repuestos para un Kia Soul 2013`+(motor!=="No sé"?` motor ${motor}`:"")+(vin?`, VIN ${vin}`:"")+`. Lado derecho = copiloto.\n\n`;
+  items.forEach((p,i)=>{ s+=`${i+1}. ${p.qty?p.qty+" × ":""}${p.es} (${p.en})`+(/\d{5}-/.test(p.oem)?` – código OEM ${p.oem}`:"")+(p.alt?` (o ${p.alt})`:"")+` – ${p.side}`+(status[p.id]==="desgaste"?" – cambio por desgaste":"")+`\n`; });
+  s+=`\nPor favor indicar precio, si es original o alternativo, y tiempo de entrega. Gracias.`;
+  return s;
+}
+function renderLists(){ if(tab==="piezas") renderPiezas(); if(tab==="cot") renderCot(); }
+
+// ---------- Pestañas y controles ----------
+function setTab(t){
+  tab=t; ["piezas","pasos","cot"].forEach(k=>{ $("#v"+({piezas:"Piezas",pasos:"Pasos",cot:"Cot"})[k]).hidden=k!==t; });
+  $("#tPiezas").setAttribute("aria-selected",String(t==="piezas")); $("#tPasos").setAttribute("aria-selected",String(t==="pasos")); $("#tCot").setAttribute("aria-selected",String(t==="cot"));
+  $("#ctrlExplode").hidden=t==="pasos"; $("#legend").hidden=t!=="cot";
+  if(t==="pasos"){ if(mode!=="zona") setMode("zona"); renderPasos(); } else if(controls && !selected) setView(false);
+  renderLists();
+}
+$("#tPiezas").onclick=()=>setTab("piezas"); $("#tPasos").onclick=()=>setTab("pasos"); $("#tCot").onclick=()=>setTab("cot");
+function setMode(m){ mode=m; $("#mZona").setAttribute("aria-pressed",String(m==="zona")); $("#mTodo").setAttribute("aria-pressed",String(m==="todo")); $("#mDesg").setAttribute("aria-pressed",String(m==="desg"));
+  if(selected && m==="zona" && !byId[selected].zone) select(null);
+  if(controls) setView(false); if(m!=="zona" && tab==="pasos") setTab("piezas"); renderLists(); }
+$("#mZona").onclick=()=>setMode("zona"); $("#mTodo").onclick=()=>setMode("todo"); $("#mDesg").onclick=()=>setMode("desg");
+$("#explode").oninput=e=>{ explode=e.target.value/100; };
+$("#reset").onclick=()=>{ explode=0; $("#explode").value=0; };
+document.addEventListener("click",e=>{
+  const r=e.target.closest(".row,.chip"); if(r&&r.dataset.id){ select(r.dataset.id); return; }
+  const d=e.target.closest(".dots button"); if(d){ goStep(+d.dataset.step); }
+});
+
+renderPiezas();
+if(T && T.OrbitControls){ try{ initThree(); }catch(err){ console.error(err); stage.insertAdjacentHTML("beforeend",'<div class="err">Tu navegador no pudo iniciar el visor 3D. Las listas de piezas y pasos siguen funcionando abajo.</div>'); } }
+})();
+</script>
+
+<!-- Botón de comentarios · Miguel Agip -->
+<a id="ma-fb" href="https://wa.me/51975525627?text=Hola%20Miguel%2C%20le%20escribo%20por%20el%20simulador%20Despiece%20Kia%20Soul%202013%3A%20" target="_blank" rel="noopener"
+ style="position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:99999;background:#e8b44a;color:#1a1408;font:700 13px system-ui,sans-serif;text-decoration:none;padding:9px 13px;border-radius:99px;box-shadow:0 6px 18px rgba(0,0,0,.35)">💬 Comentarios</a>
+<a href="mailto:neptaliagiphoyos@gmail.com?subject=Comentario%20-%20Despiece%20Kia%20Soul%202013"
+ style="position:fixed;left:142px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:99999;background:#20242d;color:#fff;font:700 13px system-ui,sans-serif;text-decoration:none;padding:9px 12px;border-radius:99px;box-shadow:0 6px 18px rgba(0,0,0,.35)">✉️</a>
+</body></html>
