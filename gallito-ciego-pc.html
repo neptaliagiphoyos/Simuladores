@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Simulador C.H. Gallito Ciego (computadora)</title>
+<style>
+:root{--bg:#0f1420;--card:#181f2e;--tx:#e8edf6;--mu:#93a0b8;--ac:#4cc3ff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:1500px;margin:0 auto;padding:14px 18px 40px}
+h1{font-size:20px;margin:2px 4px 0}
+.sub{margin:2px 4px 8px;color:var(--mu);font-size:13px}
+#cv{width:100%;display:block;background:#0f1420;border-radius:14px}
+.card{background:var(--card);border-radius:14px;padding:12px;margin-top:10px}
+.card h2{font-size:12px;margin:0 0 8px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em}
+.read{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.read div{background:#111827;border-radius:10px;padding:6px 8px}
+.read b{display:block;font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.read span{font-size:11px;color:var(--mu)}
+.ctl{margin:12px 0 4px}
+.ctl label{display:flex;justify-content:space-between;font-size:14px;gap:8px}
+.ctl output{color:var(--ac);font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+input[type=range]{width:100%;height:34px;accent-color:var(--ac)}
+input[disabled]{opacity:.35}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+button{font:inherit;color:var(--tx);background:#243049;border:1px solid #33415f;border-radius:12px;padding:10px 8px;min-height:48px;cursor:pointer}
+button small{display:block;color:var(--mu);font-size:11px}
+button.on{background:#1f6b45;border-color:#2e9a63}
+button.off{background:#5a2a2a;border-color:#8a3a3a}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:#111827;border-radius:12px;padding:3px;gap:3px;margin-top:8px}
+.seg button{border:0;background:transparent;min-height:40px;font-size:14px;padding:6px 4px}
+.seg button.sel{background:var(--ac);color:#06202e;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{min-height:36px;padding:6px 11px;border-radius:18px;font-size:13px}
+.chips button.sel{background:var(--ac);color:#06202e;border-color:var(--ac);font-weight:700}
+#info{margin-top:10px;font-size:14px;color:#cfd8e8;min-height:2.8em}
+ul.ex{font-size:14px;color:#cfd8e8;margin:0;padding-left:18px}
+ul.ex li{margin:4px 0}
+#alert{color:#ffb4a0;font-size:13px;margin-top:8px;min-height:1.2em}
+.chart{width:100%;height:130px;display:block}
+select{font:inherit;color:var(--tx);background:#111827;border:1px solid #33415f;border-radius:10px;padding:8px;width:100%}
+.lbl{font-size:14px;margin-top:12px}
+.data{display:grid;grid-template-columns:1fr 92px;gap:6px 8px;align-items:center;font-size:13px}
+.data input{font:inherit;color:var(--tx);background:#111827;border:1px solid #33415f;border-radius:8px;padding:7px 6px;width:100%;text-align:right}
+.data .src{grid-column:1/3;font-size:11px;color:var(--mu);margin-top:-4px}
+.note{font-size:12px;color:var(--mu)}
+a{color:var(--ac)}
+#fb{position:fixed;right:14px;bottom:14px;z-index:5;border-radius:24px;min-height:44px;padding:8px 14px;background:#1f6b8f;border-color:#2b8fbf;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+#fbp{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;z-index:6}
+#fbp .box{background:var(--card);border-radius:16px 16px 0 0;padding:16px;max-width:560px;width:100%}
+#fbp textarea{width:100%;min-height:80px;font:inherit;color:var(--tx);background:#111827;border:1px solid #33415f;border-radius:10px;padding:8px}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:16px;align-items:start}
+.side{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow-y:auto;padding-right:4px}
+.side .card:first-child{margin-top:0}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.charts .card{margin-top:10px}
+.read{grid-template-columns:repeat(6,1fr)}
+kbd{display:inline-block;min-width:22px;padding:1px 6px;border:1px solid #4a5672;border-bottom-width:2px;border-radius:5px;background:#111827;font:12px ui-monospace,monospace;text-align:center;color:#e8edf6}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:5px 10px;font-size:13px;align-items:center}
+#cv{cursor:default}
+@media (max-width:900px){.app{grid-template-columns:1fr}.side{position:static;max-height:none}.read{grid-template-columns:repeat(3,1fr)}.charts{grid-template-columns:1fr}}
+</style></head>
+<body><div class="wrap">
+<h1>🏞️ Central Hidroeléctrica Gallito Ciego — simulador · versión computadora</h1>
+<p class="sub">Río Jequetepeque, Yonán (Contumazá, Cajamarca). Represa → túnel → 2 turbinas Francis → generadores síncronos → SEIN. Todos los datos se pueden cambiar en «Datos de la central».</p>
+
+<div class="app"><div class="main">
+<canvas id="cv"></canvas>
+<div class="card" style="margin-top:6px"><h2>Componentes — haz clic en uno para resaltarlo en el dibujo</h2>
+ <div class="chips" id="chips"></div>
+ <div id="info">Haz clic en un componente para verlo resaltado en el dibujo.</div>
+</div>
+<div id="alert"></div>
+<div id="alert"></div>
+<div class="card"><h2>Lecturas</h2>
+<div class="read">
+ <div><b id="rHn">0</b><span>Caída neta (m)</span></div>
+ <div><b id="rQ">0</b><span>Caudal turbinado (m³/s)</span></div>
+ <div><b id="rPh">0</b><span>P. hidráulica (MW)</span></div>
+ <div><b id="rPe">0</b><span>P. eléctrica total (MW)</span></div>
+ <div><b id="rN">0</b><span>Velocidad (rpm)</span></div>
+ <div><b id="rF">0</b><span>Frecuencia (Hz)</span></div>
+ <div><b id="rEt">0</b><span>Rendimiento turbina</span></div>
+ <div><b id="rEg">0</b><span>Rendimiento global</span></div>
+ <div><b id="rV">0</b><span>Tensión generador (kV)</span></div>
+ <div><b id="rQr">0</b><span>P. reactiva (MVAr)</span></div>
+ <div><b id="rFp">—</b><span>Factor de potencia</span></div>
+ <div><b id="rE">0</b><span>Energía/año a este ritmo (GWh)</span></div>
+</div>
+<div class="note" id="water" style="margin-top:8px"></div>
+</div>
+<div class="charts"><div class="card"><h2>Frecuencia y potencia (últimos 60 s)</h2><canvas id="ch1" class="chart"></canvas>
+ <div class="note">Celeste: frecuencia (55–65 Hz) · Amarillo: potencia eléctrica total (MW).</div></div>
+<div class="card"><h2>Rendimiento de la turbina Francis</h2><canvas id="ch2" class="chart"></canvas>
+ <div class="note">Rendimiento según el caudal de cada unidad (respecto al de diseño). Punto: donde trabaja ahora.</div></div></div>
+<div class="card"><h2>¿Qué está pasando?</h2><ul class="ex" id="expl"></ul></div>
+<div class="card"><h2>Fuentes y supuestos</h2>
+ <ul class="ex" style="font-size:13px">
+  <li>Statkraft Perú, ficha técnica C.H. Gallito Ciego: 34,00 MW instalados, 38,14 MW de potencia efectiva, 83 m de altura neta, 40 m³/s de caudal de diseño, 151 GWh/año, en operación desde noviembre de 1997, ubicada al pie de la represa. <a href="https://www.statkraft.com.pe/globalassets/0/.pe/nuestra-energia/factsheets/factsheet---gallito-ciego.pdf">ver ficha</a></li>
+  <li>Statkraft: unos 135 GWh/año; reservorio de compensación aguas abajo de la casa de máquinas; operación remota desde Lima. <a href="https://www.statkraft.com/about-statkraft/where-we-operate/peru/gallito-ciego-hydropower-plant/">ver página</a></li>
+  <li>OEFA (2024): embalse de 574 hm³, de los cuales 400 hm³ son de volumen útil, para riego del valle Jequetepeque. <a href="https://www.congreso.gob.pe/Docs/comisiones2023/PueblosAndinos/files/informes_entidades/mar-abril-2024/1512264-oficio-00259-2024-oefa_pcd-20240522_(1).pdf">ver oficio</a></li>
+  <li>Dos grupos con turbinas Francis (dato de un ejercicio académico de la UNCuyo, sin confirmar en fuente oficial).</li>
+  <li><b>Supuestos del simulador (no publicados, editables):</b> 450 rpm y 16 polos (60 Hz), 10 kV de generación, 19 MW por unidad, rendimiento máximo de la turbina 92 % y del generador 97 %, 5 m de pérdidas en el túnel a caudal de diseño, desnivel del embalse de 25 m entre lleno y vacío, reactancia síncrona de 1,0 pu e inercia H = 3 s.</li>
+  <li>Ojo: con 40 m³/s y 83 m de caída la potencia del agua es 32,6 MW; los 34–38 MW de la ficha requerirían más caudal o más altura. Por eso el caudal se puede subir hasta 60 m³/s.</li>
+ </ul>
+</div>
+</div>
+<div class="side">
+<div class="card"><h2>Operación</h2>
+ <div class="seg"><button id="mSein" class="sel">Conectada al SEIN</button><button id="mIsla">En isla (carga local)</button></div>
+ <div class="ctl"><label>Nivel del embalse (volumen útil) <output id="oLv"></output></label>
+  <input type="range" id="sLv" min="0" max="100" step="1" value="75"></div>
+ <div class="ctl"><label>Caudal autorizado para riego (descarga) <output id="oQa"></output></label>
+  <input type="range" id="sQa" min="0" max="60" step="0.5" value="40"></div>
+ <div class="lbl">Unidades en servicio</div>
+ <div class="seg" id="segU"></div>
+ <div class="lbl">Regulador de velocidad (gobernador)</div>
+ <div class="seg"><button id="gA" class="sel">Automático</button><button id="gM">Manual</button></div>
+ <div class="ctl"><label>Apertura de álabes directrices <output id="oA"></output></label>
+  <input type="range" id="sA" min="0" max="100" step="1" value="80"></div>
+ <div class="ctl" id="bD"><label>Demanda de la carga local (isla) <output id="oD"></output></label>
+  <input type="range" id="sD" min="0" max="45" step="0.5" value="20"></div>
+ <div class="ctl"><label>Excitación del rotor (corriente de campo) <output id="oX"></output></label>
+  <input type="range" id="sX" min="0.5" max="2" step="0.01" value="1.25"></div>
+ <div class="btns">
+  <button id="bBrk" class="on">⚡ Interruptor cerrado<small>clic para abrir (rechazo de carga)</small></button>
+  <div><select id="sSl" aria-label="Cámara lenta"><option value="5">Cámara lenta 1/5</option><option value="20" selected>Cámara lenta 1/20</option><option value="50">Cámara lenta 1/50</option><option value="150">Cámara lenta 1/150</option></select></div>
+ </div>
+ <div id="msg" class="note" style="margin-top:8px;min-height:1.2em;color:#ffe9a8"></div>
+</div>
+<div class="card"><h2>Atajos de teclado</h2><div class="keys">
+ <kbd>S</kbd><span>Conectar al SEIN</span><kbd>I</kbd><span>Operar en isla</span>
+ <kbd>A</kbd><span>Regulador automático / manual</span><kbd>B</kbd><span>Abrir / cerrar interruptor</span>
+ <kbd>U</kbd><span>Cambiar número de unidades en servicio</span>
+ <kbd>↑</kbd> <kbd>↓</kbd><span>Apertura de álabes (manual) ±5 %</span>
+ <kbd>←</kbd> <kbd>→</kbd><span>Caudal autorizado ±1 m³/s</span>
+ <kbd>+</kbd> <kbd>−</kbd><span>Excitación ±0,05 pu</span>
+ <kbd>PgUp</kbd> <kbd>PgDn</kbd><span>Nivel del embalse ±5 %</span>
+ <kbd>Espacio</kbd><span>Pausa / continuar</span><kbd>R</kbd><span>Reiniciar simulación</span>
+ <kbd>Esc</kbd><span>Quitar el resaltado del componente</span>
+</div></div>
+<div class="card"><h2>Datos de la central (editables)</h2>
+ <div class="data" id="data"></div>
+ <div class="btns"><button id="bGC">↺ Restaurar datos Gallito Ciego</button><button id="bRs">⏹ Reiniciar simulación<small>vuelve a la operación inicial</small></button></div>
+ <p class="note" id="chk"></p>
+</div>
+</div></div>
+</div>
+
+<button id="fb">💬 Comentarios</button>
+<div id="fbp"><div class="box">
+ <h2 style="font-size:15px;margin:0 0 8px">Envía tus comentarios o sugerencias</h2>
+ <textarea id="fbt" placeholder="Escribe tu comentario sobre el simulador…"></textarea>
+ <div class="btns">
+  <a id="fbW" class="btn" href="#"><button style="width:100%">📱 Enviar por WhatsApp<small>975 525 627</small></button></a>
+  <a id="fbM" href="#"><button style="width:100%">✉️ Enviar por correo<small>neptaliagiphoyos@gmail.com</small></button></a>
+ </div>
+ <p class="note">Si el botón no abre la aplicación, escribe a <b>neptaliagiphoyos@gmail.com</b> o al WhatsApp <b>+51 975 525 627</b>. Neptalí Agip.</p>
+ <button id="fbC" style="width:100%;margin-top:6px">Cerrar</button>
+</div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const cv=$('cv'),ctx=cv.getContext('2d'),W=360,H=700,CW=1080,CH=650;let DPR=1,paused=false;
+const c1=$('ch1'),x1=c1.getContext('2d'),c2=$('ch2'),x2=c2.getContext('2d');
+function fit(){const d=window.devicePixelRatio||1;DPR=d;cv.width=CW*d;cv.height=CH*d;ctx.setTransform(d,0,0,d,0,0);
+ for(const [c,x] of [[c1,x1],[c2,x2]]){const r=c.getBoundingClientRect();c.width=r.width*d;c.height=r.height*d;x.setTransform(d,0,0,d,0,0);}}
+window.addEventListener('resize',fit);
+
+/* ---------- datos ---------- */
+const GC={Hfull:93,dH:25,Hnd:83,Qd:40,Nu:2,Pu:19,rpm:450,poles:16,kV:10,etat:0.92,etag:0.97,hl:5,Vu:400,Hin:3};
+const FIELDS=[
+ ['Hfull','Caída bruta con embalse lleno (m)','supuesto: 83 m netos + pérdidas con el embalse al 75 %'],
+ ['dH','Desnivel embalse lleno → vacío (m)','supuesto'],
+ ['Hnd','Altura neta de diseño (m)','Statkraft: 83 m'],
+ ['Qd','Caudal de diseño total (m³/s)','Statkraft: 40 m³/s'],
+ ['Nu','Unidades instaladas (1–4)','2 grupos Francis'],
+ ['Pu','Potencia nominal por unidad (MW)','supuesto: 2 × 19 ≈ 38 MW de potencia efectiva'],
+ ['rpm','Velocidad nominal (rpm)','supuesto'],
+ ['poles','Número de polos del generador','supuesto: 16 polos × 450 rpm / 120 = 60 Hz'],
+ ['kV','Tensión de generación (kV)','supuesto'],
+ ['etat','Rendimiento máx. turbina (0–1)','típico Francis: 0,90–0,94'],
+ ['etag','Rendimiento generador (0–1)','típico: 0,96–0,98'],
+ ['hl','Pérdidas en el túnel a caudal de diseño (m)','supuesto'],
+ ['Vu','Volumen útil del embalse (hm³)','OEFA: 400 hm³'],
+ ['Hin','Inercia H del grupo (s)','típico: 2–4 s']];
+let D={...GC};
+const S0={mode:'sein',lv:75,Qa:40,on:2,auto:true,a:80,dem:20,ex:1.25,brk:true,slow:20};
+let S={...S0},st={w:0,a:0.8,I:0,trip:false,th:0,hist:[],ht:0,sync:false,syncT:0},R={};
+
+function wn(){return D.rpm*2*Math.PI/60;}
+function hydro(a){ // a: apertura 0..1 (todas las unidades iguales)
+ const Qdu=D.Qd/D.Nu,lv=S.lv/100,Hb=D.Hfull-D.dH*(1-Math.pow(lv,0.7));
+ let Hn=Hb,Qu=0;
+ for(let i=0;i<5;i++){Qu=a*1.1*Qdu*Math.sqrt(Math.max(0,Hn)/D.Hnd);const Qt=Qu*S.on;Hn=Math.max(0,Hb-D.hl*(Qt/D.Qd)**2);}
+ const x=Qu/Qdu;let eta=D.etat*(1-1.1*(x-0.85)**2-(x<0.3?(0.3-x)*1.6:0));eta=Math.max(0,eta);
+ const Phu=1000*9.81*Qu*Hn;return{Hb,Hn,Qu,Qt:Qu*S.on,x,eta,Phu,Ptu:eta*Phu};
+}
+function step(dt){
+ const n=20,h=dt/n,w0=wn(),Su=D.Pu/0.9*1e6,J=2*D.Hin*Su/(w0*w0);
+ const locked=S.mode==='sein'&&S.brk&&!st.trip;
+ for(let i=0;i<n;i++){
+  // regulador
+  if(st.trip){st.a=Math.max(0,st.a-0.15*h);}
+  else if(S.auto){
+   let tgt;
+   if(locked){ // sigue el caudal autorizado
+    let lo=0,hi=1;for(let k=0;k<14;k++){const m=(lo+hi)/2;hydro(m).Qt<S.Qa?lo=m:hi=m;}tgt=lo;
+   }else{const e=(w0-st.w)/w0;st.I+=0.6*e*h;st.I=Math.max(-0.35,Math.min(0.65,st.I));tgt=Math.max(0,Math.min(1,0.35+st.I+4*e));}
+   const dA=Math.max(-0.12*h,Math.min(0.12*h,tgt-st.a));st.a+=dA;
+  }else{const dA=Math.max(-0.12*h,Math.min(0.12*h,S.a/100-st.a));st.a+=dA;}
+  const hy=hydro(st.a),wr=st.w/w0;
+  const Tt=S.on>0&&hy.Ptu>0?hy.Ptu/w0*(1.9-0.9*wr):0;
+  if(locked){st.w=w0;}
+  else{
+   const Pl=(S.mode==='isla'&&S.brk&&!st.trip)?S.dem*1e6/Math.max(1,S.on)/D.etag:0;
+   const Tl=Pl/Math.max(st.w,0.3*w0)+0.04*D.Pu*1e6/w0*wr*wr;
+   st.w=Math.max(0,st.w+(Tt-Tl)/J*h);
+   if(st.w>1.35*w0&&!st.trip){st.trip=true;}
+  }
+ }
+ if(S.mode==='isla'&&S.brk&&!st.trip&&D.poles*st.w/(4*Math.PI)<56.5){S.brk=false;st.uf=true;if(typeof document!=='undefined')syncUI();}
+ const hy=hydro(st.a),wr=st.w/w0,f=D.poles*st.w/(4*Math.PI);
+ if(st.sync){if(S.mode!=='sein'||st.trip||S.brk)st.sync=false;
+  else if(Math.abs(f-60)<0.3){st.syncT+=dt;if(st.syncT>1){S.brk=true;st.sync=false;st.syncT=0;if(typeof document!=='undefined'){syncUI();flash('✅ Sincronizado: interruptor cerrado, la central vuelve a entregar potencia al SEIN.');}}}
+  else st.syncT=0;}
+ let Pm=S.on>0?hy.Ptu*(locked?1:Math.max(0,1.9-0.9*wr)*wr):0,Pe=0;
+ const conn=S.brk&&!st.trip;
+ if(locked)Pe=Pm*D.etag;else if(S.mode==='isla'&&conn)Pe=S.dem*1e6/Math.max(1,S.on);
+ const Pu=Pe/1e6,Su_=D.Pu/0.9,Ppu=Pu/Su_;
+ let delta=0,Qpu=0,V=0,loss=false;
+ if(locked){const s=Ppu/S.ex;if(s>=1){loss=true;delta=Math.PI/2;}else delta=Math.asin(s);Qpu=S.ex*Math.cos(delta)-1;V=1;}
+ else{V=S.ex/1.25*wr*(conn?1.08-0.18*Ppu:1.08);Qpu=conn?0.25*Ppu:0;}
+ R={...hy,f,wr,Pe:Pe*S.on/1e6,Pm:Pm*S.on/1e6,delta,Qr:Qpu*Su_*S.on,V:V*D.kV,Vpu:V,loss,locked,conn,Ppu};
+}
+
+/* ---------- dibujo ---------- */
+function pt(r,a,x,y){return[x+r*Math.cos(a),y-r*Math.sin(a)];}
+function mark(id){if(S.sel!==id)return;ctx.save();ctx.shadowColor='#4cc3ff';ctx.shadowBlur=16;ctx.strokeStyle='#4cc3ff';ctx.lineWidth=3;ctx.stroke();ctx.restore();}
+function arrow(x1,y1,x2,y2,col,w=2){ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+ const a=Math.atan2(y2-y1,x2-x1),s=6+w;ctx.beginPath();ctx.moveTo(x2+Math.cos(a)*2,y2+Math.sin(a)*2);ctx.lineTo(x2-s*Math.cos(a-0.45),y2-s*Math.sin(a-0.45));ctx.lineTo(x2-s*Math.cos(a+0.45),y2-s*Math.sin(a+0.45));ctx.closePath();ctx.fill();}
+function txt(t,x,y,col='#fff',f='bold 12px system-ui',al='center'){ctx.font=f;ctx.fillStyle=col;ctx.textAlign=al;ctx.textBaseline='middle';ctx.fillText(t,x,y);}
+let flow=0;
+function drawProfile(dt){
+ const Qn=Math.min(1.5,R.Qt/D.Qd);flow+=dt*(5+60*Qn);
+ const g=ctx.createLinearGradient(0,0,0,230);g.addColorStop(0,'#1c3554');g.addColorStop(1,'#16243a');ctx.fillStyle=g;ctx.fillRect(0,0,W,232);
+ ctx.fillStyle='#2a3140';ctx.beginPath();ctx.moveTo(0,90);ctx.lineTo(40,60);ctx.lineTo(80,78);ctx.lineTo(120,40);ctx.lineTo(190,70);ctx.lineTo(240,45);ctx.lineTo(300,80);ctx.lineTo(360,55);ctx.lineTo(360,232);ctx.lineTo(0,232);ctx.fill();
+ txt('Perfil de la central (no a escala)',180,10,'#93a0b8','11px system-ui');
+ // embalse
+ const lv=S.lv/100,ys=38+(1-Math.pow(lv,0.7))*100;
+ const fx=y=>95+(205-y)/175*55;
+ ctx.beginPath();ctx.moveTo(0,ys);ctx.lineTo(fx(ys),ys);ctx.lineTo(95,205);ctx.lineTo(0,205);ctx.closePath();ctx.fillStyle='#24609f';ctx.fill();mark('embalse');
+ ctx.strokeStyle='rgba(180,220,255,.6)';ctx.lineWidth=1;ctx.beginPath();for(let x=0;x<=fx(ys);x+=3){const y=ys+1.2*Math.sin(x/7+flow/30);x?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();
+ txt('Embalse '+S.lv+' %',44,ys+14,'#cfe6ff','bold 10px system-ui');
+ // sedimentos
+ ctx.fillStyle='#5b4a35';ctx.beginPath();ctx.moveTo(0,198);ctx.lineTo(88,196);ctx.lineTo(95,205);ctx.lineTo(0,205);ctx.fill();
+ // presa
+ ctx.beginPath();ctx.moveTo(95,205);ctx.lineTo(150,30);ctx.lineTo(166,30);ctx.lineTo(228,205);ctx.closePath();ctx.fillStyle='#7d6a4f';ctx.fill();ctx.strokeStyle='#a08a66';ctx.lineWidth=1;ctx.stroke();mark('presa');
+ txt('Presa',160,90,'#f1e2c6','bold 10px system-ui');
+ // suelo
+ ctx.fillStyle='#3a3025';ctx.fillRect(0,205,W,27);
+ // túnel / tubería
+ const tun=[[104,186],[150,192],[234,197]];
+ ctx.strokeStyle='#59647c';ctx.lineWidth=9;ctx.beginPath();ctx.moveTo(...tun[0]);ctx.lineTo(...tun[1]);ctx.lineTo(...tun[2]);ctx.stroke();
+ ctx.beginPath();ctx.moveTo(...tun[0]);ctx.lineTo(...tun[1]);ctx.lineTo(...tun[2]);mark('tunel');
+ if(R.Qt>0.3){ctx.save();ctx.setLineDash([6,6]);ctx.lineDashOffset=-flow;ctx.strokeStyle='#4aa3ff';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(...tun[0]);ctx.lineTo(...tun[1]);ctx.lineTo(...tun[2]);ctx.stroke();ctx.restore();}
+ ctx.beginPath();ctx.rect(98,178,10,14);ctx.fillStyle='#8892a8';ctx.fill();mark('tunel');txt('toma',103,172,'#cfd8e8','9px system-ui');
+ // casa de máquinas
+ ctx.beginPath();ctx.rect(232,160,66,46);ctx.fillStyle='#c9ccd3';ctx.fill();ctx.fillStyle='#8b2f2f';ctx.fillRect(228,154,74,8);ctx.beginPath();ctx.rect(232,154,66,52);mark('casa');
+ txt('Casa de máquinas',265,148,'#e8edf6','9px system-ui');
+ for(let k=0;k<D.Nu;k++){const x=244+k*(46/Math.max(1,D.Nu-1||1)),on=k<S.on,y=188;
+  ctx.beginPath();ctx.arc(x,y,8,0,7);ctx.fillStyle=on?'#3d6d8f':'#666';ctx.fill();
+  if(on){ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(...pt(8,st.th,x,y));ctx.stroke();}
+  txt('G'+(k+1),x,y-13,'#2a3140','bold 8px system-ui');}
+ // H bruta
+ ctx.strokeStyle='#9fe3ff';ctx.setLineDash([3,3]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(22,ys);ctx.lineTo(22,198);ctx.lineTo(240,198);ctx.stroke();ctx.setLineDash([]);
+ arrow(22,(ys+198)/2,22,ys+2,'#9fe3ff',1.2);arrow(22,(ys+198)/2,22,196,'#9fe3ff',1.2);
+ ctx.save();ctx.translate(13,(ys+198)/2);ctx.rotate(-Math.PI/2);txt('H bruta '+R.Hb.toFixed(1)+' m',0,0,'#9fe3ff','bold 9px system-ui');ctx.restore();
+ // descarga y reservorio de compensación
+ ctx.beginPath();ctx.rect(298,196,62,12);ctx.fillStyle='#1f5f9e';ctx.fill();mark('compensa');
+ if(R.Qt>0.3){ctx.save();ctx.setLineDash([5,5]);ctx.lineDashOffset=-flow;ctx.strokeStyle='#7cc4ff';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(296,202);ctx.lineTo(360,202);ctx.stroke();ctx.restore();}
+ txt('reservorio de compensación → riego',300,222,'#cfe6ff','9px system-ui');
+ // línea de transmisión
+ ctx.strokeStyle='#cfd8e8';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(322,150);ctx.lineTo(330,92);ctx.lineTo(338,150);ctx.moveTo(324,104);ctx.lineTo(336,104);ctx.stroke();
+ ctx.strokeStyle=R.conn?'#ffd84a':'#666';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(290,154);ctx.quadraticCurveTo(310,110,330,94);ctx.quadraticCurveTo(345,88,360,92);ctx.stroke();
+ ctx.beginPath();ctx.moveTo(290,154);ctx.quadraticCurveTo(310,110,330,94);mark('linea');
+ txt(S.mode==='sein'?'al SEIN':'carga local',338,80,'#ffe9a8','bold 9px system-ui');
+}
+function drawUnit(){
+ const y0=240;ctx.fillStyle='#121a2a';ctx.fillRect(0,y0,W,262);
+ txt('Unidad G1 — turbina Francis y generador síncrono (corte)',180,y0+10,'#93a0b8','11px system-ui');
+ const tx=92,ty=y0+128,a=st.a,th=st.th;
+ // caja espiral
+ ctx.beginPath();for(let k=0;k<=60;k++){const ang=Math.PI/2-k/60*Math.PI*1.9,r=92-k/60*24;const p=pt(r,ang,tx,ty);k?ctx.lineTo(...p):ctx.moveTo(...p);}
+ for(let k=60;k>=0;k--){const ang=Math.PI/2-k/60*Math.PI*1.9;ctx.lineTo(...pt(64,ang,tx,ty));}
+ ctx.closePath();ctx.fillStyle='#3e4a63';ctx.fill();ctx.strokeStyle='#6b7690';ctx.lineWidth=1;ctx.stroke();mark('espiral');
+ ctx.beginPath();ctx.rect(tx-6,ty-104,30,16);ctx.fillStyle='#3e4a63';ctx.fill();txt('entrada del agua',tx+64,ty-96,'#93a0b8','9px system-ui');
+ // agua girando en la espiral
+ if(R.Qt>0.3){ctx.fillStyle='#6fc3ff';for(let k=0;k<14;k++){const ph=((flow/40+k/14)%1),ang=Math.PI/2-ph*Math.PI*1.9,r=82-ph*16;const p=pt(r,ang,tx,ty);ctx.beginPath();ctx.arc(p[0],p[1],2,0,7);ctx.fill();}}
+ // álabes directrices
+ for(let k=0;k<16;k++){const ang=k*Math.PI/8,c=pt(56,ang,tx,ty),dir=ang-Math.PI/2+a*0.75,L=8;
+  ctx.strokeStyle='#d8dde8';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(c[0]-L*Math.cos(dir),c[1]+L*Math.sin(dir));ctx.lineTo(c[0]+L*Math.cos(dir),c[1]-L*Math.sin(dir));ctx.stroke();
+  ctx.beginPath();ctx.arc(c[0],c[1],7,0,7);mark('alabes');}
+ // rodete
+ ctx.beginPath();ctx.arc(tx,ty,44,0,7);ctx.fillStyle='#2b3346';ctx.fill();mark('rodete');
+ ctx.strokeStyle='#b9c2d3';ctx.lineWidth=2;
+ for(let k=0;k<13;k++){const ang=th+k*2*Math.PI/13,p1=pt(13,ang,tx,ty),pc=pt(30,ang+0.35,tx,ty),p2=pt(42,ang+0.75,tx,ty);ctx.beginPath();ctx.moveTo(...p1);ctx.quadraticCurveTo(...pc,...p2);ctx.stroke();}
+ ctx.beginPath();ctx.arc(tx,ty,11,0,7);ctx.fillStyle='#9aa4ba';ctx.fill();mark('eje');
+ txt('Francis · álabes '+Math.round(st.a*100)+' %',tx,ty+110,'#cfd8e8','bold 10px system-ui');
+ // eje común
+ ctx.strokeStyle='#9aa4ba';ctx.lineWidth=5;ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(tx+44,ty);ctx.lineTo(268-86,ty);ctx.stroke();ctx.setLineDash([]);
+ ctx.beginPath();ctx.moveTo(tx+44,ty);ctx.lineTo(182,ty);mark('eje');txt('eje',(tx+44+182)/2,ty-10,'#93a0b8','9px system-ui');
+ // generador
+ const gx=268,gy=ty;
+ ctx.beginPath();ctx.arc(gx,gy,86,0,7);ctx.moveTo(gx+72,gy);ctx.arc(gx,gy,72,0,7,true);ctx.fillStyle='#4a5266';ctx.fill('evenodd');mark('estator');
+ const il=Math.min(1,Math.abs(R.Ppu||0));
+ for(let k=0;k<36;k++){const ang=k*Math.PI/18,p1=pt(72,ang,gx,gy),p2=pt(80,ang,gx,gy);ctx.strokeStyle=['#ff8a5c','#b5e655','#c38bff'][k%3];ctx.globalAlpha=0.35+0.65*il;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(...p1);ctx.lineTo(...p2);ctx.stroke();}
+ ctx.globalAlpha=1;
+ ctx.beginPath();ctx.arc(gx,gy,62,0,7);ctx.fillStyle='#2f374a';ctx.fill();mark('rotor');
+ const np=Math.max(2,Math.min(24,D.poles)),ex=Math.min(1,S.ex/1.6);
+ for(let k=0;k<np;k++){const c=th+k*2*Math.PI/np,hw=Math.PI/np*0.62,isN=k%2===0;
+  ctx.beginPath();ctx.arc(gx,gy,69,-(c-hw),-(c+hw),true);ctx.arc(gx,gy,50,-(c+hw*0.7),-(c-hw*0.7),false);ctx.closePath();
+  ctx.fillStyle=isN?`rgba(210,75,75,${0.3+0.7*ex})`:`rgba(61,111,214,${0.3+0.7*ex})`;ctx.fill();ctx.strokeStyle='#d98c3a';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.beginPath();ctx.arc(gx,gy,69,-(c-hw),-(c+hw),true);ctx.arc(gx,gy,50,-(c+hw*0.7),-(c-hw*0.7),false);ctx.closePath();mark('polos');}
+ ctx.beginPath();ctx.arc(gx,gy,22,0,7);ctx.fillStyle='#596277';ctx.fill();
+ ctx.beginPath();ctx.arc(gx,gy,10,0,7);ctx.fillStyle='#9aa4ba';ctx.fill();
+ txt('Generador síncrono · '+D.poles+' polos',gx,gy+110,'#cfd8e8','bold 10px system-ui');
+ txt('excitación '+S.ex.toFixed(2)+' pu',gx,gy-96,'#ffd9a8','9px system-ui');
+ // sentido de giro
+ if(st.w>0.5){ctx.strokeStyle='#7dffb0';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(gx,gy,92,-(Math.PI/2+0.4),-(Math.PI/2-0.4),false);ctx.stroke();
+  const a1=Math.PI/2+0.4,pe=pt(92,a1,gx,gy);arrow(pe[0]+Math.sin(a1)*5,pe[1]+Math.cos(a1)*5,pe[0]-Math.sin(a1)*2,pe[1]-Math.cos(a1)*2,'#7dffb0',2.5);}
+}
+function drawGrid(){
+ const y0=505;txt('Frecuencia, interruptor, transformador y diagrama fasorial',180,y0+8,'#93a0b8','11px system-ui');
+ // dial de frecuencia
+ const dx=62,dy=y0+105,dr=48;
+ ctx.beginPath();ctx.arc(dx,dy,dr,Math.PI,2*Math.PI);ctx.strokeStyle='#33415f';ctx.lineWidth=10;ctx.stroke();
+ [[58.5,61.5,'#2e9a63'],[55,58.5,'#8a6a2a'],[61.5,65,'#8a6a2a']].forEach(([a,b,c])=>{ctx.beginPath();ctx.arc(dx,dy,dr,Math.PI+(a-55)/10*Math.PI,Math.PI+(b-55)/10*Math.PI);ctx.strokeStyle=c;ctx.lineWidth=10;ctx.stroke();});
+ const fv=Math.max(55,Math.min(65,R.f)),na=Math.PI+(fv-55)/10*Math.PI;
+ ctx.strokeStyle='#fff';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(dx,dy);ctx.lineTo(dx+(dr-6)*Math.cos(na),dy+(dr-6)*Math.sin(na));ctx.stroke();
+ txt(R.f.toFixed(2)+' Hz',dx,dy+14,'#fff','bold 13px system-ui');txt('55',dx-dr,dy+10,'#93a0b8','9px system-ui');txt('65',dx+dr,dy+10,'#93a0b8','9px system-ui');txt('60',dx,dy-dr-10,'#93a0b8','9px system-ui');
+ // interruptor + transformador
+ const ly=y0+70;ctx.strokeStyle='#c9a36b';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(116,ly);ctx.lineTo(132,ly);ctx.moveTo(150,ly);ctx.lineTo(160,ly);ctx.stroke();
+ ctx.strokeStyle=R.conn?'#7dffb0':'#ff9a7a';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(132,ly);R.conn?ctx.lineTo(150,ly):ctx.lineTo(148,ly-12);ctx.stroke();
+ ctx.beginPath();ctx.rect(126,ly-16,30,24);mark('interruptor');txt(R.conn?'cerrado':(st.sync?'sincronizando':'abierto'),141,ly+16,R.conn?'#7dffb0':(st.sync?'#ffd84a':'#ff9a7a'),'9px system-ui');
+ ctx.strokeStyle='#e8edf6';ctx.lineWidth=2;ctx.beginPath();ctx.arc(170,ly,10,0,7);ctx.stroke();ctx.beginPath();ctx.arc(184,ly,10,0,7);ctx.stroke();
+ ctx.beginPath();ctx.rect(158,ly-12,38,24);mark('trafo');txt(D.kV+' kV → AT',177,ly+20,'#93a0b8','9px system-ui');
+ ctx.strokeStyle=R.conn?'#ffd84a':'#666';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(194,ly);ctx.lineTo(214,ly);ctx.stroke();
+ txt(S.mode==='sein'?'SEIN':'Carga local',214,ly-14,'#ffe9a8','bold 10px system-ui');
+ ctx.strokeStyle='#c9a36b';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(116,ly);ctx.lineTo(108,ly);ctx.stroke();txt('G',103,ly,'#fff','bold 11px system-ui');
+ // diagrama fasorial
+ const ox=236,oy=y0+170,sc=44;
+ txt('Diagrama fasorial',ox+48,y0+30,'#93a0b8','9px system-ui');
+ if(R.locked&&R.Pe>0.01||R.locked){
+  const E=S.ex,d=R.delta,ex=ox+E*sc*Math.cos(d),ey=oy-E*sc*Math.sin(d);
+  arrow(ox,oy,ox+sc,oy,'#4cc3ff',2.5);txt('V red',ox+sc+12,oy+10,'#4cc3ff','9px system-ui');
+  arrow(ox,oy,ex,ey,'#ff8a5c',2.5);txt('E',ex+8,ey-6,'#ff8a5c','bold 10px system-ui');
+  ctx.save();ctx.setLineDash([3,3]);ctx.strokeStyle='#b5e655';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(ox+sc,oy);ctx.lineTo(ex,ey);ctx.stroke();ctx.restore();
+  ctx.strokeStyle='#ffd84a';ctx.lineWidth=1;ctx.beginPath();ctx.arc(ox,oy,22,-d,0);ctx.stroke();
+  txt('δ = '+(d*180/Math.PI).toFixed(0)+'°',ox+40,oy-12,'#ffd84a','bold 10px system-ui');
+  ctx.beginPath();ctx.rect(ox-4,y0+40,120,140);mark('fasor');
+ }else{txt('(solo con el interruptor',ox+50,oy-60,'#93a0b8','10px system-ui');txt('cerrado al SEIN)',ox+50,oy-46,'#93a0b8','10px system-ui');}
+}
+
+function sect(fn,sc,ox,oy,sy){ctx.save();ctx.translate(ox,oy);ctx.scale(sc,sc);ctx.translate(0,-sy);fn();ctx.restore();}
+function drawStats(){
+ const x0=548,y0=400,w=524,h=244;ctx.fillStyle='#141c2c';ctx.beginPath();ctx.roundRect(x0,y0,w,h,14);ctx.fill();
+ ctx.font='bold 13px system-ui';ctx.fillStyle='#93a0b8';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('TABLERO DE LA CENTRAL'+(paused?'  ·  ⏸ EN PAUSA':''),x0+14,y0+10);
+ const it=[['P. eléctrica',R.Pe.toFixed(1),'MW','#ffd84a'],['Frecuencia',R.f.toFixed(2),'Hz',Math.abs(R.f-60)<0.5?'#7dffb0':'#ffb4a0'],['Velocidad',Math.round(st.w*60/(2*Math.PI)),'rpm','#e8edf6'],
+  ['Caudal',R.Qt.toFixed(1),'m³/s','#6fc3ff'],['Caída neta',R.Hn.toFixed(1),'m','#9fe3ff'],[R.locked?'Ángulo δ':'Apertura',R.locked?(R.delta*180/Math.PI).toFixed(0):Math.round(st.a*100),R.locked?'°':'%','#ff8a5c']];
+ it.forEach((v,i)=>{const cx=x0+14+(i%3)*170,cy=y0+36+Math.floor(i/3)*100;ctx.fillStyle='#111827';ctx.beginPath();ctx.roundRect(cx,cy,160,90,10);ctx.fill();
+  ctx.fillStyle='#93a0b8';ctx.font='12px system-ui';ctx.fillText(v[0],cx+12,cy+10);
+  ctx.fillStyle=v[3];ctx.font='bold 34px system-ui';ctx.fillText(v[1],cx+12,cy+32);
+  const tw=ctx.measureText(v[1]).width;ctx.font='14px system-ui';ctx.fillStyle='#cfd8e8';ctx.fillText(v[2],cx+18+tw,cy+50);});
+ ctx.textBaseline='middle';
+}
+/* ---------- gráficas ---------- */
+function drawCharts(){
+ let w=c1.getBoundingClientRect().width,h=130,m=28;x1.clearRect(0,0,w,h);
+ x1.strokeStyle='#2a3348';x1.lineWidth=1;x1.beginPath();x1.moveTo(m,4);x1.lineTo(m,h-14);x1.lineTo(w-4,h-14);x1.stroke();
+ const yf=f=>h-14-(h-20)*(Math.max(55,Math.min(65,f))-55)/10;
+ x1.strokeStyle='rgba(46,154,99,.6)';x1.setLineDash([3,3]);x1.beginPath();x1.moveTo(m,yf(60));x1.lineTo(w-4,yf(60));x1.stroke();x1.setLineDash([]);
+ let pm=10;for(const p of st.hist)pm=Math.max(pm,p[1]);pm=Math.ceil(pm/10)*10;const yp=p=>h-14-(h-20)*p/pm;
+ x1.fillStyle='#93a0b8';x1.font='10px system-ui';x1.fillText('65 Hz',2,10);x1.fillText('55',2,h-16);x1.textAlign='right';x1.fillText(pm+' MW',w-4,10);x1.fillText('−60 s → ahora',w-4,h-2);x1.textAlign='left';
+ [[0,'#4cc3ff',yf],[1,'#ffd84a',yp]].forEach(([k,c,Y])=>{x1.strokeStyle=c;x1.lineWidth=2;x1.beginPath();st.hist.forEach((p,i)=>{const x=m+(w-m-4)*i/599;i?x1.lineTo(x,Y(p[k])):x1.moveTo(x,Y(p[k]));});x1.stroke();});
+ w=c2.getBoundingClientRect().width;x2.clearRect(0,0,w,h);
+ x2.strokeStyle='#2a3348';x2.beginPath();x2.moveTo(m,4);x2.lineTo(m,h-14);x2.lineTo(w-4,h-14);x2.stroke();
+ const X=x=>m+(w-m-6)*x/1.2,Y=e=>h-14-(h-20)*e;
+ x2.fillStyle='#93a0b8';x2.font='10px system-ui';x2.fillText('100 %',0,10);x2.fillText('0',m-8,h-16);
+ for(const x of[0.3,0.6,0.9,1.2])x2.fillText(Math.round(x*100)+'%',X(x)-10,h-2);
+ x2.strokeStyle='#4cc3ff';x2.lineWidth=2;x2.beginPath();
+ for(let x=0;x<=1.2;x+=0.01){let e=D.etat*(1-1.1*(x-0.85)**2-(x<0.3?(0.3-x)*1.6:0));e=Math.max(0,e);x?x2.lineTo(X(x),Y(e)):x2.moveTo(X(x),Y(e));}x2.stroke();
+ x2.fillStyle='#ffd84a';x2.beginPath();x2.arc(X(Math.min(1.2,R.x||0)),Y(R.eta||0),5,0,7);x2.fill();
+}
+
+/* ---------- interfaz ---------- */
+const comps=[
+ ['embalse','Embalse','Embalse de Gallito Ciego sobre el río Jequetepeque: unos 574 hm³ en total, 400 hm³ útiles. Su función principal es el riego del valle; la central usa el agua que se descarga. Mientras más alto el nivel, mayor la caída.'],
+ ['presa','Presa','Presa: cierra el valle y eleva el nivel del agua. La central está al pie de la presa. La presa no es de Statkraft, la administran las autoridades de riego.'],
+ ['tunel','Toma y túnel','Toma y túnel de conducción: llevan el agua a presión desde el embalse hasta las turbinas. El rozamiento resta caudal al cuadrado (pérdidas de carga).'],
+ ['casa','Casa de máquinas','Casa de máquinas: aloja los grupos turbina-generador, el regulador, la excitación y los tableros. Se opera a distancia desde Lima.'],
+ ['espiral','Caja espiral','Caja espiral: distribuye el agua alrededor de toda la turbina, reduciendo su sección para que la velocidad sea uniforme.'],
+ ['alabes','Álabes directrices','Álabes directrices: paletas móviles que regulan el caudal y orientan el agua hacia el rodete. Los mueve el regulador de velocidad.'],
+ ['rodete','Rodete Francis','Rodete Francis: el agua entra de afuera hacia adentro, empuja los álabes curvos y sale por el centro hacia el tubo de aspiración. Es la turbina típica para caídas medianas como estos 83 m.'],
+ ['eje','Eje','Eje: une el rodete con el rotor del generador; giran a la misma velocidad.'],
+ ['estator','Estator','Estator: núcleo con el bobinado trifásico, donde se induce la tensión. El color de las ranuras indica la carga.'],
+ ['polos','Polos del rotor','Polos del rotor: electroimanes alimentados por la excitación con corriente continua. Con '+GC.poles+' polos a '+GC.rpm+' rpm se obtienen 60 Hz (f = polos × rpm / 120).'],
+ ['rotor','Rotor','Rotor del generador: gira con la turbina y lleva los polos.'],
+ ['interruptor','Interruptor','Interruptor de generación: conecta el grupo a la red. Al abrirlo con carga (rechazo de carga) la turbina se acelera hasta que el regulador cierra los álabes.'],
+ ['trafo','Transformador','Transformador elevador: sube la tensión del generador a alta tensión para transmitir con menos pérdidas.'],
+ ['linea','Línea al SEIN','Línea de transmisión: lleva la energía al Sistema Eléctrico Interconectado Nacional (SEIN), que fija la frecuencia en 60 Hz.'],
+ ['compensa','Reservorio de compensación','Reservorio de compensación aguas abajo: regula el agua que vuelve al río para que el riego del valle no dependa del horario de generación.'],
+ ['fasor','Diagrama fasorial','Diagrama fasorial: E (tensión interna, depende de la excitación) adelanta a la tensión de la red V en el ángulo δ. A más potencia, mayor δ; si δ llega a 90° se pierde el sincronismo.']
+];
+const chips=$('chips');
+comps.forEach(([id,n,t])=>{const b=document.createElement('button');b.textContent=n;b.onclick=()=>{
+ S.sel=S.sel===id?null:id;[...chips.children].forEach(c=>c.classList.remove('sel'));
+ if(S.sel){b.classList.add('sel');$('info').textContent=t;}else $('info').textContent='Haz clic en un componente para verlo resaltado en el dibujo.';};chips.appendChild(b);});
+
+function buildData(){const d=$('data');d.innerHTML='';
+ FIELDS.forEach(([k,l,s])=>{const L=document.createElement('label');L.textContent=l;L.htmlFor='d_'+k;
+  const I=document.createElement('input');I.type='number';I.id='d_'+k;I.step='any';I.value=D[k];I.inputMode='decimal';
+  I.onchange=()=>{let v=parseFloat(I.value);if(!isFinite(v)||v<=0){I.value=D[k];return;}
+   if(k==='Nu'){v=Math.max(1,Math.min(4,Math.round(v)));I.value=v;S.on=Math.min(S.on,v);}
+   if(k==='poles'){v=Math.max(2,Math.round(v/2)*2);I.value=v;}
+   if(k==='etat'||k==='etag')v=Math.min(0.99,v);
+   D[k]=v;segU();checkData();};
+  const sm=document.createElement('div');sm.className='src';sm.textContent=s;d.append(L,I,sm);});
+ checkData();}
+function checkData(){const f=D.poles*D.rpm/120,Ph=9.81*D.Qd*D.Hnd/1000,Pmax=Ph*D.etat*D.etag;
+ $('chk').innerHTML=`Con estos datos: frecuencia nominal = ${D.poles} × ${D.rpm} / 120 = <b>${f.toFixed(1)} Hz</b>${Math.abs(f-60)>0.5?' ⚠ (la red del Perú es de 60 Hz)':''}. Potencia del agua a caudal y caída de diseño = <b>${Ph.toFixed(1)} MW</b>; potencia eléctrica esperada ≈ <b>${Pmax.toFixed(1)} MW</b> frente a ${(D.Pu*D.Nu).toFixed(1)} MW nominales.`;}
+function segU(){const s=$('segU');s.innerHTML='';for(let k=0;k<=D.Nu;k++){const b=document.createElement('button');b.textContent=k===0?'Ninguna':k===1?'1 unidad':k+' unidades';
+ if(k===S.on)b.className='sel';b.onclick=()=>{S.on=k;segU();};s.appendChild(b);}}
+const binds=[['sLv','lv',v=>v+' %'],['sQa','Qa',v=>v.toFixed(1)+' m³/s'],['sA','a',v=>v+' %'],['sD','dem',v=>v.toFixed(1)+' MW'],['sX','ex',v=>v.toFixed(2)+' pu']];
+function syncUI(){binds.forEach(([id,k,f])=>{$(id).value=S[k];$('o'+id.slice(1)).textContent=f(S[k]);});
+ $('mSein').classList.toggle('sel',S.mode==='sein');$('mIsla').classList.toggle('sel',S.mode==='isla');
+ $('gA').classList.toggle('sel',S.auto);$('gM').classList.toggle('sel',!S.auto);$('sA').disabled=S.auto;$('bD').hidden=S.mode!=='isla';
+ const b=$('bBrk'),c=S.brk&&!st.trip;b.className=c?'on':'off';
+ if(st.sync){b.className='';b.innerHTML='⏳ Sincronizando…<small>f = '+(R.f||0).toFixed(2)+' Hz · clic para cancelar</small>';}else
+ b.innerHTML=c?'⚡ Interruptor cerrado<small>clic para abrir (rechazo de carga)</small>':(st.trip?'⛔ Disparo por sobrevelocidad<small>clic para rearmar</small>':'⚡ Interruptor abierto<small>clic para sincronizar y cerrar</small>');
+ $('sSl').value=S.slow;segU();}
+binds.forEach(([id,k,f])=>{$(id).oninput=e=>{S[k]=+e.target.value;$('o'+id.slice(1)).textContent=f(S[k]);};});
+$('sSl').onchange=e=>S.slow=+e.target.value;
+$('mSein').onclick=()=>{S.mode='sein';if(Math.abs(R.f-60)>0.3){S.brk=false;st.sync=true;st.syncT=0;S.auto=true;st.I=st.a-0.35;flash('⏳ Sincronizando con el SEIN: el interruptor se cerrará cuando la frecuencia llegue a 60 Hz.');}syncUI();};
+$('mIsla').onclick=()=>{S.mode='isla';st.I=st.a-0.35;syncUI();};
+$('gA').onclick=()=>{S.auto=true;st.I=st.a-0.35;syncUI();};$('gM').onclick=()=>{S.auto=false;S.a=Math.round(st.a*100);syncUI();};
+$('bBrk').onclick=()=>{
+ if(st.sync){st.sync=false;flash('Sincronización cancelada.');syncUI();return;}
+ if(st.trip){st.trip=false;S.brk=false;st.I=-0.35;S.auto=true;flash('Disparo rearmado. Toca de nuevo el interruptor para sincronizar.');syncUI();return;}
+ if(S.brk){S.brk=false;st.I=st.a-0.35;flash('Interruptor abierto: rechazo de carga. La turbina se acelera y el regulador cierra los álabes.');}
+ else{st.uf=false;
+  if(S.mode==='sein'&&Math.abs(R.f-60)>0.3){st.sync=true;st.syncT=0;if(!S.auto){S.auto=true;st.I=st.a-0.35;}
+   flash('⏳ Sincronizando: el regulador lleva la máquina a 60 Hz y el interruptor se cerrará solo (frecuencia ahora '+R.f.toFixed(2)+' Hz).');}
+  else{S.brk=true;flash(S.mode==='sein'?'✅ Sincronizado: interruptor cerrado.':'Interruptor cerrado: la central alimenta la carga local.');}}
+ syncUI();};
+$('bGC').onclick=()=>{D={...GC};buildData();segU();};
+$('bRs').onclick=()=>{const sel=S.sel;S={...S0,sel};st={w:wn(),a:0.8,I:0,trip:false,th:0,hist:[],ht:0,sync:false,syncT:0};syncUI();};
+let fl=0;function flash(t){$('alert').textContent=t;$('msg').textContent=t;fl=4;}
+// comentarios
+$('fb').onclick=()=>{$('fbp').style.display='flex';upFb();};$('fbC').onclick=()=>{$('fbp').style.display='none';};
+function upFb(){const t=encodeURIComponent('Comentario sobre el simulador C.H. Gallito Ciego: '+($('fbt').value||''));
+ $('fbW').href='https://wa.me/51975525627?text='+t;$('fbM').href='mailto:neptaliagiphoyos@gmail.com?subject='+encodeURIComponent('Simulador Gallito Ciego')+'&body='+t;}
+$('fbt').oninput=upFb;
+
+function ui(){
+ const n=st.w*60/(2*Math.PI);
+ $('rHn').textContent=R.Hn.toFixed(1);$('rQ').textContent=R.Qt.toFixed(1);$('rPh').textContent=(R.Phu*S.on/1e6).toFixed(1);
+ $('rPe').textContent=R.Pe.toFixed(1);$('rN').textContent=Math.round(n);$('rF').textContent=R.f.toFixed(2);
+ $('rEt').textContent=(R.eta*100).toFixed(1)+' %';const Ph=R.Phu*S.on/1e6;$('rEg').textContent=Ph>0.1?(R.Pe/Ph*100).toFixed(0)+' %':'—';
+ $('rV').textContent=R.V.toFixed(2);$('rQr').textContent=R.conn?R.Qr.toFixed(1):'0';
+ const sP=Math.hypot(R.Pe,R.Qr);$('rFp').textContent=R.conn&&sP>0.1?(R.Pe/sP).toFixed(2)+(R.Qr>=0?' ind.':' cap.'):'—';
+ $('rE').textContent=(R.Pe*8.76).toFixed(0);
+ const Vol=D.Vu*S.lv/100,days=S.Qa>0?Vol*1e6/(S.Qa*86400):Infinity;
+ $('water').textContent=`Volumen útil actual ≈ ${Vol.toFixed(0)} hm³ → alcanza para ${isFinite(days)?days.toFixed(0)+' días':'—'} descargando ${S.Qa} m³/s sin lluvias. Referencia: 151 GWh/año según la ficha (≈ ${(151/8.76).toFixed(1)} MW promedio).`;
+ const al=[];
+ if(st.uf)al.push('⛔ Rechazo por baja frecuencia: la demanda de la isla supera lo que puede dar la central y se desconectó la carga. Baja la demanda y cierra el interruptor.');
+ if(st.trip)al.push('⛔ Disparo por sobrevelocidad (>135 %): los álabes se cierran. Toca el interruptor para rearmar.');
+ else if(!R.locked&&R.wr>1.1)al.push('⚠ Sobrevelocidad '+(R.wr*100).toFixed(0)+' %: la turbina se embala.');
+ if(R.loss)al.push('⛔ Pérdida de sincronismo: la potencia supera lo que permite la excitación. Sube la excitación o baja la potencia.');
+ if(R.locked&&R.Pe/Math.max(1,S.on)>D.Pu*1.05)al.push('🔥 Sobrecarga: cada unidad entrega más que su potencia nominal ('+D.Pu+' MW).');
+ if(R.Qt>S.Qa+0.5)al.push('💧 Turbinas más caudal que el autorizado para riego: el embalse bajaría.');
+ if(S.mode==='isla'&&R.conn&&Math.abs(R.f-60)>1)al.push('Frecuencia fuera de rango en isla: el regulador no alcanza la demanda.');
+ if(R.conn&&R.Vpu>1.1)al.push('⚡ Sobretensión: baja la excitación.');
+ if(S.on===0)al.push('Ninguna unidad en servicio.');
+ if(st.sync){$('bBrk').innerHTML='⏳ Sincronizando…<small>f = '+R.f.toFixed(2)+' Hz · clic para cancelar</small>';}
+ if(fl>0)fl-=0.15;else $('alert').textContent=al.join(' ');
+ if(!st.sync&&fl<=0&&$('msg').textContent.startsWith('⏳'))$('msg').textContent='';
+ const ex=[];
+ ex.push(`Potencia del agua: P = 1000 × 9,81 × ${R.Qt.toFixed(1)} m³/s × ${R.Hn.toFixed(1)} m = ${(R.Phu*S.on/1e6).toFixed(1)} MW. Turbina (${(R.eta*100).toFixed(0)} %) y generador (${(D.etag*100).toFixed(0)} %) → ${R.Pe.toFixed(1)} MW eléctricos.`);
+ ex.push(`El nivel del embalse (${S.lv} %) fija la caída bruta (${R.Hb.toFixed(1)} m); el túnel pierde ${(R.Hb-R.Hn).toFixed(1)} m por rozamiento.`);
+ if(R.locked)ex.push(`Conectada al SEIN: la red impone 60 Hz y ${D.rpm} rpm. ${S.auto?'El regulador abre los álabes para turbinar el caudal autorizado para riego.':'Tú fijas la apertura de los álabes, y con ella la potencia.'} La excitación no cambia la potencia activa, solo la reactiva (${R.Qr.toFixed(1)} MVAr) y el ángulo δ.`);
+ else if(S.mode==='isla'&&R.conn)ex.push(`En isla la central sola alimenta ${S.dem} MW: si la turbina da más de lo que consume la carga, la frecuencia sube; si da menos, baja. ${S.auto?'El regulador automático mueve los álabes para sostener 60 Hz.':'En manual tú tienes que igualar la apertura a la demanda.'}`);
+ else ex.push('Interruptor abierto: el generador gira sin carga. Si se abre de golpe con carga (rechazo de carga) la turbina se acelera hasta que el regulador cierra los álabes; para volver a la red hay que sincronizar a 60 Hz.');
+ ex.push(`Frecuencia = polos × rpm / 120 = ${D.poles} × ${Math.round(st.w*60/(2*Math.PI))} / 120 = ${R.f.toFixed(2)} Hz.`);
+ ex.push('La central depende del agua que se descarga para riego: en época seca baja el caudal y con él la generación.');
+ $('expl').innerHTML=ex.map(t=>'<li>'+t+'</li>').join('');
+}
+
+let last=performance.now(),uit=0;
+function loop(t){const dt=paused?0:Math.min(0.05,(t-last)/1000);last=t;
+ step(dt);st.th+=st.w*dt/S.slow;
+ st.ht+=dt;if(st.ht>0.1){st.ht=0;st.hist.push([R.f,R.Pe]);if(st.hist.length>600)st.hist.shift();}
+ ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle='#0f1420';ctx.fillRect(0,0,CW,CH);
+ sect(()=>drawProfile(dt),1.5,0,0,0);sect(drawUnit,1.5,540,0,240);sect(drawGrid,1.5,0,348,500);drawStats();
+ uit+=dt;if(uit>0.15){uit=0;ui();drawCharts();if(st.trip&&!$('bBrk').classList.contains('off'))syncUI();}
+ requestAnimationFrame(loop);}
+document.addEventListener('keydown',e=>{
+ const tg=e.target;if(tg&&(tg.tagName==='TEXTAREA'||(tg.tagName==='INPUT'&&tg.type!=='range')))return;
+ if(tg&&tg.tagName==='INPUT'&&tg.type==='range'&&e.key.startsWith('Arrow'))return;
+ const k=e.key,cl=(v,a,b)=>Math.max(a,Math.min(b,v));let h=true;
+ if(k==='s'||k==='S')$('mSein').click();else if(k==='i'||k==='I')$('mIsla').click();
+ else if(k==='a'||k==='A')(S.auto?$('gM'):$('gA')).click();else if(k==='b'||k==='B')$('bBrk').click();
+ else if(k==='u'||k==='U'){S.on=(S.on+1)%(D.Nu+1);segU();}
+ else if(k==='ArrowUp'||k==='ArrowDown'){if(S.auto)$('gM').click();S.a=cl(S.a+(k==='ArrowUp'?5:-5),0,100);}
+ else if(k==='ArrowRight'||k==='ArrowLeft')S.Qa=cl(S.Qa+(k==='ArrowRight'?1:-1),0,60);
+ else if(k==='+'||k==='=')S.ex=Math.round(cl(S.ex+0.05,0.5,2)*100)/100;else if(k==='-'||k==='_')S.ex=Math.round(cl(S.ex-0.05,0.5,2)*100)/100;
+ else if(k==='PageUp'||k==='PageDown')S.lv=cl(S.lv+(k==='PageUp'?5:-5),0,100);
+ else if(k===' '){paused=!paused;}else if(k==='r'||k==='R')$('bRs').click();
+ else if(k==='Escape'){S.sel=null;[...chips.children].forEach(c=>c.classList.remove('sel'));$('info').textContent='Haz clic en un componente para verlo resaltado en el dibujo.';}
+ else h=false;
+ if(h){e.preventDefault();syncUI();}
+});
+fit();st.w=wn();buildData();syncUI();step(0.01);requestAnimationFrame(loop);
+</script>
+</body></html>
