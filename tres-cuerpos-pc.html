@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>El problema de los tres cuerpos 3D (computadora)</title>
+<style>
+  :root{--bg:#05070d;--panel:#0f1420;--line:#1e2738;--txt:#e7ecf5;--mut:#8a96ad;--acc:#ffb547;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+  body{display:flex;flex-direction:column;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  header{padding:10px 14px 6px}
+  h1{font-size:17px;margin:0;font-weight:650;letter-spacing:.2px}
+  h1 small{font-size:11px;color:var(--acc);border:1px solid var(--acc);border-radius:6px;padding:1px 5px;margin-left:6px;vertical-align:2px}
+  .sub{font-size:12px;color:var(--mut);margin-top:2px;min-height:16px}
+  #wrap{position:relative;flex:1;min-height:0}
+  canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+  .hud{position:absolute;left:10px;top:8px;font-size:11px;color:var(--mut);
+    font-variant-numeric:tabular-nums;line-height:1.5;pointer-events:none}
+  .hud b{color:var(--txt);font-weight:600}
+  .hint{position:absolute;left:10px;bottom:8px;font-size:11px;color:#5d6880;pointer-events:none}
+  .zoom{position:absolute;right:10px;top:8px;display:flex;flex-direction:column;gap:6px}
+  .zoom button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);
+    background:rgba(15,20,32,.85);color:var(--txt);font-size:18px}
+  .zoom button.on{border-color:var(--acc);color:var(--acc)}
+  #toast{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);background:rgba(255,181,71,.95);
+    color:#1a1205;font-size:13px;font-weight:650;padding:6px 12px;border-radius:999px;opacity:0;
+    transition:opacity .25s;pointer-events:none;white-space:nowrap}
+  #toast.show{opacity:1}
+  #info{position:absolute;left:10px;right:10px;bottom:10px;background:rgba(15,20,32,.95);
+    border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.45;
+    color:#cfd7e6;display:none;max-height:70%;overflow:auto}
+  #info.show{display:block}
+  #info h3{margin:0 0 6px;font-size:14px;color:var(--acc)}
+  #info .x{float:right;background:none;border:0;color:var(--mut);font-size:18px;margin:-4px -4px 0 0}
+  .panel{background:var(--panel);border-top:1px solid var(--line);padding:10px 12px 12px}
+  .presets{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}
+  .presets::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;padding:8px 12px;border-radius:999px;border:1px solid var(--line);
+    background:#151c2b;color:var(--txt);font-size:13px;white-space:nowrap}
+  .chip.on{background:var(--acc);color:#1a1205;border-color:var(--acc);font-weight:600}
+  .row{display:flex;gap:7px;align-items:center;margin-top:2px}
+  .btn{flex:1;height:44px;border-radius:12px;border:1px solid var(--line);background:#151c2b;
+    color:var(--txt);font-size:13.5px;font-weight:550;padding:0 4px}
+  .btn.main{background:var(--acc);color:#1a1205;border-color:var(--acc);flex:.8}
+  .btn.sq{flex:.6}
+  .btn.tog.on{border-color:var(--acc);color:var(--acc);background:#2a2210}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-top:10px}
+  .sl{font-size:11.5px;color:var(--mut)}
+  .sl .lab{display:flex;justify-content:space-between}
+  .sl .lab span:last-child{color:var(--txt);font-variant-numeric:tabular-nums}
+  .sl input{width:100%;accent-color:var(--acc);margin:2px 0 0}
+  .sl.off{opacity:.35}
+  /* ======= versión de escritorio ======= */
+  body{display:grid;grid-template-columns:minmax(0,1fr) 370px;grid-template-rows:auto 1fr;max-width:1600px;margin:0 auto}
+  header{grid-column:1/3;padding:12px 20px 10px;border-bottom:1px solid var(--line)}
+  h1{font-size:22px}.sub{font-size:13.5px}
+  #wrap{grid-column:1;grid-row:2}
+  .panel{grid-column:2;grid-row:2;border-top:0;border-left:1px solid var(--line);overflow:auto;display:flex;flex-direction:column;gap:14px;padding:18px}
+  .presets{flex-wrap:wrap;overflow:visible;padding-bottom:0}
+  .grid{grid-template-columns:1fr;gap:12px}
+  .hud{font-size:13.5px;left:16px;top:12px}.hint{font-size:12.5px;left:16px}
+  .zoom{right:16px;top:12px}.zoom button{width:42px;height:42px}
+  #info{left:auto;right:16px;width:440px;font-size:14px}
+  #toast{font-size:14px}
+  button,.chip{cursor:pointer}canvas{cursor:grab}canvas:active{cursor:grabbing}
+  .keys{font-size:12.5px;color:var(--mut);line-height:1.8;border-top:1px solid var(--line);padding-top:12px;margin-top:auto}
+  .keys kbd{display:inline-block;min-width:22px;text-align:center;padding:0 6px;border:1px solid #2a3550;border-radius:5px;background:#151c2b;color:var(--txt);font:600 12px system-ui}
+</style>
+<style>
+  .fbm{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px}
+  .fbm.show{display:flex}
+  .fbbox{background:#0f1420;border:1px solid #2a3550;border-radius:16px;padding:16px 16px 12px;max-width:380px;width:100%;color:#e7ecf5;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;box-shadow:0 10px 40px #000a}
+  .fbbox h3{margin:0 0 4px;font-size:17px;color:#ffb547}.fbbox p{margin:0 0 12px;font-size:13px;color:#aab6cc;line-height:1.45}
+  .fbbox .x{float:right;background:none;border:0;color:#8a96ad;font-size:22px;margin:-6px -4px 0 0;cursor:pointer}
+  .fbb{display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff;border-radius:12px;padding:11px 12px;margin-bottom:8px;font-size:14px;font-weight:600}
+  .fbb small{display:block;font-weight:400;font-size:12px;opacity:.85}
+  .fbb.wa{background:#1fa855}.fbb.ml{background:#2f6fd6}.fbb.tl{background:#26304a}
+  .fbcp{display:flex;gap:8px;margin-top:4px}.fbcp button{flex:1;background:#151c2b;border:1px solid #2a3550;color:#cfd7e6;border-radius:10px;padding:8px;font-size:12px;cursor:pointer}
+  .fbnote{font-size:11px!important;color:#6f7a90!important;margin:8px 0 0!important}
+  #fbBtn.pulse{animation:fbp 2.4s ease-in-out 3}@keyframes fbp{50%{box-shadow:0 0 0 6px #ffb54755}}
+</style>
+</head>
+<body>
+<header>
+  <h1>El problema de los tres cuerpos <small>3D</small> <span style="font-size:14px;color:#8a96ad;font-weight:500">· versión computadora</span></h1>
+  <div class="sub" id="sub"></div>
+</header>
+
+<div id="wrap">
+  <canvas id="cv"></canvas>
+  <div class="hud" id="hud"></div>
+  <div class="hint" id="hint">Arrastra con el mouse para girar · rueda para acercar · doble clic: vista inicial</div>
+  <div id="toast"></div>
+  <div class="zoom">
+    <button id="zin" aria-label="Acercar">+</button>
+    <button id="zout" aria-label="Alejar">−</button>
+    <button id="zfit" aria-label="Ajustar" style="font-size:13px">⤢</button>
+    <button id="rot" aria-label="Girar cámara" class="on" style="font-size:15px">🔄</button>
+    <button id="ibtn" aria-label="Información" style="font-size:15px">i</button>
+    <button id="fbBtn" aria-label="Comentarios" title="Envíame tus comentarios" style="font-size:15px">💬</button>
+  </div>
+  <div id="info">
+    <button class="x" id="ix">×</button>
+    <h3 id="ititle"></h3>
+    <div id="itext"></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="presets" id="presets"></div>
+  <div class="row">
+    <button class="btn main" id="play">⏸</button>
+    <button class="btn sq" id="reset">↺</button>
+    <button class="btn tog" id="ghost">👻 Caos</button>
+    <button class="btn tog on" id="coll">💥 Choques</button>
+  </div>
+  <div class="grid">
+    <div class="sl"><div class="lab"><span>Velocidad</span><span id="spdv">1.0×</span></div><input type="range" id="spd" min="0" max="100" value="50"></div>
+    <div class="sl"><div class="lab"><span>Estela</span><span id="trlv">60%</span></div><input type="range" id="trl" min="0" max="100" value="60"></div>
+    <div class="sl" id="slF"><div class="lab"><span>Fragilidad</span><span id="frgv">90%</span></div><input type="range" id="frg" min="0" max="100" value="90"></div>
+    <div class="sl" id="slT"><div class="lab"><span>Tamaño cuerpos</span><span id="tamv">1.0×</span></div><input type="range" id="tam" min="0" max="100" value="40"></div>
+  </div>
+  <div class="keys"><div style="color:#e7ecf5;font-weight:600;margin-bottom:4px">⌨️ Atajos de teclado</div>
+    <kbd>1</kbd>–<kbd>7</kbd> escenarios · <kbd>Espacio</kbd> pausa · <kbd>Supr</kbd> reiniciar<br>
+    <kbd>G</kbd> 👻 caos · <kbd>C</kbd> 💥 choques · <kbd>A</kbd> girar sola<br>
+    <kbd>+</kbd> <kbd>−</kbd> zoom · <kbd>F</kbd> ajustar · <kbd>←</kbd> <kbd>→</kbd> velocidad<br><kbd>I</kbd> información · <kbd>Esc</kbd> cerrar</div>
+</div>
+
+<script>
+(() => {
+const PALETTE = ['#ff5a6e','#4fc3ff','#ffd84f'];
+const G = 1, EPS2 = 1e-7, ETA = 0.02, NMAX = 90, MAXSTEPS = 700;
+let RHO = 0.05, FRAG_RATIO = 1.165, collOn = true;
+
+// ---------- Escenarios ----------
+function centrar(b){let M=0,p=[0,0,0],c=[0,0,0];
+  b.forEach(o=>{o.z=o.z||0;o.vz=o.vz||0;M+=o.m;p[0]+=o.m*o.vx;p[1]+=o.m*o.vy;p[2]+=o.m*o.vz;c[0]+=o.m*o.x;c[1]+=o.m*o.y;c[2]+=o.m*o.z;});
+  b.forEach(o=>{o.vx-=p[0]/M;o.vy-=p[1]/M;o.vz-=p[2]/M;o.x-=c[0]/M;o.y-=c[1]/M;o.z-=c[2]/M;});return b;}
+function rotX(o,a){const c=Math.cos(a),s=Math.sin(a);
+  const y=o.y*c-o.z*s,z=o.y*s+o.z*c,vy=o.vy*c-o.vz*s,vz=o.vy*s+o.vz*c;o.y=y;o.z=z;o.vy=vy;o.vz=vz;return o;}
+const L = Math.pow(3,-0.25);
+const PRESETS = [
+  { id:'sitnikov', name:'Péndulo de Sitnikov', sub:'Dos soles en órbita y un tercero oscilando como péndulo',
+    info:'El problema de Sitnikov (1960) es el «péndulo» del problema de tres cuerpos: dos masas iguales giran en una órbita elíptica en el plano horizontal y un tercer cuerpo, muy pequeño, sube y baja por el eje vertical que pasa por su centro. Como la elipse acerca y aleja a los dos soles, el tirón sobre el péndulo cambia todo el tiempo: su oscilación es caótica — nunca se repite y no puede predecirse a largo plazo. Gira la vista para verlo de costado.',
+    bodies:()=>{const e=0.2,a=1,ra=a*(1+e),v=Math.sqrt((1-e)/(a*(1+e)));
+      return [{m:0.5,x:ra/2,y:0,z:0,vx:0,vy:v/2,vz:0},{m:0.5,x:-ra/2,y:0,z:0,vx:0,vy:-v/2,vz:0},
+              {m:1e-4,x:0,y:0,z:0.9,vx:0,vy:0,vz:0}];},view:{yaw:0.6,pitch:0.25}},
+  { id:'choque3d', name:'💥 Choque en 3D', sub:'Impacto frontal: los fragmentos salen en todas direcciones',
+    info:'Dos masas lanzadas una contra otra; un tercer cuerpo pasa por encima del plano. Al chocar por encima de la velocidad de escape mutua se rompen y los fragmentos salen disparados en una esfera alrededor del impacto. Cada fragmento es un cuerpo nuevo con su gravedad: algunos escapan, otros vuelven a caer (acreción) o son capturados por el tercero.',
+    bodies:()=>centrar([
+      {m:1.5,x:-2.6,y: 0.04,z: 0.03,vx: 3.5,vy:0,vz:0},
+      {m:1.5,x: 2.6,y:-0.04,z:-0.03,vx:-3.5,vy:0,vz:0},
+      {m:1.0,x: 0,y: 2.2,z:0.9,vx:-0.62,vy:0,vz:-0.25}]),view:{yaw:0.9,pitch:0.45}},
+  { id:'ocho', name:'Figura en 8', sub:'Órbita periódica plana (Chenciner–Montgomery, 2000)',
+    info:'Tres masas iguales persiguiéndose sobre una curva en forma de 8 contenida en un plano. Gira la vista: es completamente plana. Activa «Caos» para ver que una diferencia mínima termina creciendo.',
+    bodies:()=>[
+      {m:1,x: 0.97000436,y:-0.24308753,z:0,vx: 0.46620368,vy: 0.43236573,vz:0},
+      {m:1,x:-0.97000436,y: 0.24308753,z:0,vx: 0.46620368,vy: 0.43236573,vz:0},
+      {m:1,x:0,y:0,z:0,vx:-0.93240737,vy:-0.86473146,vz:0}],view:{yaw:0.3,pitch:0.9}},
+  { id:'pit3d', name:'Pitagórico 3D', sub:'Burrau 3-4-5 con un leve empujón fuera del plano',
+    info:'El clásico problema pitagórico (masas 3, 4 y 5 partiendo del reposo en un triángulo 3-4-5), pero con una pequeña velocidad vertical en una masa. El caos lo amplifica: el movimiento deja de ser plano y se vuelve realmente tridimensional. Con «Choques» activado, los encuentros cercanos acaban en fusiones.',
+    bodies:()=>centrar([
+      {m:3,x: 1,y: 3,z:0,vx:0,vy:0,vz:0.06},
+      {m:4,x:-2,y:-1,z:0,vx:0,vy:0,vz:0},
+      {m:5,x: 1,y:-1,z:0,vx:0,vy:0,vz:0}]),view:{yaw:0.5,pitch:0.6}},
+  { id:'sol', name:'Sol, planeta y luna inclinada', sub:'Órbitas en planos distintos',
+    info:'Una estrella, un planeta en órbita levemente inclinada y una luna cuya órbita está inclinada 35° respecto a la del planeta. Al girar la vista se ven los distintos planos orbitales; con el tiempo el Sol hace «bambolear» (precesar) la órbita de la luna.',
+    bodies:()=>{const M=100,m=1,mu=0.01,r=3,v=Math.sqrt(G*M/r),rm=0.15,vm=Math.sqrt(G*m/rm);
+      const moon=rotX({m:mu,x:rm,y:0,z:0,vx:0,vy:vm,vz:0},35*Math.PI/180);
+      const b=[{m:M,x:0,y:0,z:0,vx:0,vy:-(m*v)/M,vz:0},{m:m,x:r,y:0,z:0,vx:0,vy:v,vz:0},
+        {m:mu,x:r+moon.x,y:moon.y,z:moon.z,vx:moon.vx,vy:v+moon.vy,vz:moon.vz}];
+      return b.map(o=>rotX(o,8*Math.PI/180));},view:{yaw:0.4,pitch:0.35},minR:3.3},
+  { id:'lagrange', name:'Triángulo de Lagrange', sub:'Equilibrio rotante… pero inestable',
+    info:'Lagrange (1772): tres cuerpos en un triángulo equilátero pueden girar juntos como un sólido. Con masas iguales es inestable: tras varias vueltas se rompe.',
+    bodies:()=>[0,1,2].map(k=>{const a=Math.PI/2+k*2*Math.PI/3;
+      return {m:1,x:Math.cos(a),y:Math.sin(a),z:0,vx:-L*Math.sin(a),vy:L*Math.cos(a),vz:0.002*k};}),view:{yaw:0.3,pitch:0.7}},
+  { id:'azar', name:'🎲 Aleatorio 3D', sub:'Posiciones y velocidades al azar en el espacio',
+    info:'Condiciones aleatorias en las tres dimensiones con el centro de masa en reposo. Casi siempre caótico: encuentros cercanos, choques, intercambios de pareja y expulsiones.',
+    bodies:()=>{const b=[],r=()=>Math.random()*2-1;for(let i=0;i<3;i++)b.push({m:0.6+Math.random()*1.2,x:r()*1.4,y:r()*1.4,z:r()*1.4,
+      vx:r()*0.45,vy:r()*0.45,vz:r()*0.45});return centrar(b);},view:{yaw:0.6,pitch:0.4}}
+];
+
+// ---------- Colores ----------
+function hex2rgb(h){return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
+function rgb2hex(c){return '#'+c.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');}
+function mix(a,b,t){const A=hex2rgb(a),B=hex2rgb(b);return rgb2hex(A.map((v,i)=>v*(1-t)+B[i]*t));}
+
+// ---------- Simulación N cuerpos 3D con choques ----------
+let uid=0;
+function sphereDirs(n){const out=[],ga=Math.PI*(3-Math.sqrt(5)),rot=Math.random()*6.28,tilt=Math.random()*3.14;
+  for(let i=0;i<n;i++){const y=1-2*(i+0.5)/n,r=Math.sqrt(1-y*y),t=i*ga+rot;
+    let x=Math.cos(t)*r,z=Math.sin(t)*r,yy=y;const c=Math.cos(tilt),s=Math.sin(tilt);
+    out.push([x,yy*c-z*s,yy*s+z*c]);}return out;}
+class Sim{
+  constructor(init,pert=0){
+    this.b=init.map((o,i)=>({id:uid++,m:o.m,x:o.x,y:o.y,z:o.z||0,vx:o.vx,vy:o.vy,vz:o.vz||0,ax:0,ay:0,az:0,col:PALETTE[i%3],trail:[],frag:false}));
+    if(pert)this.b[this.b.length-1].x+=pert;
+    this.t=0;this.nFus=0;this.nRup=0;this.nEsc=0;this.events=[];this.dead=[];
+    this.Mtot=this.b.reduce((s,o)=>s+o.m,0);this.mMin=this.Mtot*0.004;
+    this.calcAcc();this.E0=this.energy();this.K0=this.b.reduce((s,o)=>s+0.5*o.m*(o.vx**2+o.vy**2+o.vz**2),0)||1;
+  }
+  R(m){return RHO*Math.cbrt(m);}
+  calcAcc(){const b=this.b,n=b.length;let tmin=1e9;
+    for(const o of b){o.ax=0;o.ay=0;o.az=0;}
+    for(let i=0;i<n;i++){const p=b[i];for(let j=i+1;j<n;j++){const q=b[j];
+      const dx=q.x-p.x,dy=q.y-p.y,dz=q.z-p.z,r2=dx*dx+dy*dy+dz*dz,rs=r2+EPS2,inv=G/(rs*Math.sqrt(rs));
+      p.ax+=q.m*dx*inv;p.ay+=q.m*dy*inv;p.az+=q.m*dz*inv;q.ax-=p.m*dx*inv;q.ay-=p.m*dy*inv;q.az-=p.m*dz*inv;
+      const r=Math.sqrt(r2)+1e-6,td=Math.sqrt(r*r*r/(G*(p.m+q.m)));
+      const dv=Math.hypot(q.vx-p.vx,q.vy-p.vy,q.vz-p.vz),tc=r/(dv+1e-9);
+      const tt=td<tc?td:tc;if(tt<tmin)tmin=tt;}}
+    this.dtNext=Math.min(0.01,Math.max(2e-6,ETA*tmin));}
+  step(h){const b=this.b;this.rupStep=0;
+    for(const o of b){o.vx+=0.5*h*o.ax;o.vy+=0.5*h*o.ay;o.vz+=0.5*h*o.az;o.x+=h*o.vx;o.y+=h*o.vy;o.z+=h*o.vz;}
+    if(collOn)this.collisions();
+    this.calcAcc();
+    for(const o of this.b){o.vx+=0.5*h*o.ax;o.vy+=0.5*h*o.ay;o.vz+=0.5*h*o.az;}
+    this.t+=h;}
+  advance(T){let done=0,n=0;while(done<T&&n<MAXSTEPS){const h=Math.min(this.dtNext,T-done);this.step(h);done+=h;n++;}
+    this.cleanup();}
+  collisions(){let again=true,guard=0;
+    while(again&&guard++<6){again=false;const b=this.b;
+      outer:for(let i=0;i<b.length;i++)for(let j=i+1;j<b.length;j++){const p=b[i],q=b[j];
+        if(p.grp&&p.grp===q.grp&&this.t<Math.max(p.born,q.born)+0.6)continue;
+        const dx=q.x-p.x,dy=q.y-p.y,dz=q.z-p.z,rr=this.R(p.m)+this.R(q.m);
+        if(dx*dx+dy*dy+dz*dz<rr*rr&&(dx*(q.vx-p.vx)+dy*(q.vy-p.vy)+dz*(q.vz-p.vz))<0){this.resolve(i,j);again=true;break outer;}}}}
+  resolve(i,j){
+    const b=this.b,p=b[i],q=b[j],M=p.m+q.m;
+    const cx=(p.m*p.x+q.m*q.x)/M,cy=(p.m*p.y+q.m*q.y)/M,cz=(p.m*p.z+q.m*q.z)/M;
+    const vcx=(p.m*p.vx+q.m*q.vx)/M,vcy=(p.m*p.vy+q.m*q.vy)/M,vcz=(p.m*p.vz+q.m*q.vz)/M;
+    const vrel=Math.hypot(q.vx-p.vx,q.vy-p.vy,q.vz-p.vz);
+    const Rp=this.R(p.m),Rq=this.R(q.m),vesc=Math.sqrt(2*G*M/(Rp+Rq));
+    const big=p.m>=q.m?p:q,ratio=vrel/vesc;
+    const kmax=Math.min(16,NMAX-b.length+2,Math.floor(M/this.mMin));
+    const romper=ratio>FRAG_RATIO&&kmax>=3&&M>=12*this.mMin&&Math.min(p.m,q.m)>=1.5*this.mMin&&this.rupStep<2;
+    const kill=o=>{if(o.trail.length>1)this.dead.push({pts:o.trail,col:o.col,life:1,frag:o.frag});};
+    const nuevos=[];
+    if(!romper){
+      nuevos.push({id:uid++,m:M,x:cx,y:cy,z:cz,vx:vcx,vy:vcy,vz:vcz,ax:0,ay:0,az:0,col:big.col,trail:big.trail,frag:big.frag&&M<this.Mtot*0.08});
+      kill(big===p?q:p);this.nFus++;
+      this.events.push({x:cx,y:cy,z:cz,kind:'fus',R:this.R(M),age:0});
+    }else{
+      const k=Math.max(3,Math.min(kmax,Math.round(6+12*(ratio-FRAG_RATIO))));
+      const fL=Math.max(0.15,Math.min(0.7,0.55/ratio));
+      const w=[];let ws=0;for(let s=1;s<k;s++){const v=0.4+Math.random();w.push(v);ws+=v;}
+      const ms=[fL*M,...w.map(v=>(1-fL)*M*v/ws)];
+      const mu=p.m*q.m/M,Eb=0.5*mu*vrel*vrel*0.85;
+      const Rrem=this.R(ms[0]);let mf=0;for(let s=1;s<k;s++)mf+=ms[s];
+      const sp=Math.sqrt(2*Eb/(mf*(1+mf/ms[0])));
+      const dirs=sphereDirs(k-1);
+      const fr=[{m:ms[0],x:0,y:0,z:0,vx:0,vy:0,vz:0,col:big.col,frag:false}];
+      for(let s=1;s<k;s++){const u=dirs[s-1];
+        const d=Rrem*1.15+this.R(ms[s])*(1.2+0.3*k)+0.01*Math.random(),f=sp*(0.7+0.6*Math.random());
+        const src=Math.random()<p.m/M?p:q;
+        fr.push({m:ms[s],x:u[0]*d,y:u[1]*d,z:u[2]*d,vx:u[0]*f,vy:u[1]*f,vz:u[2]*f,col:mix(src.col,'#ffffff',0.25+0.25*Math.random()),frag:true});}
+      let S=[0,0,0],P=[0,0,0];fr.forEach(o=>{S[0]+=o.m*o.x;S[1]+=o.m*o.y;S[2]+=o.m*o.z;P[0]+=o.m*o.vx;P[1]+=o.m*o.vy;P[2]+=o.m*o.vz;});
+      fr.forEach(o=>nuevos.push({id:uid++,m:o.m,x:cx+o.x-S[0]/M,y:cy+o.y-S[1]/M,z:cz+o.z-S[2]/M,
+        vx:vcx+o.vx-P[0]/M,vy:vcy+o.vy-P[1]/M,vz:vcz+o.vz-P[2]/M,ax:0,ay:0,az:0,col:o.col,trail:o.frag?[]:big.trail,frag:o.frag}));
+      kill(big===p?q:p);this.nRup++;this.rupStep++;
+      const grp=uid;nuevos.forEach(o=>{o.grp=grp;o.born=this.t;});
+      this.events.push({x:cx,y:cy,z:cz,kind:'rup',R:this.R(M),age:0,k});this.lastRup=k;
+    }
+    this.b=b.filter(o=>o!==p&&o!==q).concat(nuevos);
+  }
+  cleanup(){const [cx,cy,cz]=this.com();const keep=[];
+    for(const o of this.b){if(Math.hypot(o.x-cx,o.y-cy,o.z-cz)>80){this.nEsc++;if(o.trail.length>1)this.dead.push({pts:o.trail,col:o.col,life:1,frag:o.frag});}else keep.push(o);}
+    if(keep.length)this.b=keep;}
+  energy(){const b=this.b;let K=0,U=0;
+    for(let i=0;i<b.length;i++){K+=0.5*b[i].m*(b[i].vx**2+b[i].vy**2+b[i].vz**2);
+      for(let j=i+1;j<b.length;j++)U-=G*b[i].m*b[j].m/Math.sqrt((b[j].x-b[i].x)**2+(b[j].y-b[i].y)**2+(b[j].z-b[i].z)**2+EPS2);}
+    return K+U;}
+  com(){let M=0,x=0,y=0,z=0;for(const o of this.b){M+=o.m;x+=o.m*o.x;y+=o.m*o.y;z+=o.m*o.z;}return [x/M,y/M,z/M];}
+}
+
+// ---------- Cámara 3D ----------
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+let W=0,H=0,DPR=1,F=400;
+const cam={yaw:0.6,pitch:0.35,dist:4,tdist:4,tx:0,ty:0,tz:0,auto:true,fit:true};
+let basis=null;
+function updBasis(){const cp=Math.cos(cam.pitch),sp=Math.sin(cam.pitch),cy=Math.cos(cam.yaw),sy=Math.sin(cam.yaw);
+  const dir=[cp*cy,cp*sy,sp];                         // desde el objetivo hacia la cámara
+  const pos=[cam.tx+dir[0]*cam.dist,cam.ty+dir[1]*cam.dist,cam.tz+dir[2]*cam.dist];
+  const f=[-dir[0],-dir[1],-dir[2]];
+  let r=[f[1]*1-f[2]*0, f[2]*0-f[0]*1, 0];             // f × (0,0,1)
+  r=[f[1],-f[0],0];const rl=Math.hypot(r[0],r[1])||1;r=[r[0]/rl,r[1]/rl,0];
+  const u=[r[1]*f[2]-r[2]*f[1],r[2]*f[0]-r[0]*f[2],r[0]*f[1]-r[1]*f[0]];
+  basis={pos,f,r,u};}
+function proj(x,y,z){const d0=x-basis.pos[0],d1=y-basis.pos[1],d2=z-basis.pos[2];
+  const zc=d0*basis.f[0]+d1*basis.f[1]+d2*basis.f[2];if(zc<0.02)return null;
+  const xc=d0*basis.r[0]+d1*basis.r[1]+d2*basis.r[2],yc=d0*basis.u[0]+d1*basis.u[1]+d2*basis.u[2];
+  return [W/2+xc*F/zc,H/2-yc*F/zc,zc];}
+function projDir(x,y,z){const zc=x*basis.f[0]+y*basis.f[1]+z*basis.f[2];if(zc<0.05)return null;
+  return [W/2+(x*basis.r[0]+y*basis.r[1]+z*basis.r[2])*F/zc,H/2-(x*basis.u[0]+y*basis.u[1]+z*basis.u[2])*F/zc];}
+
+// ---------- Estado ----------
+let preset=PRESETS[0],init=null,sim=null,ghost=null,ghostOn=false,running=true;
+let speed=1,trailFrac=0.6,stars=[],flashes=[];
+function resize(){const r=cv.getBoundingClientRect();DPR=Math.min(2,window.devicePixelRatio||1);
+  W=r.width;H=r.height;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);F=Math.min(W,H)*1.05;}
+window.addEventListener('resize',resize);
+for(let i=0;i<260;i++){const u=Math.random()*2-1,t=Math.random()*6.283,r=Math.sqrt(1-u*u);stars.push([r*Math.cos(t),r*Math.sin(t),u,Math.random()*1.3+0.3,Math.random()]);}
+
+function fitRadius(s){const c=s.com();let R=0.5;
+  for(const o of s.b){if(o.frag&&o.m<s.Mtot*0.05)continue;R=Math.max(R,Math.hypot(o.x-c[0],o.y-c[1],o.z-c[2])+s.R(o.m));}
+  return Math.max(R,preset.minR||0);}
+function load(p,same){
+  preset=p;if(!same||!init||p.id!==init.pid){init=p.bodies();init.pid=p.id;}
+  sim=new Sim(init);ghost=ghostOn?new Sim(init,1e-5):null;flashes=[];
+  const c=sim.com();cam.tx=c[0];cam.ty=c[1];cam.tz=c[2];cam.fit=true;
+  if(!same){cam.yaw=p.view.yaw;cam.pitch=p.view.pitch;}
+  cam.dist=cam.tdist=fitRadius(sim)*2.7;
+  document.getElementById('sub').textContent=p.sub;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.id===p.id));
+}
+
+// ---------- Controles ----------
+const pres=document.getElementById('presets');
+PRESETS.forEach(p=>{const b=document.createElement('button');b.className='chip';b.textContent=p.name;b.dataset.id=p.id;
+  b.onclick=()=>{load(p,false);info.classList.remove('show');};pres.appendChild(b);});
+const playB=document.getElementById('play');
+playB.onclick=()=>{running=!running;playB.textContent=running?'⏸':'▶';};
+document.getElementById('reset').onclick=()=>load(preset,true);
+const gB=document.getElementById('ghost');
+gB.onclick=()=>{ghostOn=!ghostOn;gB.classList.toggle('on',ghostOn);load(preset,true);
+  if(ghostOn)showInfo('Efecto mariposa','Se lanzó una copia fantasma (círculos huecos y estelas punteadas) idéntica salvo que un cuerpo está desplazado 0,00001 unidades. Observa cuándo las dos historias se separan.');};
+const cB=document.getElementById('coll');
+function syncColl(){cB.classList.toggle('on',collOn);document.getElementById('slF').classList.toggle('off',!collOn);document.getElementById('slT').classList.toggle('off',!collOn);}
+cB.onclick=()=>{collOn=!collOn;syncColl();load(preset,true);toast(collOn?'💥 Choques activados':'Masas puntuales (sin choques)');};
+const spd=document.getElementById('spd');
+spd.oninput=()=>{speed=Math.pow(10,(spd.value-50)/50);document.getElementById('spdv').textContent=(speed<1?speed.toFixed(2):speed.toFixed(1))+'×';};
+const trl=document.getElementById('trl');
+trl.oninput=()=>{trailFrac=trl.value/100;document.getElementById('trlv').textContent=trl.value+'%';};
+const frg=document.getElementById('frg');
+frg.oninput=()=>{FRAG_RATIO=2.2-1.15*frg.value/100;document.getElementById('frgv').textContent=frg.value+'%';};
+const tam=document.getElementById('tam');
+tam.oninput=()=>{const f=Math.pow(10,(tam.value-40)/60);RHO=0.05*f;document.getElementById('tamv').textContent=f.toFixed(1)+'×';};
+document.getElementById('zin').onclick=()=>{cam.fit=false;cam.tdist/=1.4;};
+document.getElementById('zout').onclick=()=>{cam.fit=false;cam.tdist*=1.4;};
+document.getElementById('zfit').onclick=()=>{cam.fit=true;};
+const rB=document.getElementById('rot');
+rB.onclick=()=>{cam.auto=!cam.auto;rB.classList.toggle('on',cam.auto);};
+const info=document.getElementById('info');
+function showInfo(t,x){document.getElementById('ititle').textContent=t;document.getElementById('itext').textContent=x;info.classList.add('show');}
+document.getElementById('ibtn').onclick=()=>{if(info.classList.contains('show'))info.classList.remove('show');
+  else showInfo(preset.name,preset.info+(collOn?' — Choques: si dos cuerpos se tocan a baja velocidad se fusionan; si chocan bastante más rápido que su velocidad de escape mutua se rompen en fragmentos (la «Fragilidad» fija ese umbral). Se conservan la masa y el momento; parte de la energía se pierde como calor.':''));};
+document.getElementById('ix').onclick=()=>info.classList.remove('show');
+const tEl=document.getElementById('toast');let tTimer=0;
+function toast(s){tEl.textContent=s;tEl.classList.add('show');clearTimeout(tTimer);tTimer=setTimeout(()=>tEl.classList.remove('show'),1600);}
+
+// gestos: 1 dedo gira, 2 dedos zoom, doble toque reinicia vista
+let ptrs=new Map(),lastPinch=0,lastTap=0,idleUntil=0;
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,[e.clientX,e.clientY]);
+  const now=performance.now();if(now-lastTap<300&&ptrs.size===1){cam.yaw=preset.view.yaw;cam.pitch=preset.view.pitch;cam.fit=true;}lastTap=now;
+  document.getElementById('hint').style.display='none';});
+cv.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;const p=ptrs.get(e.pointerId);
+  if(ptrs.size===1){cam.yaw-=(e.clientX-p[0])*0.008;cam.pitch=Math.max(-1.5,Math.min(1.5,cam.pitch+(e.clientY-p[1])*0.008));idleUntil=performance.now()+2500;}
+  ptrs.set(e.pointerId,[e.clientX,e.clientY]);
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);
+    if(lastPinch){cam.fit=false;cam.dist*=lastPinch/d;cam.tdist=cam.dist;}lastPinch=d;}});
+const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)lastPinch=0;};
+cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+cv.addEventListener('wheel',e=>{e.preventDefault();cam.fit=false;cam.tdist*=Math.exp(e.deltaY*0.001);},{passive:false});
+
+// ---------- Dibujo ----------
+function drawGrid(){
+  const c=sim.com(),R=Math.max(1,cam.dist/2.7),step=Math.pow(10,Math.floor(Math.log10(R)))*(R/Math.pow(10,Math.floor(Math.log10(R)))>4?1:0.5);
+  const n=Math.ceil(R*1.6/step),gx=Math.round(c[0]/step)*step,gy=Math.round(c[1]/step)*step,z=c[2];
+  ctx.lineWidth=1;
+  for(let i=-n;i<=n;i++){
+    for(const dirX of [true,false]){
+      let prev=null;ctx.beginPath();let started=false;
+      for(let k=-n;k<=n;k++){const x=dirX?gx+i*step:gx+k*step,y=dirX?gy+k*step:gy+i*step;
+        const p=proj(x,y,z);if(!p){started=false;continue;}
+        if(!started){ctx.moveTo(p[0],p[1]);started=true;}else ctx.lineTo(p[0],p[1]);}
+      const fade=1-Math.abs(i)/(n+1);ctx.strokeStyle=`rgba(120,150,200,${0.10*fade})`;ctx.stroke();}}
+  // ejes
+  const o=proj(c[0],c[1],c[2]);
+  const ax=[[R*0.35,0,0,'#ff5a6e88','x'],[0,R*0.35,0,'#5ad18a88','y'],[0,0,R*0.35,'#4fc3ff88','z']];
+  if(o)for(const a of ax){const p=proj(c[0]+a[0],c[1]+a[1],c[2]+a[2]);if(!p)continue;
+    ctx.strokeStyle=a[3];ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(o[0],o[1]);ctx.lineTo(p[0],p[1]);ctx.stroke();
+    ctx.fillStyle=a[3];ctx.font='10px system-ui';ctx.fillText(a[4],p[0]+3,p[1]-3);}
+}
+function drawTrail(tr,col,dashed,alphaMul,frag){
+  const n=tr.length;if(n<2)return;ctx.lineWidth=(dashed?1.1:frag?1:1.7);ctx.lineCap='round';ctx.lineJoin='round';
+  if(dashed)ctx.setLineDash([3,4]);
+  const seg=Math.max(1,Math.floor(n/20));
+  for(let s=0;s<n-1;s+=seg){const e=Math.min(n-1,s+seg);
+    ctx.globalAlpha=(dashed?0.5:frag?0.55:0.85)*(e/n)*alphaMul;ctx.strokeStyle=col;ctx.beginPath();let st=false;
+    for(let k=s;k<=e;k++){const p=proj(tr[k][0],tr[k][1],tr[k][2]);if(!p){st=false;continue;}
+      if(!st){ctx.moveTo(p[0],p[1]);st=true;}else ctx.lineTo(p[0],p[1]);}ctx.stroke();}
+  ctx.setLineDash([]);ctx.globalAlpha=1;}
+function bodyPx(s,o,zc){const phys=s.R(o.m)*F/zc;
+  if(collOn)return Math.max(phys,o.frag?1.4:2.6);
+  return Math.max(2.6,Math.min(16,(0.06+0.045*Math.cbrt(o.m))*F/zc));}
+function drawDrop(o,c){ // línea vertical al plano: ayuda a leer la profundidad
+  const a=proj(o.x,o.y,o.z),b=proj(o.x,o.y,c[2]);if(!a||!b)return;
+  ctx.strokeStyle='rgba(160,180,220,.18)';ctx.lineWidth=1;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba(160,180,220,.25)';ctx.beginPath();ctx.ellipse(b[0],b[1],2.5,1.3,0,0,7);ctx.fill();}
+function drawBody(s,o,hollow){const p=proj(o.x,o.y,o.z);if(!p)return;const [sx,sy,zc]=p;
+  if(sx<-80||sy<-80||sx>W+80||sy>H+80)return;
+  const r=bodyPx(s,o,zc),col=o.col;
+  if(hollow){ctx.strokeStyle=col;ctx.lineWidth=1.2;ctx.globalAlpha=0.7;ctx.beginPath();ctx.arc(sx,sy,r,0,7);ctx.stroke();ctx.globalAlpha=1;return;}
+  const gr=Math.min(r*2.6,r+28);
+  const g=ctx.createRadialGradient(sx,sy,r*0.5,sx,sy,gr);g.addColorStop(0,col+'99');g.addColorStop(1,col+'00');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy,gr,0,7);ctx.fill();
+  // esfera sombreada (luz desde arriba-izquierda)
+  const sh=ctx.createRadialGradient(sx-r*0.35,sy-r*0.35,r*0.1,sx,sy,r);
+  sh.addColorStop(0,mix(col,'#ffffff',0.65));sh.addColorStop(0.55,col);sh.addColorStop(1,mix(col,'#000000',0.55));
+  ctx.fillStyle=sh;ctx.beginPath();ctx.arc(sx,sy,r,0,7);ctx.fill();}
+function drawFlash(f){const p=proj(f.x,f.y,f.z);if(!p)return;const [sx,sy,zc]=p;const a=1-f.age;
+  const r=Math.max(8,f.R*F/zc)*(1+f.age*(f.kind==='rup'?5:2.5));
+  ctx.globalAlpha=a*0.9;ctx.strokeStyle=f.kind==='rup'?'#ffb547':'#ffffff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(sx,sy,r,0,7);ctx.stroke();
+  if(f.kind==='rup'){ctx.globalAlpha=a*0.5;const g=ctx.createRadialGradient(sx,sy,0,sx,sy,r);g.addColorStop(0,'#fff3c4');g.addColorStop(1,'#ff7a2f00');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy,r,0,7);ctx.fill();}
+  ctx.globalAlpha=1;}
+
+const hud=document.getElementById('hud');
+let lastT=performance.now();
+function pushTrails(s){const maxLen=Math.floor(20+trailFrac*1200);
+  for(const o of s.b){o.trail.push([o.x,o.y,o.z]);const ml=o.frag?Math.floor(maxLen*0.35):maxLen;
+    if(o.trail.length>ml)o.trail.splice(0,o.trail.length-ml);}}
+function frame(now){
+  const dt=Math.min(0.05,(now-lastT)/1000);lastT=now;
+  if(running){const T=dt*speed*1.2,r0=sim.nRup,f0=sim.nFus;
+    sim.advance(T);if(ghost)ghost.advance(T);
+    if(sim.nRup>r0)toast(`💥 Ruptura: ${sim.lastRup} fragmentos nuevos`);
+    else if(sim.nFus>f0)toast('🔗 Fusión: dos cuerpos se unieron');
+    flashes.push(...sim.events);sim.events=[];if(ghost)ghost.events=[];
+    pushTrails(sim);if(ghost)pushTrails(ghost);}
+  for(const f of flashes)f.age+=dt*1.4;flashes=flashes.filter(f=>f.age<1);
+  for(const s of [sim,ghost]){if(!s)continue;for(const d of s.dead)d.life-=dt*0.5;s.dead=s.dead.filter(d=>d.life>0);}
+
+  // cámara
+  const c=sim.com();cam.tx+=(c[0]-cam.tx)*0.08;cam.ty+=(c[1]-cam.ty)*0.08;cam.tz+=(c[2]-cam.tz)*0.08;
+  if(cam.fit){const want=fitRadius(sim)*2.7;cam.tdist=want>cam.tdist?cam.tdist+(want-cam.tdist)*0.15:cam.tdist+(want-cam.tdist)*0.01;}
+  cam.dist+=(cam.tdist-cam.dist)*0.12;
+  if(cam.auto&&ptrs.size===0&&now>idleUntil)cam.yaw+=dt*0.12;
+  updBasis();
+
+  ctx.fillStyle='#05070d';ctx.fillRect(0,0,W,H);
+  for(const s of stars){const p=projDir(s[0],s[1],s[2]);if(!p)continue;
+    ctx.globalAlpha=0.25+0.4*Math.abs(Math.sin(now/1500+s[4]*9));ctx.fillStyle='#9fb4d8';ctx.fillRect(p[0],p[1],s[3],s[3]);}
+  ctx.globalAlpha=1;
+  drawGrid();
+  for(const d of sim.dead)drawTrail(d.pts,d.col,false,d.life,d.frag);
+  if(ghost)for(const o of ghost.b)drawTrail(o.trail,o.col,true,1,o.frag);
+  for(const o of sim.b)drawTrail(o.trail,o.col,false,1,o.frag);
+  for(const o of sim.b)if(!o.frag)drawDrop(o,c);
+  if(ghost)for(const o of ghost.b)drawBody(ghost,o,true);
+  // pintar de lejos a cerca
+  const order=sim.b.map(o=>{const p=proj(o.x,o.y,o.z);return [p?p[2]:-1,o];}).sort((a,b)=>b[0]-a[0]);
+  for(const [,o] of order)drawBody(sim,o,false);
+  for(const f of flashes)drawFlash(f);
+
+  const n=sim.b.length,mayores=sim.b.filter(o=>!o.frag).length;
+  let h=`t = <b>${sim.t.toFixed(1)}</b> · Cuerpos: <b style="color:var(--acc)">${n}</b>${n>mayores?` (${n-mayores} fragm.)`:''}`;
+  if(preset.id==='sitnikov'&&n===3){const p=sim.b[2];h+=`<br>Altura del péndulo z: <b style="color:${p.col}">${(p.z-c[2]).toFixed(2)}</b>`;}
+  if(collOn&&(sim.nFus+sim.nRup))h+=`<br>Fusiones: <b>${sim.nFus}</b> · Rupturas: <b>${sim.nRup}</b>${sim.nEsc?` · Escaparon: <b>${sim.nEsc}</b>`:''}`;
+  if(!collOn||(sim.nFus+sim.nRup)===0){const E=sim.energy(),dE=Math.abs((E-sim.E0)/(sim.E0||1));
+    h+=`<br>Error energía: <b>${dE<1e-9?'<1e-9':dE.toExponential(1)}</b>`;}
+  else{const E=sim.energy();h+=`<br>Calor disipado en choques: <b>${(Math.min(1,Math.max(0,(sim.E0-E)/Math.max(sim.K0,Math.abs(sim.E0))))*100).toFixed(0)}%</b>`;}
+  if(ghost){const sa=[...sim.b].sort((x,y)=>y.m-x.m),sb=[...ghost.b].sort((x,y)=>y.m-x.m);let dm=0;
+    for(let i=0;i<Math.min(3,sa.length,sb.length);i++)dm=Math.max(dm,Math.hypot(sa[i].x-sb[i].x,sa[i].y-sb[i].y,sa[i].z-sb[i].z));
+    if(preset.id==='sitnikov'&&sa.length===3&&sb.length===3){const a=sim.b[2],b=ghost.b[2];dm=Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);}
+    h+=`<br>Separación fantasma: <b style="color:var(--acc)">${dm.toExponential(1)}</b>`;}
+  hud.innerHTML=h;
+  requestAnimationFrame(frame);
+}
+resize();syncColl();load(PRESETS[0]);updBasis();requestAnimationFrame(frame);
+})();
+</script>
+<div class="fbm" id="fbm" role="dialog" aria-label="Comentarios"><div class="fbbox"><button class="x" id="fbX" aria-label="Cerrar">×</button>
+  <h3>💬 ¿Comentarios o ideas?</h3><p>«El problema de los tres cuerpos» lo está desarrollando el <b>Ing. Miguel Agip</b>. Cuéntame qué te pareció, qué falló o qué te gustaría que agregue.</p>
+  <a class="fbb wa" href="https://wa.me/51975525627?text=Hola%20Miguel%2C%20te%20escribo%20sobre%20%C2%ABEl%20problema%20de%20los%20tres%20cuerpos%C2%BB.%20Mi%20comentario%3A%20" target="_blank" rel="noopener">🟢 <span>WhatsApp<small>975 525 627</small></span></a>
+  <a class="fbb ml" href="mailto:neptaliagiphoyos@gmail.com?subject=Comentarios%20sobre%20El%20problema%20de%20los%20tres%20cuerpos&body=Hola%20Miguel%2C%0A%0AEstuve%20usando%20%C2%ABEl%20problema%20de%20los%20tres%20cuerpos%C2%BB%20y%20quer%C3%ADa%20comentarte%3A%0A%0A" target="_blank" rel="noopener">✉️ <span>Correo<small>neptaliagiphoyos@gmail.com</small></span></a>
+  <a class="fbb tl" href="tel:+51975525627">📞 <span>Llamar<small>+51 975 525 627</small></span></a>
+  <div class="fbcp"><button id="fbCm">Copiar correo</button><button id="fbCt">Copiar número</button></div>
+  <p class="fbnote">Si algún botón no abre nada en tu equipo, copia el dato y escríbeme desde tu app.</p></div></div>
+<script>(()=>{const m=document.getElementById('fbm'),b=document.getElementById('fbBtn');if(!b)return;
+  b.addEventListener('click',e=>{e.stopPropagation();m.classList.add('show');});
+  document.getElementById('fbX').onclick=()=>m.classList.remove('show');m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show');});
+  window.addEventListener('keydown',e=>{if(e.key==='Escape'&&m.classList.contains('show')){m.classList.remove('show');e.stopImmediatePropagation();}},true);
+  const cp=(t,btn)=>{const ok=()=>{const o=btn.textContent;btn.textContent='✓ Copiado';setTimeout(()=>btn.textContent=o,1500);};
+    try{navigator.clipboard.writeText(t).then(ok,()=>{btn.textContent=t;});}catch(_){btn.textContent=t;}};
+  document.getElementById('fbCm').onclick=e=>cp('neptaliagiphoyos@gmail.com',e.target);document.getElementById('fbCt').onclick=e=>cp('+51975525627',e.target);
+  b.classList.add('pulse');})();
+// ---- teclado (versión computadora) ----
+window.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'&&/Arrow/.test(e.key))return;
+  const $=id=>document.getElementById(id),chips=[...document.querySelectorAll('#presets .chip')];
+  if(e.key===' '){e.preventDefault();$('play').click();}
+  else if(e.key==='Delete'||e.key==='Backspace')$('reset').click();
+  else if(/^[1-9]$/.test(e.key)&&chips[+e.key-1])chips[+e.key-1].click();
+  else if(e.key==='g'||e.key==='G')$('ghost').click();
+  else if(e.key==='c'||e.key==='C')$('coll').click();
+  else if(e.key==='a'||e.key==='A')$('rot').click();
+  else if(e.key==='f'||e.key==='F')$('zfit').click();
+  else if(e.key==='i'||e.key==='I')$('ibtn').click();
+  else if(e.key==='+'||e.key==='=')$('zin').click();
+  else if(e.key==='-')$('zout').click();
+  else if(e.key==='ArrowRight'||e.key==='ArrowLeft'){const s=$('spd');s.value=Math.max(0,Math.min(100,+s.value+(e.key==='ArrowRight'?5:-5)));s.dispatchEvent(new Event('input'));}
+  else if(e.key==='Escape'){const inf=$('info');if(inf)inf.classList.remove('show');}});
+</script>
+</body>
+</html>
