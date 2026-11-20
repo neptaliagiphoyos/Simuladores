@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Biblioteca de Simuladores · Ing. Miguel Agip</title>
+<meta name="description" content="Biblioteca de simuladores interactivos de física, astronomía e ingeniería creados por el Ing. Miguel Agip. Ábrelos en línea o descárgalos.">
+<meta property="og:title" content="Biblioteca de Simuladores · Ing. Miguel Agip">
+<meta property="og:description" content="Simuladores interactivos de física, astronomía e ingeniería. Ábrelos en línea o descárgalos.">
+<style>
+:root{
+  --bg:#0f1115;--panel:#171a21;--line:#2a2f3a;--ink:#eef0f4;--mute:#9aa3b2;
+  --gold:#e8b44a;--gold2:#f6d48a;--radius:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:inherit}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+
+/* ---------- Portada ---------- */
+.cover{position:relative;overflow:hidden;padding:56px 0 40px;border-bottom:1px solid var(--line);
+  background:
+    radial-gradient(1200px 400px at 80% -10%,rgba(232,180,74,.18),transparent 60%),
+    radial-gradient(800px 300px at 0% 110%,rgba(80,140,255,.14),transparent 60%),
+    linear-gradient(180deg,#141821,#0f1115)}
+.cover::before{content:"";position:absolute;inset:0;opacity:.07;
+  background-image:linear-gradient(var(--ink) 1px,transparent 1px),linear-gradient(90deg,var(--ink) 1px,transparent 1px);
+  background-size:32px 32px;mask-image:linear-gradient(180deg,#000,transparent 85%)}
+.eyebrow{display:inline-flex;gap:8px;align-items:center;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold2);
+  border:1px solid rgba(232,180,74,.4);border-radius:99px;padding:5px 12px;background:rgba(232,180,74,.08)}
+.cover h1{font-family:Georgia,"Times New Roman",serif;font-weight:700;font-size:clamp(34px,8vw,64px);line-height:1.05;margin:18px 0 10px;letter-spacing:-.01em}
+.cover h1 em{font-style:normal;color:var(--gold)}
+.lead{font-size:clamp(16px,3.6vw,19px);color:#cdd3de;max-width:680px;margin:0 0 22px}
+.author{display:flex;gap:14px;align-items:center;margin:22px 0 0;padding:14px 16px;border:1px solid var(--line);border-radius:var(--radius);
+  background:rgba(23,26,33,.75);max-width:560px}
+.seal{flex:none;width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-family:Georgia,serif;font-weight:700;font-size:20px;color:#1a1408;
+  background:conic-gradient(from 30deg,var(--gold),var(--gold2),var(--gold),#b9852a,var(--gold));box-shadow:0 0 0 3px #1b1f27,0 0 0 4px rgba(232,180,74,.5)}
+.author b{display:block;font-size:16px}
+.author span{color:var(--mute);font-size:13px}
+.promise{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:24px;max-width:760px}
+.promise div{border:1px solid var(--line);border-radius:12px;padding:12px;background:rgba(23,26,33,.6);font-size:13px;color:#cdd3de}
+.promise div strong{display:block;color:var(--gold2);font-size:14px;margin-bottom:2px}
+.stats{margin-top:22px;color:var(--mute);font-size:13px}
+.stats b{color:var(--ink)}
+
+/* ---------- Herramientas ---------- */
+.tools{position:sticky;top:0;z-index:5;background:rgba(15,17,21,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:12px 0}
+.search{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:15px}
+.search:focus{outline:2px solid var(--gold);border-color:transparent}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-top:10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--panel);color:#cdd3de;border-radius:99px;padding:7px 14px;font-size:13px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--gold);color:#1a1408;border-color:var(--gold);font-weight:600}
+
+/* ---------- Estantería ---------- */
+.shelf-title{font-family:Georgia,serif;font-size:22px;margin:30px 0 4px}
+.shelf-sub{color:var(--mute);font-size:13px;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;padding-bottom:12px}
+.book{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);overflow:hidden;transition:transform .15s,border-color .15s}
+.book:hover{transform:translateY(-2px);border-color:#3a4150}
+.jacket{position:relative;height:150px;display:flex;align-items:flex-end;padding:14px 16px 14px 26px;color:#fff;
+  background:linear-gradient(135deg,var(--c1),var(--c2))}
+.jacket::before{content:"";position:absolute;left:0;top:0;bottom:0;width:12px;background:linear-gradient(90deg,rgba(0,0,0,.35),rgba(0,0,0,.05))}
+.jacket::after{content:"";position:absolute;inset:0;background:radial-gradient(260px 120px at 85% 15%,rgba(255,255,255,.22),transparent 60%)}
+.glyph{position:absolute;right:14px;top:10px;font-size:54px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.35))}
+.jacket h3{position:relative;z-index:1;margin:0;font-family:Georgia,serif;font-size:20px;line-height:1.15;text-shadow:0 2px 8px rgba(0,0,0,.35);max-width:78%}
+.jacket small{position:absolute;left:26px;top:12px;z-index:1;font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.9}
+.body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:10px;flex:1}
+.desc{margin:0;color:#cdd3de;font-size:14px}
+.learn{margin:0;color:var(--mute);font-size:13px}
+.learn b{color:var(--ink);font-weight:600}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:11.5px;color:#cdd3de;border:1px solid var(--line);border-radius:99px;padding:3px 9px}
+.versions{display:flex;flex-direction:column;gap:8px;margin-top:auto}
+.ver{display:flex;gap:8px;align-items:center}
+.ver span{flex:1;font-size:12.5px;color:var(--mute)}
+.btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none;border-radius:10px;padding:8px 12px;font-size:13.5px;font-weight:600;border:1px solid var(--line);background:#20242d;cursor:pointer;color:var(--ink)}
+.btn.primary{background:var(--gold);border-color:var(--gold);color:#1a1408}
+.btn[aria-disabled=true]{opacity:.4;pointer-events:none}
+.soon{font-size:12px;color:var(--gold2)}
+.empty{display:none;text-align:center;color:var(--mute);padding:40px 0}
+
+/* ---------- Próximamente / pie ---------- */
+.next{margin:36px 0;border:1px dashed rgba(232,180,74,.5);border-radius:var(--radius);padding:22px;background:rgba(232,180,74,.05)}
+.next h2{font-family:Georgia,serif;margin:0 0 6px;font-size:22px}
+.next p{margin:0 0 14px;color:#cdd3de}
+footer{border-top:1px solid var(--line);padding:22px 0 90px;color:var(--mute);font-size:13px}
+footer b{color:var(--ink)}
+
+/* ---------- Botón de comentarios ---------- */
+.fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:20;border:none;border-radius:99px;padding:13px 18px;
+  background:var(--gold);color:#1a1408;font-weight:700;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.45);cursor:pointer}
+.sheet{position:fixed;inset:0;z-index:30;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55)}
+.sheet.open{display:flex}
+.sheet .card{width:100%;max-width:460px;background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px))}
+.sheet h3{margin:0 0 4px;font-family:Georgia,serif;font-size:20px}
+.sheet p{margin:0 0 16px;color:var(--mute);font-size:14px}
+.sheet .btn{width:100%;justify-content:center;padding:12px;margin-bottom:10px;font-size:15px}
+@media(min-width:700px){.sheet{align-items:center}.sheet .card{border-radius:18px}}
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <div class="wrap" style="position:relative">
+    <span class="eyebrow">📚 Biblioteca abierta · gratis</span>
+    <h1>Biblioteca de <em>Simuladores</em></h1>
+    <p class="lead">Simuladores interactivos de física, astronomía e ingeniería para aprender viendo y tocando. Revisa la ficha de cada uno, ábrelo en línea o descárgalo para usarlo sin internet.</p>
+
+    <div class="author">
+      <div class="seal">MA</div>
+      <div>
+        <b>Creado por el Ing. Miguel Agip</b>
+        <span>Ingeniero Civil · CIP 110206 · Lima, Perú</span>
+      </div>
+    </div>
+
+    <div class="promise">
+      <div><strong>🚀 Seguimos creando</strong>Nuevos simuladores se suman a la biblioteca cada semana.</div>
+      <div><strong>🎯 Más personalizados</strong>Contenidos adaptados a cada curso, obra o necesidad.</div>
+      <div><strong>🧠 Más inteligentes</strong>Simuladores que responden, calculan y explican.</div>
+    </div>
+    <p class="stats"><b id="nTotal">0</b> simuladores en la biblioteca · <b id="nReady">0</b> disponibles hoy</p>
+  </div>
+</header>
+
+<div class="tools">
+  <div class="wrap">
+    <input id="q" class="search" type="search" placeholder="🔎  Buscar: sistema solar, sismos, robot, hidroeléctrica…" aria-label="Buscar simulador">
+    <div class="chips" id="chips" role="toolbar" aria-label="Filtrar por tema"></div>
+  </div>
+</div>
+
+<main class="wrap">
+  <div id="shelves"></div>
+  <p class="empty" id="empty">No encontramos ese simulador. Prueba con otra palabra o <a href="#" data-feedback>pídelo aquí</a>.</p>
+
+  <section class="next">
+    <h2>¿Necesitas un simulador a tu medida?</h2>
+    <p>Diseño simuladores para cursos, obras, proyectos y presentaciones: personalizados con tus datos y pensados para celular, computadora o TV.</p>
+    <button class="btn primary" data-feedback>💬 Escríbeme tu idea</button>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <b>Biblioteca de Simuladores · Ing. Miguel Agip</b><br>
+    Todos los simuladores son de libre uso educativo. Si lo compartes o lo usas en clase, menciona al autor.<br>
+    © <span id="yr"></span> Miguel Agip · neptaliagiphoyos@gmail.com
+  </div>
+</footer>
+
+<button class="fab" data-feedback>💬 Comentarios</button>
+
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetT">
+  <div class="card">
+    <h3 id="sheetT">Envíame tus comentarios</h3>
+    <p>Cuéntame qué simulador usaste, qué mejorarías o qué tema te gustaría ver en la biblioteca.</p>
+    <a class="btn primary" id="wa" target="_blank" rel="noopener">🟢 WhatsApp · 975 525 627</a>
+    <a class="btn" id="mail">✉️ Correo · neptaliagiphoyos@gmail.com</a>
+    <button class="btn" id="close">Cerrar</button>
+  </div>
+</div>
+
+<script>
+/* Catálogo: para agregar un simulador nuevo, añade un bloque aquí
+   y sube su archivo .html con el mismo nombre que figura en "file". */
+const SIMS = [
+  {t:"Central Hidroeléctrica Gallito Ciego", cat:"Ingeniería", g:"🏞️", c:["#0f5c7a","#1fa3a0"],
+   d:"Recorre la presa y la central: embalse, tubería forzada, turbina y generador, con caudales y potencia en vivo.",
+   l:"Cómo el agua almacenada se convierte en electricidad.",
+   tags:["Hidráulica","Energía","Perú"],
+   v:[{n:"Celular",f:"gallito-ciego-celular.html"},{n:"Computadora",f:"gallito-ciego-pc.html"}]},
+  {t:"Microcentral Hidroeléctrica", cat:"Ingeniería", g:"⚡", c:["#1d4e89","#3aa0ff"],
+   d:"Caída de agua y generador de imanes: cambia la altura y el caudal y mira cuánta energía obtienes.",
+   l:"Inducción electromagnética y potencia hidráulica.",
+   tags:["Energía","Electricidad"], v:[{n:"Simulador",f:"microcentral-hidroelectrica.html"}]},
+  {t:"Sismos en el Perú", cat:"Ingeniería", g:"🌋", c:["#7a2e0f","#e0662b"],
+   d:"Subducción de placas, ondas sísmicas y cómo responden los edificios según su altura y estructura.",
+   l:"Por qué tiembla en el Perú y cómo se protegen las construcciones.",
+   tags:["Sismología","Estructuras","Perú"], v:[{n:"Simulador",f:"sismos-peru.html"}]},
+  {t:"Metrado de Cargas", cat:"Ingeniería", g:"🏗️", c:["#4a4a52","#9a8a6a"],
+   d:"Calcula las cargas muertas y vivas de una edificación paso a paso, con resultados ordenados.",
+   l:"Metrado de cargas para el diseño estructural.",
+   tags:["Estructuras","Cálculo"], v:[{n:"Calculadora",f:"metrado-de-cargas.html"}]},
+  {t:"Teodolito A26", cat:"Ingeniería", g:"📐", c:["#2d5a27","#7cbf4a"],
+   d:"Mide distancia, altura y ancho de un objeto a partir de una foto del celular, con esquema y fórmulas.",
+   l:"Topografía y trigonometría aplicada.",
+   tags:["Topografía","Medición"], v:[{n:"Simulador",f:"teodolito-a26.html"}]},
+  {t:"Planta Concretera AGIP", cat:"Ingeniería", g:"🚚", c:["#5a5f68","#c9a227"],
+   d:"Simulador de una planta de concreto: agregados, cemento, agua y despacho de mixers.",
+   l:"Cómo se produce y despacha el concreto premezclado.",
+   tags:["Construcción","Concreto"], v:[{n:"Celular",f:"simulador-agip-celular.html"}]},
+  {t:"Brazo Robot AGI-4", cat:"Tecnología", g:"🦾", c:["#3b2a7a","#8b5cf6"],
+   d:"Brazo de 4 articulaciones con pinza, servos y ESP32. Simúlalo aquí y luego ármalo con LEGO o piezas impresas.",
+   l:"Robótica, servomotores y programación.",
+   tags:["Robótica","ESP32","LEGO"], v:[{n:"Simulador",f:"brazo-robot-agi4.html"}]},
+  {t:"Despiece Kia Soul 2013", cat:"Tecnología", g:"🚗", c:["#6b1d2a","#e04a5f"],
+   d:"Explora el auto por sistemas y piezas: motor, transmisión, suspensión, frenos y carrocería.",
+   l:"Cómo está armado un automóvil.",
+   tags:["Mecánica","Automotriz"], v:[{n:"Simulador",f:"despiece-kia-soul.html"}]},
+  {t:"Sistema Solar 3D y Alfa Centauri", cat:"Astronomía", g:"🪐", c:["#0b1a3a","#3b5bdb"],
+   d:"Viaja por los planetas en 3D y compara nuestro sistema con la estrella vecina, Alfa Centauri.",
+   l:"Escalas, órbitas y distancias del universo cercano.",
+   tags:["3D","Planetas","Estrellas"], v:[{n:"Simulador",f:"sistema-solar-alfa-centauri.html"}]},
+  {t:"El Sol y Alfa Centauri en 3D", cat:"Astronomía", g:"☀️", c:["#5a2a00","#f59f00"],
+   d:"Compara en 3D el Sol con el sistema triple de Alfa Centauri: tamaños, brillo y distancias.",
+   l:"Tipos de estrellas y sistemas múltiples.",
+   tags:["3D","Estrellas"], v:[{n:"Simulador",f:"sol-alfa-centauri-3d.html"}]},
+  {t:"Sistema Solar y Asteroides", cat:"Astronomía", g:"☄️", c:["#1a1f4a","#7048e8"],
+   d:"Sistema solar en 3D con el cinturón de asteroides y fichas de cada planeta.",
+   l:"Datos de cada planeta y el cinturón de asteroides.",
+   tags:["3D","Planetas"], v:[{n:"Simulador",f:"sistema-solar-asteroides.html"}]},
+  {t:"El Problema de los Tres Cuerpos", cat:"Astronomía", g:"🌀", c:["#141414","#5c7cfa"],
+   d:"Tres masas que se atraen entre sí en 3D: mira cómo el orden se vuelve caos.",
+   l:"Gravitación y sistemas caóticos.",
+   tags:["3D","Gravedad","Caos"], v:[{n:"Simulador",f:"tres-cuerpos-3d.html"}]},
+  {t:"Aurora Boreal", cat:"Astronomía", g:"🌌", c:["#06302a","#20c997"],
+   d:"El viento solar choca con la atmósfera y enciende el cielo: colores, altura y campo magnético.",
+   l:"Cómo y por qué se forman las auroras.",
+   tags:["Atmósfera","Magnetismo"], v:[{n:"Computadora",f:"aurora-boreal-pc.html"}]},
+  {t:"Banco Óptico: Fotones de la Aurora", cat:"Física", g:"🔭", c:["#08343f","#15aabf"],
+   d:"Lleva la luz de la aurora por espejos y lentes multifocales y sigue el recorrido de cada fotón.",
+   l:"Reflexión, refracción y óptica geométrica.",
+   tags:["Óptica","Luz"],
+   v:[{n:"Celular",f:"banco-optico-celular.html"},{n:"Computadora",f:"banco-optico-pc.html"}]},
+  {t:"Fuerzas Fundamentales", cat:"Física", g:"🧲", c:["#3a0f4a","#d6336c"],
+   d:"Las cuatro interacciones del universo: gravitatoria, electromagnética, nuclear fuerte y débil.",
+   l:"Qué mantiene unido todo lo que existe.",
+   tags:["Partículas","TV"],
+   v:[{n:"Celular",f:"fuerzas-fundamentales-celular.html"},{n:"TV / computadora",f:"fuerzas-fundamentales-tv.html"}]},
+  {t:"Ondas EM y Moléculas", cat:"Física", g:"📡", c:["#0a2f5a","#4dabf7"],
+   d:"Cómo las ondas electromagnéticas interactúan con 11 compuestos a nivel molecular.",
+   l:"Espectro electromagnético y absorción molecular.",
+   tags:["Ondas","Química","TV"], v:[{n:"Simulador",f:"ondas-em-moleculas.html"}]},
+  {t:"Choques Nucleares", cat:"Física", g:"☢️", c:["#3d3a00","#fab005"],
+   d:"Fisión, captura, fusión, experimento de Rutherford, superpesados y reacción en cadena con datos reales.",
+   l:"Física nuclear y energía del átomo.",
+   tags:["Nuclear","TV"], v:[{n:"Simulador",f:"choques-nucleares.html"}]},
+  {t:"Tabla Periódica Interactiva", cat:"Química", g:"⚗️", c:["#0f3d2e","#40c057"],
+   d:"Los 118 elementos con ficha, modelo de capas animado y estado físico según la temperatura.",
+   l:"Propiedades y estructura de los elementos.",
+   tags:["Elementos","TV"], v:[{n:"Simulador",f:"tabla-periodica.html"}]}
+];
+
+const $ = s => document.querySelector(s);
+const CATS = ["Todos", ...new Set(SIMS.map(s => s.cat))];
+let cat = "Todos", query = "", ready = new Set();
+
+$("#yr").textContent = new Date().getFullYear();
+$("#nTotal").textContent = SIMS.length;
+
+const chips = $("#chips");
+CATS.forEach(c => {
+  const b = document.createElement("button");
+  b.className = "chip"; b.textContent = c; b.setAttribute("aria-pressed", c === cat);
+  b.onclick = () => { cat = c; chips.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", x === b)); render(); };
+  chips.appendChild(b);
+});
+
+const norm = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+function card(s){
+  const ok = s.v.some(v => ready.has(v.f));
+  const vers = s.v.map(v => {
+    const on = ready.has(v.f);
+    return `<div class="ver"><span>${v.n}</span>
+      <a class="btn primary" href="${v.f}" target="_blank" rel="noopener" aria-disabled="${!on}">▶ Abrir</a>
+      <a class="btn" href="${v.f}" download aria-disabled="${!on}">⬇</a></div>`;
+  }).join("");
+  return `<article class="book" style="--c1:${s.c[0]};--c2:${s.c[1]}">
+    <div class="jacket"><small>${s.cat}</small><span class="glyph" aria-hidden="true">${s.g}</span><h3>${s.t}</h3></div>
+    <div class="body">
+      <p class="desc">${s.d}</p>
+      <p class="learn"><b>Aprenderás:</b> ${s.l}</p>
+      <div class="tags">${s.tags.map(t => `<span class="tag">${t}</span>`).join("")}</div>
+      ${ok ? "" : `<span class="soon">⏳ Próximamente en la biblioteca</span>`}
+      <div class="versions">${vers}</div>
+    </div></article>`;
+}
+
+function render(){
+  const q = norm(query.trim());
+  const list = SIMS.filter(s => (cat === "Todos" || s.cat === cat) &&
+    (!q || norm([s.t, s.d, s.l, s.cat, ...s.tags].join(" ")).includes(q)));
+  const groups = cat === "Todos" ? CATS.slice(1) : [cat];
+  $("#shelves").innerHTML = groups.map(g => {
+    const items = list.filter(s => s.cat === g);
+    if (!items.length) return "";
+    return `<h2 class="shelf-title">${g}</h2><p class="shelf-sub">${items.length} simulador${items.length > 1 ? "es" : ""}</p>
+      <div class="grid">${items.map(card).join("")}</div>`;
+  }).join("");
+  $("#empty").style.display = list.length ? "none" : "block";
+}
+
+$("#q").addEventListener("input", e => { query = e.target.value; render(); });
+render();
+
+/* Marca como disponibles los archivos que ya están subidos */
+Promise.all(SIMS.flatMap(s => s.v).map(v =>
+  fetch(v.f, {method: "HEAD", cache: "no-store"}).then(r => { if (r.ok) ready.add(v.f); }).catch(() => {})
+)).then(() => {
+  $("#nReady").textContent = SIMS.filter(s => s.v.some(v => ready.has(v.f))).length;
+  render();
+});
+
+/* Comentarios */
+const msg = encodeURIComponent("Hola Ing. Miguel, le escribo desde la Biblioteca de Simuladores: ");
+$("#wa").href = "https://wa.me/51975525627?text=" + msg;
+$("#mail").href = "mailto:neptaliagiphoyos@gmail.com?subject=" + encodeURIComponent("Comentario – Biblioteca de Simuladores") + "&body=" + msg;
+const sheet = $("#sheet");
+document.addEventListener("click", e => {
+  if (e.target.closest("[data-feedback]")) { e.preventDefault(); sheet.classList.add("open"); }
+  if (e.target === sheet || e.target.id === "close") sheet.classList.remove("open");
+});
+</script>
+</body>
+</html>
