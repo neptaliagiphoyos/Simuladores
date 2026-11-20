@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sismos en el Perú: subducción, ondas y edificios (computadora)</title>
+<style>
+:root{--bg:#0f1720;--card:#16212d;--ink:#e8eef4;--mut:#93a4b5;--acc:#4fc3f7;--p:#4fc3f7;--s:#ff7043;--r:#ffd54f;--line:#26364a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:24px}
+header{max-width:1500px;margin:0 auto;padding:14px 14px 0}
+h1{font-size:21px;margin:0}header p{margin:3px 0 0;color:var(--mut);font-size:13px}
+main{max-width:1500px;margin:0 auto;padding:0 18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}
+.card h2{font-size:15px;margin:0 0 6px}
+canvas{width:100%;display:block;border-radius:8px;background:#0b121a;margin:6px 0}
+nav{position:sticky;top:0;display:flex;max-width:1500px;margin:0 auto;background:#0b121a;border-bottom:1px solid var(--line);z-index:9}
+nav button{flex:1;padding:11px 4px 14px;background:none;border:0;color:var(--mut);font-size:13px;font-weight:600}
+nav button.on{color:var(--acc);box-shadow:inset 0 -3px 0 var(--acc)}
+.tab{display:none}.tab.on{display:block}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;flex:1}
+.seg button{flex:1;background:none;border:0;color:var(--ink);padding:9px 6px;font-size:13px}
+.seg button.on{background:var(--acc);color:#04202e;font-weight:700}
+.btn{background:var(--acc);color:#04202e;border:0;border-radius:9px;padding:10px 14px;font-weight:700;font-size:14px}
+.btn.alt{background:#26364a;color:var(--ink)}
+label{font-size:13px;color:var(--mut)}label b{color:var(--ink)}
+input[type=range]{width:100%;margin:4px 0 8px}
+select{background:#0b121a;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px;font-size:13px;max-width:100%}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin:6px 0}
+.stat{background:#0b121a;border-radius:8px;padding:7px 9px}
+.stat b{display:block;font-size:16px}.stat span{font-size:11.5px;color:var(--mut)}
+.stat.bad b{color:#ff8a65}.stat.ok b{color:#9ccc65}
+.note{font-size:13px;color:var(--mut);margin:6px 0}
+.leg{font-size:12px;color:var(--mut);display:flex;gap:12px;flex-wrap:wrap}
+.leg i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:4px}
+.layer{display:grid;grid-template-columns:1.1fr 1fr;gap:8px;align-items:center;background:#0b121a;padding:7px 9px;border-radius:8px;margin:6px 0}
+.diag{background:#0b121a;border-left:3px solid var(--acc);padding:8px 10px;border-radius:6px;font-size:13.5px}
+.diag.warn{border-color:#ff7043}
+ul{padding-left:18px;margin:6px 0}li{font-size:13px;color:var(--mut);margin:3px 0}
+@media(min-width:620px){.stats{grid-template-columns:repeat(4,1fr)}}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:16px;align-items:start}
+.side{position:sticky;top:56px;max-height:calc(100vh - 66px);overflow-y:auto;padding-right:4px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:0 14px}
+button,.btn,.seg button,nav button,select{cursor:pointer}
+nav button{font-size:14px}
+kbd{background:#0b121a;border:1px solid #3a4a5e;border-bottom-width:2px;border-radius:5px;padding:1px 6px;font:12px system-ui;color:#e8eef4}
+ul.kb{list-style:none;padding:0}ul.kb li{margin:6px 0}
+#cvB{cursor:ns-resize}
+@media(max-width:1000px){.app{grid-template-columns:1fr}.side{position:static;max-height:none}.g2,.g3{grid-template-columns:1fr}}
+</style></head>
+<body>
+<header><button id="infob" class="btn alt" style="float:right;padding:7px 11px;font-size:13px">ⓘ Info</button><h1>Sismos en el Perú · versión computadora</h1><p>Placa de Nazca bajo la Sudamericana · ondas P, S y R · amplificación en edificios según el suelo</p></header>
+<nav><button data-t="1" class="on">🌎 Placas</button><button data-t="2">〰 Ondas P·S·R</button><button data-t="3">🏢 Edificio y suelo</button></nav>
+<div id="infom" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:20;align-items:center;justify-content:center;padding:16px">
+<div class="card" style="max-width:420px;width:100%"><h2>Simulador de sismos</h2>
+<p class="note">Creado por <b style="color:#e8eef4">Neptalí Agip</b>. Herramienta didáctica: no reemplaza estudios de suelos ni el análisis según la Norma E.030.</p>
+<p class="note">¿Comentarios, errores o ideas? Escríbeme:</p>
+<p>✉️ <a href="mailto:neptaliagiphoyos@gmail.com?subject=Simulador%20de%20sismos" style="color:#4fc3f7">neptaliagiphoyos@gmail.com</a></p>
+<p>💬 WhatsApp: <a href="https://wa.me/51975525627?text=Hola%20Miguel%2C%20comentario%20sobre%20el%20simulador%20de%20sismos%3A%20" style="color:#4fc3f7">+51 975 525 627</a></p>
+<div class="row"><button class="btn alt" id="copym">Copiar correo</button><button class="btn" id="closem">Cerrar</button></div><p class="note" id="copymsg"></p></div></div>
+<main>
+
+<!-- ============ TAB 1 ============ -->
+<section class="tab on" id="t1"><div class="app">
+<div><div class="card">
+<h2>Subducción: Nazca bajo Sudamérica</h2>
+<p class="note">La placa de Nazca (oceánica y más densa) avanza hacia el este ≈ 6–7 cm/año y se hunde bajo la placa Sudamericana en la fosa Perú-Chile. En el contacto las placas quedan <b>trabadas</b>: acumulan deformación durante décadas y la liberan de golpe en un sismo.</p>
+<canvas id="cv1"></canvas>
+<div class="leg"><span><i style="background:var(--p)"></i>Onda P</span><span><i style="background:var(--s)"></i>Onda S</span><span><i style="background:var(--r)"></i>Onda R (superficie)</span></div>
+<label>Sismograma registrado en Lima</label>
+<canvas id="sg1"></canvas>
+</div></div>
+<div class="side"><div class="card"><h2>Tipo de sismo</h2>
+<div class="row"><div class="seg" id="qtype"><button data-v="0" class="on">Interplaca</button><button data-v="1">Intermedio</button><button data-v="2">Cortical</button></div></div>
+<p class="note" id="qdesc"></p>
+<div class="row"><button class="btn" id="go1">⚡ Liberar sismo</button><button class="btn alt" id="spd1">🐢 Lento</button></div>
+<label>Magnitud (escala de Richter / magnitud de momento Mw)</label><canvas id="cvM1"></canvas>
+<div class="stats" id="st1"></div>
+</div>
+<div class="card"><h2>⌨️ Atajos de teclado</h2><ul class="kb">
+<li><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> cambiar de pestaña</li>
+<li><kbd>Espacio</kbd> liberar sismo / sacudir edificio</li>
+<li><kbd>+</kbd> <kbd>−</kbd> pisos (o distancia en Ondas) · rueda del mouse sobre el edificio</li>
+<li><kbd>↑</kbd> <kbd>↓</kbd> magnitud ±0,1</li>
+<li><kbd>C</kbd> concreto · <kbd>A</kbd> acero · <kbd>M</kbd> madera</li>
+<li><kbd>G</kbd> hacer crecer · <kbd>N</kbd> otro sismo · <kbd>L</kbd> lento · <kbd>I</kbd> info</li>
+</ul></div>
+</div></div></section>
+
+<!-- ============ TAB 2 ============ -->
+<section class="tab" id="t2">
+<div class="g3">
+<div class="card"><h2 style="color:var(--p)">Onda P — primaria (compresión)</h2>
+<canvas id="cvP"></canvas>
+<p class="note">Las partículas vibran <b>en la misma dirección</b> en que viaja la onda: empujan y jalan (zonas apretadas y estiradas). Es la más rápida: ≈ 5,5–7 km/s en la corteza; viaja por sólidos y líquidos. Llega primero y se siente como un golpe seco, sobre todo vertical cerca del epicentro.</p></div>
+<div class="card"><h2 style="color:var(--s)">Onda S — secundaria (corte)</h2>
+<canvas id="cvS"></canvas>
+<p class="note">Las partículas se mueven <b>perpendicular</b> a la dirección de viaje. ≈ 3–4 km/s en roca, pero solo 100–400 m/s en suelos blandos. No atraviesa líquidos. Es la que produce el vaivén horizontal fuerte que daña a los edificios.</p></div>
+<div class="card"><h2 style="color:var(--r)">Onda R — Rayleigh (superficial)</h2>
+<canvas id="cvR"></canvas>
+<p class="note">Nace cuando P y S llegan a la superficie. Cada partícula gira en una <b>elipse retrógrada</b> (como una ola que “rueda hacia atrás”) y el movimiento disminuye con la profundidad. Viaja a ≈ 0,92·Vs, pero es de periodo largo y gran amplitud: castiga a edificios altos y estructuras largas.</p></div>
+</div>
+<div class="card"><h2>¿En qué orden llegan?</h2>
+<label>Distancia al epicentro: <b id="dv">150 km</b></label>
+<input type="range" id="dist" min="10" max="1000" value="150">
+<canvas id="sg2"></canvas>
+<div class="stats" id="st2"></div>
+<p class="note">Regla práctica: distancia ≈ 8,6 × (tiempo S − tiempo P). Con tres estaciones se triangula el epicentro.</p>
+</div>
+</section>
+
+<!-- ============ TAB 3 ============ -->
+<section class="tab" id="t3"><div class="app">
+<div>
+<div class="card">
+<h2>Edificio sobre estratos de suelo</h2>
+<canvas id="cvB"></canvas>
+<div class="row"><button class="btn" id="shake">▶ Sacudir</button><button class="btn alt" id="grow">🏗 Hacer crecer</button><button class="btn alt" id="newq">🎲 Otro sismo</button></div>
+<div class="stats" id="st3"></div>
+<div class="diag" id="diag"></div>
+</div>
+<div class="g2">
+<div class="card"><h2>Espectro de respuesta</h2>
+<canvas id="cvSp"></canvas>
+<div class="leg"><span><i style="background:#90a4ae"></i>En roca</span><span><i style="background:#ffb74d"></i>En superficie del suelo</span><span><i style="background:#81c784"></i>E.030 elástico (Z4, U=1, R=1)</span><span><i style="background:#4fc3f7"></i>T edificio</span></div>
+<p class="note">Cada punto es la aceleración máxima que sufriría un edificio de ese periodo. Donde la curva naranja sube por encima de la gris, el suelo amplifica.</p></div>
+<div class="card"><h2>Amplificación del suelo según el periodo</h2>
+<canvas id="cvTF"></canvas>
+<p class="note">Cuántas veces el suelo multiplica la onda que viene de la roca. El pico está en el periodo propio del suelo Ts = 4·H/Vs.</p></div>
+<div class="card"><h2>Aceleración en azotea según número de pisos</h2>
+<canvas id="cvN"></canvas>
+<p class="note">Con el mismo sismo y el mismo suelo, muestra qué altura de edificio sufre más: la que entra en resonancia con el suelo. <span style="color:#ff5252">●</span> = alturas que colapsarían con este sismo.</p></div>
+<div class="card"><h2>Registros de aceleración (g)</h2>
+<canvas id="cvTH"></canvas></div>
+</div>
+<div class="card"><h2>Supuestos del modelo</h2><ul>
+<li>Ondas S verticales en suelo estratificado lineal (método de Haskell) sobre roca base; el sismo es sintético (ruido filtrado con envolvente).</li>
+<li>Periodo del edificio T = hn/Ct (E.030): Ct = 35 pórticos, 45 dual o arriostrado, 60 muros; entrepiso 3 m. Amortiguamiento 5 % concreto y 2 % acero.</li>
+<li>El edificio se representa por su modo fundamental (factor de participación ≈ 1,27). La deformación dibujada está exagerada ×15.</li>
+<li>En sismos fuertes los suelos blandos se vuelven no lineales: baja su rigidez, sube el amortiguamiento y el pico se corre a periodos más largos.</li>
+<li>Madera (aproximación): entramado ligero y CLT con T ≈ 0,0488·hn<sup>0,75</sup> (fórmula de ASCE 7 para «otros sistemas»), pórticos de madera T ≈ hn/25; amortiguamiento 6 % entramado, 5 % pórticos, 3 % CLT; deriva límite E.030 = 0,010.</li>
+<li>Colapso (aproximado): ocurre cuando la deriva elástica del primer piso supera una deriva última típica — concreto 2,5 % pórticos, 2 % dual, 1,5 % muros; acero 4 % pórticos, 2,5 % arriostrado; madera 4 % entramado, 3 % pórticos, 2,5 % CLT. El modelo es lineal (regla de desplazamientos iguales), así que es una estimación didáctica.</li>
+<li>Magnitud → aceleración en roca con la ley de atenuación de Youngs et al. (1997) para sismos de subducción (interplaca/intraplaca). Intensidad Mercalli estimada desde la aceleración del suelo con la relación de Wald et al. (1999). La escala de Richter original se satura cerca de M 7; para grandes sismos se usa la magnitud de momento Mw, que empalma con ella.</li>
+<li>La «fuerza sísmica en la base» es ≈ 0,8 × peso × aceleración espectral: muestra por qué un edificio liviano recibe menos fuerza con la misma aceleración.</li>
+<li>Ejemplo real de resonancia: México 1985, edificios de 8–15 pisos sobre arcilla lacustre con Ts ≈ 2 s.</li>
+<li>Herramienta didáctica: no reemplaza un estudio de mecánica de suelos ni el análisis según la Norma E.030.</li>
+</ul></div>
+</div>
+<div class="side">
+<div class="card"><h2>Estructura</h2>
+<div class="row"><div class="seg" id="mat"><button data-v="c" class="on">Concreto armado</button><button data-v="a">Acero</button><button data-v="m">Madera</button></div></div>
+<div class="row"><label>Sistema&nbsp;</label><select id="sys"></select></div>
+<label>Número de pisos: <b id="nfv">10</b></label>
+<input type="range" id="nf" min="1" max="50" value="10">
+<label>Aceleración máxima en roca (PGA): <b id="pgav">0,35 g</b></label>
+<input type="range" id="pga" min="0.02" max="1" step="0.01" value="0.35">
+</div>
+<div class="card"><h2>Magnitud (escala de Richter)</h2>
+<canvas id="cvM"></canvas>
+<div class="row"><div class="seg" id="mtype"><button data-v="0" class="on">Interplaca</button><button data-v="1">Intraplaca</button></div></div>
+<label>Magnitud: <b id="mv">8,1</b></label><input type="range" id="mag" min="4" max="9.5" step="0.1" value="8.1">
+<label>Distancia a la ruptura: <b id="rv">60 km</b></label><input type="range" id="mdist" min="10" max="400" step="5" value="60">
+<p class="note">La magnitud mide la energía que libera la falla (es una sola por sismo); la intensidad (Mercalli) mide cuánto se sacude un lugar y depende de la distancia y del suelo. Con la magnitud y la distancia se estima la aceleración en roca (ley de atenuación de Youngs et al., 1997, para subducción). Si mueves la PGA a mano, se recalcula la magnitud equivalente.</p></div>
+<div class="card"><h2>Estratos de suelo (de arriba hacia abajo)</h2>
+<div class="row"><label>Ejemplo&nbsp;</label><select id="preset"></select></div>
+<div id="layers"></div>
+<p class="note">Debajo de los estratos: roca base (Vs ≈ 1200 m/s). Pon 0 m para quitar un estrato.</p>
+</div>
+<div class="card"><h2>Sismo de entrada</h2>
+<div class="row"><div class="seg" id="src"><button data-v="syn" class="on">Sintético</button><button data-v="rec">Registro real</button></div></div>
+<p class="note" id="srcinfo">Sismo sintético (ruido filtrado). Cambia con 🎲.</p>
+<div id="recbox" style="display:none">
+<p class="note">Carga el acelerograma (.txt, .csv, .AT2 de PEER, formato CISMID o una columna de números). Para Lima 1974: registro de la estación IGP (Parque de la Reserva / Av. Arequipa), disponible en CISMID-UNI o en el informe USGS OFR 77-587 (NOAA).</p>
+<input type="file" id="recfile" accept=".txt,.csv,.dat,.at2,.acc,.asc,text/plain">
+<div class="layer"><div><label>Intervalo dt (s)</label><br><input id="recdt" type="number" step="0.001" min="0.001" value="0.02" style="width:90px;background:#0b121a;color:#e8eef4;border:1px solid #26364a;border-radius:6px;padding:5px"></div>
+<div><label>Unidades</label><br><select id="recun"><option value="auto">Automático</option><option value="g">g</option><option value="gal">gal (cm/s²)</option><option value="ms2">m/s²</option></select></div>
+<div><label>Columna</label><br><select id="reccol"><option value="0">1</option></select></div>
+<div><label>Aplicar como</label><br><select id="recas"><option value="rock">Movimiento en roca</option><option value="surf">Movimiento en superficie</option></select></div></div>
+<div class="row"><button class="btn" id="recuse">Usar registro</button><label><input type="checkbox" id="recscale" checked> PGA original</label></div>
+<p class="note" id="recmsg"></p>
+</div></div>
+<div class="card"><h2>⌨️ Atajos de teclado</h2><ul class="kb">
+<li><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> cambiar de pestaña</li>
+<li><kbd>Espacio</kbd> liberar sismo / sacudir edificio</li>
+<li><kbd>+</kbd> <kbd>−</kbd> pisos (o distancia en Ondas) · rueda del mouse sobre el edificio</li>
+<li><kbd>↑</kbd> <kbd>↓</kbd> magnitud ±0,1</li>
+<li><kbd>C</kbd> concreto · <kbd>A</kbd> acero · <kbd>M</kbd> madera</li>
+<li><kbd>G</kbd> hacer crecer · <kbd>N</kbd> otro sismo · <kbd>L</kbd> lento · <kbd>I</kbd> info</li>
+</ul></div>
+</div></div></section>
+</main>
+
+
+
+<script>
+"use strict";
+{const tf=Number.prototype.toFixed;Number.prototype.toFixed=function(d){return tf.call(this,d).replace(".",",");};}
+const $=s=>document.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const CAP={cv1:()=>Math.max(440,innerHeight-300),cvB:()=>Math.max(460,innerHeight-270),sg1:()=>200,sg2:()=>220};
+function fit(cv,ratio){let w=cv.clientWidth;if(!w)w=Math.min(1100,document.body.clientWidth)-420;let h=Math.round(w*ratio);if(CAP[cv.id])h=Math.min(h,Math.round(CAP[cv.id]()));const d=window.devicePixelRatio||1;const W=Math.round(w*d),H=Math.round(h*d);if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H;}cv.style.height=h+'px';const c=cv.getContext('2d');c.setTransform(d,0,0,d,0,0);return{c,w,h};}
+
+//<calc>
+function rng(seed){let s=(seed>>>0)||1;return()=>{s^=s<<13;s>>>=0;s^=s>>>17;s^=s<<5;s>>>=0;return s/4294967296;};}
+function fft(re,im,inv){const n=re.length;for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){let t=re[i];re[i]=re[j];re[j]=t;t=im[i];im[i]=im[j];im[j]=t;}}
+for(let len=2;len<=n;len<<=1){const ang=2*Math.PI/len*(inv?1:-1),wr=Math.cos(ang),wi=Math.sin(ang),hl=len>>1;for(let i=0;i<n;i+=len){let cr=1,ci=0;for(let j=0;j<hl;j++){const a=i+j,b=a+hl;const xr=re[b]*cr-im[b]*ci,xi=re[b]*ci+im[b]*cr;re[b]=re[a]-xr;im[b]=im[a]-xi;re[a]+=xr;im[a]+=xi;const nr=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=nr;}}}
+if(inv){for(let i=0;i<n;i++){re[i]/=n;im[i]/=n;}}}
+let NS=4096;const DT=0.01,G=9.81;
+function genRock(seed){const r=rng(seed*7919+13);const re=new Float64Array(NS),im=new Float64Array(NS);
+for(let i=0;i<NS;i++){const u=r()||1e-9,v=r();re[i]=Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+fft(re,im,false);
+const wg=2*Math.PI*2.5,zg=0.6,wf=2*Math.PI*0.2,zf=0.7;
+for(let k=0;k<NS;k++){const kk=k<=NS/2?k:NS-k;const w=2*Math.PI*kk/(NS*DT);
+const r1=(w/wg)**2,kt=(1+4*zg*zg*r1)/((1-r1)**2+4*zg*zg*r1);
+const r2=(w/wf)**2,cp=(r2*r2)/((1-r2)**2+4*zf*zf*r2);
+const f=Math.sqrt(kt*cp);re[k]*=f;im[k]*=f;}
+fft(re,im,true);
+const a=new Float64Array(NS);let mx=0;
+for(let i=0;i<NS;i++){const t=i*DT;let e=t<3?(t/3)**2:(t<16?1:Math.exp(-0.22*(t-16)));if(t>37)e*=Math.max(0,(40.9-t)/3.9);a[i]=re[i]*e;if(Math.abs(a[i])>mx)mx=Math.abs(a[i]);}
+for(let i=0;i<NS;i++)a[i]/=mx;return a;}
+const SOILS=[
+{n:'Relleno',vs:130,rho:1.6,xi:.06,c:'#8a7866',t:'mix'},
+{n:'Arcilla blanda',vs:100,rho:1.6,xi:.06,c:'#76594a',t:'line'},
+{n:'Limo',vs:160,rho:1.75,xi:.05,c:'#b09a80',t:'line'},
+{n:'Arena suelta',vs:190,rho:1.8,xi:.05,c:'#dfbd78',t:'dot'},
+{n:'Arena densa',vs:330,rho:1.95,xi:.04,c:'#c4954a',t:'dot'},
+{n:'Cascajo / grava',vs:600,rho:2.1,xi:.03,c:'#878d92',t:'grav'},
+{n:'Piedras / bolonería',vs:800,rho:2.2,xi:.025,c:'#66788a',t:'stone'}];
+const ROCK={n:'Roca base',vs:1200,rho:2.4,xi:.01,c:'#434d57'};
+function cdiv(ar,ai,br,bi){const d=br*br+bi*bi;return[(ar*br+ai*bi)/d,(ai*br-ar*bi)/d];}
+function soilTF(lay,f){if(!lay.length||f<=0)return[1,0];const w=2*Math.PI*f;let Ar=1,Ai=0,Br=1,Bi=0;
+for(let m=0;m<lay.length;m++){const L=lay[m],R=m+1<lay.length?lay[m+1]:ROCK;
+const vr=L.vs,vi=L.vs*L.xi;const [al,ali]=cdiv(L.rho*vr,L.rho*vi,R.rho*R.vs,R.rho*R.vs*R.xi);
+const [kr,ki]=cdiv(w,0,vr,vi);const h=L.h;
+const c=Math.cos(kr*h),s=Math.sin(kr*h),e1=Math.exp(-ki*h),e2=Math.exp(ki*h);
+const epr=e1*c,epi=e1*s,emr=e2*c,emi=-e2*s;
+const apr=Ar*epr-Ai*epi,api=Ar*epi+Ai*epr,bmr=Br*emr-Bi*emi,bmi=Br*emi+Bi*emr;
+const opr=1+al,opi=ali,omr=1-al,omi=-ali;
+const nAr=0.5*((apr*opr-api*opi)+(bmr*omr-bmi*omi)),nAi=0.5*((apr*opi+api*opr)+(bmr*omi+bmi*omr));
+const nBr=0.5*((apr*omr-api*omi)+(bmr*opr-bmi*opi)),nBi=0.5*((apr*omi+api*omr)+(bmr*opi+bmi*opr));
+Ar=nAr;Ai=nAi;Br=nBr;Bi=nBi;}
+return cdiv(1,0,Ar,Ai);}
+function sdof(ag,T,xi,keep,gam){const w=2*Math.PI/T,k=w*w,c=2*xi*w,dt=DT,kh=k+2*c/dt+4/(dt*dt);gam=gam||1;
+let u=0,v=0,a=-ag[0]*G,amax=0,umax=0,rmax=0;const U=keep?new Float64Array(NS):null,A=keep?new Float64Array(NS):null;
+for(let i=0;i<NS;i++){if(i>0){const p=-ag[i]*G;const ph=p+(4/(dt*dt)*u+4/dt*v+a)+c*(2/dt*u+v);const un=ph/kh;const vn=2/dt*(un-u)-v;const an=4/(dt*dt)*(un-u)-4/dt*v-a;u=un;v=vn;a=an;}
+const aa=a/G+ag[i],rr=ag[i]+gam*a/G;if(keep){U[i]=u;A[i]=rr;}
+if(Math.abs(aa)>amax)amax=Math.abs(aa);if(Math.abs(u)>umax)umax=Math.abs(u);if(Math.abs(rr)>rmax)rmax=Math.abs(rr);}
+return{amax,umax,rmax,U,A};}
+function siteParams(L){let H=0,tt=0;L.forEach(l=>{H+=l.h;tt+=l.h/l.vs;});let d=0,t30=0;for(const l of L){const hh=Math.min(l.h,30-d);if(hh<=0)break;t30+=hh/l.vs;d+=hh;}if(d<30)t30+=(30-d)/ROCK.vs;
+const vs30=30/t30;return{H,Ts:H>0?4*tt:0,vs30,perfil:vs30>1500?'S0':vs30>500?'S1':vs30>180?'S2':'S3'};}
+const E030={S0:{S:0.8,Tp:0.3,TL:3.0},S1:{S:1.0,Tp:0.4,TL:2.5},S2:{S:1.05,Tp:0.6,TL:2.0},S3:{S:1.10,Tp:1.0,TL:1.6}};
+function Cf(T,p){return T<p.Tp?2.5:(T<p.TL?2.5*p.Tp/T:2.5*p.Tp*p.TL/(T*T));}
+//</calc>
+
+// ---------- gráfico genérico ----------
+function nice(m){const raw=m/4;const p=10**Math.floor(Math.log10(raw));const f=raw/p;return(f<1.5?1:f<3?2:f<7?5:10)*p;}
+function chart(cv,ratio,o){const{c,w,h}=fit(cv,ratio);c.clearRect(0,0,w,h);const L=40,Rm=10,T=14,B=26,pw=w-L-Rm,ph=h-T-B;
+const lx=o.xlog,x0=o.xmin,x1=o.xmax;const fx=x=>L+(lx?(Math.log(x)-Math.log(x0))/(Math.log(x1)-Math.log(x0)):(x-x0)/(x1-x0))*pw;
+let ymax=o.ymax;if(ymax==null){ymax=0;o.series.forEach(s=>s.y.forEach(v=>{if(isFinite(v)&&v>ymax)ymax=v;}));ymax=(ymax||1)*1.12;}
+const fy=y=>T+(1-y/ymax)*ph;c.font='12.0px system-ui';c.lineWidth=1;
+const yt=nice(ymax);for(let v=0;v<=ymax+1e-9;v+=yt){const y=fy(v);c.strokeStyle='#22303f';c.beginPath();c.moveTo(L,y);c.lineTo(L+pw,y);c.stroke();c.fillStyle='#93a4b5';c.textAlign='right';c.fillText(String(+v.toPrecision(6)).replace('.',','),L-4,y+3);}
+const xt=o.xticks||(lx?[0.05,0.1,0.2,0.5,1,2,5]:[]);c.textAlign='center';xt.forEach(v=>{if(v<x0||v>x1)return;const x=fx(v);c.strokeStyle='#22303f';c.beginPath();c.moveTo(x,T);c.lineTo(x,T+ph);c.stroke();c.fillStyle='#93a4b5';c.fillText(String(v).replace('.',','),x,T+ph+12);});
+c.fillStyle='#93a4b5';c.textAlign='right';c.fillText(o.xlabel||'',L+pw,h-2);c.textAlign='left';c.fillText(o.ylabel||'',L,10);
+(o.bands||[]).forEach(b=>{c.fillStyle=b.color;c.fillRect(fx(b.a),T,fx(b.b)-fx(b.a),ph);});
+c.save();c.beginPath();c.rect(L,T,pw,ph);c.clip();
+o.series.forEach(s=>{c.strokeStyle=s.color;c.lineWidth=s.w||2;c.setLineDash(s.dash||[]);c.beginPath();const X=s.x||o.x;s.y.forEach((v,i)=>{const x=fx(X[i]),y=fy(v);i?c.lineTo(x,y):c.moveTo(x,y);});c.stroke();c.setLineDash([]);});
+c.restore();
+(o.markers||[]).forEach(m=>{if(!(m.x>=x0&&m.x<=x1))return;const x=fx(m.x);c.strokeStyle=m.color;c.lineWidth=1.5;c.setLineDash(m.dash||[]);c.beginPath();c.moveTo(x,T);c.lineTo(x,T+ph);c.stroke();c.setLineDash([]);c.fillStyle=m.color;c.font='bold 12.6px system-ui';c.textAlign=x>L+pw*0.75?'right':'left';c.fillText(m.label,x+(c.textAlign==='right'?-3:3),T+10+(m.row||0)*12);});
+(o.points||[]).forEach(p=>{c.fillStyle=p.color;c.beginPath();c.arc(fx(p.x),fy(p.y),p.r||5,0,7);c.fill();c.strokeStyle='#fff';c.lineWidth=1.5;c.stroke();});
+}
+
+
+// ---------- magnitud e intensidad ----------
+function youngs(M,r,H,zt){return Math.exp(0.2418+1.414*M-2.552*Math.log(r+1.7818*Math.exp(0.554*M))+0.00607*H+0.3846*zt);}
+const MQ={M:8.1,R:60,zt:0};
+const mH=()=>MQ.zt?80:30;
+function mFromPga(p){let a=3,b=9.8;for(let k=0;k<50;k++){const m=(a+b)/2;if(youngs(m,MQ.R,mH(),MQ.zt)<p)a=m;else b=m;}return(a+b)/2;}
+function mmi(g){const cm=Math.max(0.1,g*981);let v=3.66*Math.log10(cm)-1.66;if(v<5)v=2.20*Math.log10(cm)+1.00;return clamp(v,1,12);}
+const MMI_T=['no sentido','débil','leve','moderado','algo fuerte','fuerte','muy fuerte','severo','violento','extremo','extremo','extremo'];
+function roman(v){return['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'][clamp(Math.round(v),1,12)-1];}
+function magCat(M){return M<3?'Micro: no se siente':M<4?'Menor':M<5?'Ligero':M<6?'Moderado':M<7?'Fuerte':M<8?'Mayor':'Gran terremoto';}
+function drawGauge(cv,M,extra){const{c,w,h}=fit(cv,0.62);c.clearRect(0,0,w,h);const L=14,pw=w-28,y0=52,bh=16;const fx=m=>L+(m-1)/9*pw;
+const cols=['#26a69a','#43a047','#7cb342','#c0ca33','#fdd835','#ffb300','#fb8c00','#e53935','#8e24aa'];
+for(let k=1;k<10;k++){c.fillStyle=cols[k-1];c.fillRect(fx(k),y0,fx(k+1)-fx(k)-1,bh);c.fillStyle='#cfd8dc';c.font='12.0px system-ui';c.textAlign='center';c.fillText(k,fx(k),y0+bh+12);}
+c.fillText('10',fx(10),y0+bh+12);
+const x=fx(clamp(M,1,10));c.fillStyle='#fff';c.beginPath();c.moveTo(x,y0-2);c.lineTo(x-7,y0-14);c.lineTo(x+7,y0-14);c.fill();c.fillRect(x-1.5,y0-2,3,bh+4);
+c.textAlign='left';c.font='bold 20.4px system-ui';c.fillStyle=cols[clamp(Math.floor(M),1,9)-1];c.fillText('M '+M.toFixed(1),L,20);
+const tw=c.measureText('M '+M.toFixed(1)+'  ').width;c.font='bold 15.6px system-ui';c.fillStyle='#e8eef4';c.fillText(magCat(M),L+tw,20);
+const E=Math.pow(10,1.5*M+4.8),t=E/4.184e9;const tnt=t>=1e6?(t/1e6).toFixed(t>=1e8?0:1)+' megatones':t>=1e3?(t/1e3).toFixed(t>=1e5?0:1)+' kilotones':t.toFixed(0)+' toneladas';
+c.font='13.8px system-ui';let yy=y0+bh+32;const wrap=(t,col)=>{c.fillStyle=col;let line='';t.split(' ').forEach(wd=>{const tt=line?line+' '+wd:wd;if(c.measureText(tt).width>pw&&line){c.fillText(line,L,yy);yy+=18;line=wd;}else line=tt;});if(line){c.fillText(line,L,yy);yy+=20;}};
+wrap('Energía liberada ≈ '+tnt+' de TNT. Cada grado más = ×10 en amplitud y ≈ ×32 en energía.','#93a4b5');wrap(extra||'','#ffcc80');}
+
+// ================== TAB 1 : SUBDUCCIÓN ==================
+const VP=6.5,VS=3.7,VR=3.4,LIMA=160;
+const QK=[{m:8.1,zt:0,x:100,z:25,d:'<b>Interplaca</b> (en el contacto entre placas, 10–50 km): los más grandes y frecuentes frente a la costa; pueden generar tsunamis. Ej.: Lima 1746, Lima 1974, Pisco 2007 (Mw 8,0).'},
+{m:8.0,zt:1,x:270,z:119,d:'<b>Intraplaca de profundidad intermedia</b> (70–300 km, dentro de la placa de Nazca que se dobla): se sienten en áreas muy amplias y las ondas R son más débiles. Ej.: Loreto 2019 (Mw 8,0, ≈ 110 km de profundidad).'},
+{m:6.5,zt:0,x:330,z:14,d:'<b>Cortical</b> (fallas superficiales dentro de la placa Sudamericana, &lt; 30 km): de menor magnitud, pero muy destructivos cerca de la falla. Ej.: fallas de Huaytapallana (Junín) o de la Cordillera Blanca.'}];
+const T1={type:0,mode:'load',strain:0.55,t:0,spd:22,ph:0};
+function slabTop(x){return x<0?5+2*Math.exp(x/30):(x<=120?7+0.18*x:28.6+0.55*(x-120));}
+function surfD(x){if(x<0)return slabTop(x);if(x<150)return 7*Math.pow(1-x/150,1.2);return -(0.1+4.6*Math.exp(-(((x-320)/80)**2)));}
+const zd=z=>z<0?z*3:z;
+function lima(){const q=QK[T1.type];const dist=Math.hypot(LIMA-q.x,q.z);const tR0=q.z/VS;return{dist,tP:dist/VP,tS:dist/VS,tR:tR0+Math.abs(LIMA-q.x)/VR,tR0,d:dist,rA:Math.exp(-q.z/60)};}
+function wave(t,t0,dur,f,amp,ph){if(t<t0)return 0;const u=t-t0;return amp*(1-Math.exp(-u/0.6))*Math.exp(-u/dur)*(Math.sin(2*Math.PI*f*u+ph)+0.6*Math.sin(2*Math.PI*f*1.63*u+ph*2+1));}
+function seis(t,a){const dur=4+a.d/80;return wave(t,a.tP,dur,3,0.22,0)+wave(t,a.tS,dur*1.2,1.4,0.6,1)+wave(t,a.tR,dur*2,0.35,a.rA,2);}
+function drawSeis(cv,a,tNow,tEnd){const{c,w,h}=fit(cv,0.3);c.clearRect(0,0,w,h);const L=8,pw=w-16,mid=h*0.55,amp=h*0.32;
+c.strokeStyle='#22303f';c.beginPath();c.moveTo(L,mid);c.lineTo(L+pw,mid);c.stroke();
+const fx=t=>L+t/tEnd*pw;c.font='bold 13.2px system-ui';
+[['P',a.tP,'#4fc3f7'],['S',a.tS,'#ff7043'],['R',a.tR,'#ffd54f']].forEach(([n,t,col],k)=>{if(t>tNow)return;const x=fx(t);c.strokeStyle=col;c.setLineDash([3,3]);c.beginPath();c.moveTo(x,10);c.lineTo(x,h-14);c.stroke();c.setLineDash([]);c.fillStyle=col;c.textAlign='center';c.fillText(n+' '+t.toFixed(0)+' s',x+(k===2?14:0),10+k*0);});
+c.strokeStyle='#e8eef4';c.lineWidth=1.2;c.beginPath();const tm=Math.min(tNow,tEnd);for(let px=0;px<=pw*tm/tEnd;px++){const t=px/pw*tEnd;const y=mid-amp*seis(t,a)/1.25;px?c.lineTo(L+px,y):c.moveTo(L+px,y);}c.stroke();
+c.fillStyle='#93a4b5';c.font='12.0px system-ui';c.textAlign='left';c.fillText('0 s',L,h-3);c.textAlign='right';c.fillText(tEnd.toFixed(0)+' s',L+pw,h-3);}
+function stats1(){const a=lima(),q=QK[T1.type];$('#st1').innerHTML=[['Profundidad del foco',q.z+' km'],['Distancia a Lima',a.dist.toFixed(0)+' km'],['Llega P / S',a.tP.toFixed(0)+' s / '+a.tS.toFixed(0)+' s'],['Llega R',a.tR.toFixed(0)+' s']].map(s=>`<div class="stat"><span>${s[0]}</span><b>${s[1]}</b></div>`).join('');$('#qdesc').innerHTML=q.d;
+const pg=youngs(q.m,a.dist,q.z,q.zt);drawGauge($('#cvM1'),q.m,`En Lima (≈ ${a.dist.toFixed(0)} km): PGA en roca ≈ ${pg.toFixed(2)} g · intensidad ≈ ${roman(mmi(pg))} (${MMI_T[Math.round(mmi(pg))-1]})`);}
+function draw1(dt){const{c,w,h}=fit($('#cv1'),0.66);const x0=-120,x1=460,z0=-32,z1=200;const sx=w/(x1-x0),sy=h/(z1-z0);const X=x=>(x-x0)*sx,Y=z=>(zd(z)-z0)*sy;
+const q=QK[T1.type];
+if(T1.mode==='load'){T1.strain=Math.min(1,T1.strain+dt*0.08);T1.ph+=dt;}else{T1.t+=dt*T1.spd;T1.strain=Math.max(0,T1.strain-dt*2);}
+// manto
+let g=c.createLinearGradient(0,0,0,h);g.addColorStop(0,'#6b3314');g.addColorStop(1,'#3a1a0b');c.fillStyle=g;c.fillRect(0,0,w,h);
+// cielo
+c.fillStyle='#0b1726';c.beginPath();c.moveTo(0,0);for(let x=x0;x<=x1;x+=4)c.lineTo(X(x),Math.min(Y(surfD(x)),Y(0)));c.lineTo(w,0);c.fill();
+// océano
+c.fillStyle='#0e4a72';c.beginPath();c.moveTo(X(x0),Y(0));for(let x=x0;x<=150;x+=3)c.lineTo(X(x),Y(surfD(x)));c.lineTo(X(150),Y(0));c.fill();
+// Nazca
+c.fillStyle='#2e5e57';c.beginPath();for(let x=x0;x<=x1;x+=4)c.lineTo(X(x),Y(slabTop(x)));for(let x=x1;x>=x0;x-=4)c.lineTo(X(x),Y(slabTop(x)+45));c.fill();
+// Sudamericana
+const moho=x=>30+40*Math.exp(-(((x-320)/90)**2));
+c.fillStyle='#6b5a43';c.beginPath();for(let x=0;x<=x1;x+=3)c.lineTo(X(x),Y(surfD(x)));for(let x=x1;x>=0;x-=3)c.lineTo(X(x),Y(Math.min(moho(x),slabTop(x))));c.fill();
+// zona acoplada
+c.strokeStyle=`rgba(255,${Math.round(200-150*T1.strain)},60,${0.35+0.6*T1.strain})`;c.lineWidth=3+3*T1.strain;c.beginPath();for(let x=12;x<=150;x+=3)c.lineTo(X(x),Y(slabTop(x)));c.stroke();
+// flechas en la placa (movimiento)
+c.fillStyle='rgba(255,255,255,.55)';const off=(T1.ph*8)%60;for(let s=-120+off;s<440;s+=60){const xa=s,za=slabTop(xa)+22,xb=xa+6,zb=slabTop(xb)+22;const ang=Math.atan2(Y(zb)-Y(za),X(xb)-X(xa));c.save();c.translate(X(xa),Y(za));c.rotate(ang);c.beginPath();c.moveTo(7,0);c.lineTo(-5,-4);c.lineTo(-5,4);c.fill();c.restore();}
+// textos
+c.font='bold 13.2px system-ui';c.fillStyle='#cfe8e3';c.textAlign='left';c.fillText('Placa de Nazca →',X(-115),Y(32));c.fillText('6–7 cm/año',X(-115),Y(32)+13);
+c.fillStyle='#f3e3c4';c.fillText('Placa Sudamericana',X(250),Y(18));
+c.fillStyle='#ffcc80';c.font='12.0px system-ui';c.fillText('Manto (astenosfera)',X(-110),Y(185));
+c.fillStyle='#9fd3ff';c.fillText('Océano Pacífico',X(-105),Y(-3)+3);
+c.fillStyle='#fff';c.textAlign='center';c.fillText('Fosa',X(0),Y(9)+12);c.fillText('Andes',X(320),Y(-5.2)-4);
+c.fillStyle='#ffab91';c.fillText('zona trabada',X(75),Y(slabTop(75))-6);
+// escala de profundidad
+c.textAlign='left';c.fillStyle='#93a4b5';[0,50,100,150].forEach(z=>{c.fillRect(0,Y(z),5,1);c.fillText(z+' km',7,Y(z)+3);});
+// epicentro / hipocentro
+const hx=X(q.x),hy=Y(q.z);c.strokeStyle='rgba(255,255,255,.4)';c.setLineDash([2,3]);c.beginPath();c.moveTo(hx,hy);c.lineTo(hx,Y(surfD(q.x)));c.stroke();c.setLineDash([]);
+// ondas
+if(T1.mode==='quake'){const t=T1.t;c.save();c.beginPath();c.moveTo(X(x0),Y(surfD(x0)));for(let x=x0;x<=x1;x+=4)c.lineTo(X(x),Y(surfD(x)));c.lineTo(w,h);c.lineTo(0,h);c.closePath();c.clip();
+if(T1.type===0){const vr=2.5;const a=Math.max(12,q.x-vr*t),b=Math.min(150,q.x+vr*t);c.strokeStyle='rgba(255,250,200,.95)';c.lineWidth=5;c.beginPath();for(let x=a;x<=b;x+=2)c.lineTo(X(x),Y(slabTop(x)));c.stroke();}
+[[VP,'79,195,247'],[VS,'255,112,67']].forEach(([v,col])=>{for(let k=0;k<4;k++){const r=v*t-k*10;if(r<=0)continue;c.strokeStyle=`rgba(${col},${(0.95-k*0.25)*Math.max(0.15,1-r/600)})`;c.lineWidth=k?1.5:2.5;c.beginPath();c.ellipse(hx,hy,r*sx,r*sy,0,0,7);c.stroke();}});
+c.restore();
+const a=lima();if(t>a.tR0){const tt=t-a.tR0;[q.x-VR*tt,q.x+VR*tt].forEach(p=>{const amp=8*Math.exp(-tt/150)*a.rA+1;c.strokeStyle='#ffd54f';c.lineWidth=2.2;c.beginPath();for(let x=p-30;x<=p+30;x+=1){const y=Y(surfD(x))-amp*Math.sin((x-p)/3.5)*Math.exp(-(((x-p)/14)**2));x>p-30?c.lineTo(X(x),y):c.moveTo(X(x),y);}c.stroke();});}
+if(t>a.tR+35){T1.mode='load';}}
+// estrella
+c.fillStyle=T1.mode==='quake'?'#fff59d':'#ffeb3b';c.beginPath();for(let k=0;k<10;k++){const r=k%2?3.5:8,an=k*Math.PI/5-Math.PI/2;c.lineTo(hx+r*Math.cos(an),hy+r*Math.sin(an));}c.fill();
+// Lima
+const a=lima();const t=T1.mode==='quake'?T1.t:-1;let col='#e8eef4';if(t>=a.tR)col='#ffd54f';else if(t>=a.tS)col='#ff7043';else if(t>=a.tP)col='#4fc3f7';
+const ly=Y(surfD(LIMA));c.fillStyle=col;c.beginPath();c.moveTo(X(LIMA),ly-2);c.lineTo(X(LIMA)-6,ly-14);c.lineTo(X(LIMA)+6,ly-14);c.fill();c.font='bold 13.2px system-ui';c.textAlign='center';c.fillText('Lima',X(LIMA),ly-17);
+// barra de deformación
+const by=h-42;c.fillStyle='rgba(0,0,0,.55)';c.fillRect(w-156,by,150,34);c.fillStyle='#ccc';c.font='12.0px system-ui';c.textAlign='left';c.fillText(T1.mode==='load'?'Deformación acumulada':'t = '+T1.t.toFixed(0)+' s tras la ruptura',w-150,by+12);
+c.fillStyle='#333';c.fillRect(w-150,by+18,138,9);c.fillStyle=T1.strain>0.9?'#ff5252':'#ff9800';c.fillRect(w-150,by+18,138*T1.strain,9);
+// sismograma
+drawSeis($('#sg1'),a,T1.mode==='quake'?T1.t:0,a.tR+35);}
+document.querySelectorAll('#qtype button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#qtype button').forEach(x=>x.classList.remove('on'));b.classList.add('on');T1.type=+b.dataset.v;T1.mode='load';stats1();});
+$('#go1').onclick=()=>{T1.mode='quake';T1.t=0;};
+$('#spd1').onclick=e=>{T1.spd=T1.spd===22?7:22;e.target.textContent=T1.spd===22?'🐢 Lento':'🐇 Normal';};
+
+// ================== TAB 2 : ONDAS ==================
+function drawWaves(time){const om=2*Math.PI*0.55;
+{const{c,w,h}=fit($('#cvP'),0.34);c.fillStyle='#0b121a';c.fillRect(0,0,w,h);const cols=34,rows=6,dx=w/cols,dy=h/(rows+1),k=2*Math.PI/(12*dx),A=0.75*dx;
+for(let i=-2;i<cols+2;i++){const x0=(i+0.5)*dx;const x=x0+A*Math.sin(k*x0-om*time);const comp=Math.cos(k*x0-om*time);c.strokeStyle=i===14?'rgba(255,82,82,.8)':`rgba(79,195,247,${0.18+0.3*Math.max(0,-comp)})`;c.lineWidth=1;c.beginPath();c.moveTo(x,4);c.lineTo(x,h-4);c.stroke();for(let j=1;j<=rows;j++){c.fillStyle=i===14?'#ff5252':'#4fc3f7';c.beginPath();c.arc(x,j*dy,2.6,0,7);c.fill();}}
+label(c,w,'Vp ≈ 6,5 km/s  →  propagación');}
+{const{c,w,h}=fit($('#cvS'),0.34);c.fillStyle='#0b121a';c.fillRect(0,0,w,h);const cols=34,rows=6,dx=w/cols,dy=h/(rows+1),k=2*Math.PI/(12*dx),A=0.9*dy;
+const pos=(i,j)=>{const x0=(i+0.5)*dx;return[x0,j*dy+A*Math.sin(k*x0-om*time)];};
+c.strokeStyle='rgba(255,112,67,.35)';c.lineWidth=1;for(let j=1;j<=rows;j++){c.beginPath();for(let i=-1;i<=cols;i++){const[p,q]=pos(i,j);i>-1?c.lineTo(p,q):c.moveTo(p,q);}c.stroke();}
+for(let i=0;i<cols;i++)for(let j=1;j<=rows;j++){const[p,q]=pos(i,j);c.fillStyle=(i===14&&j===3)?'#fff':'#ff7043';c.beginPath();c.arc(p,q,(i===14&&j===3)?4:2.6,0,7);c.fill();}
+label(c,w,'Vs ≈ 3,7 km/s  →  propagación');}
+{const{c,w,h}=fit($('#cvR'),0.4);c.fillStyle='#0b121a';c.fillRect(0,0,w,h);const sky=h*0.18;c.fillStyle='#10233a';c.fillRect(0,0,w,sky);
+const cols=30,rows=7,dx=w/cols,dy=(h-sky-6)/rows,k=2*Math.PI/(14*dx);
+const pos=(i,j)=>{const x0=(i+0.5)*dx,y0=sky+j*dy,e=Math.exp(-j/2.3),ph=k*x0-om*time;return[x0+0.9*dx*e*Math.cos(ph),y0+1.25*dx*e*Math.sin(ph)];};
+c.fillStyle='rgba(196,149,74,.25)';c.beginPath();for(let i=-1;i<=cols;i++){const[p,q]=pos(i,0);i>-1?c.lineTo(p,q):c.moveTo(p,q);}c.lineTo(w,h);c.lineTo(0,h);c.fill();
+c.strokeStyle='rgba(255,213,79,.3)';c.lineWidth=1;for(let j=0;j<rows;j++){c.beginPath();for(let i=-1;i<=cols;i++){const[p,q]=pos(i,j);i>-1?c.lineTo(p,q):c.moveTo(p,q);}c.stroke();}
+const hi=12,hj=0;const e=1;c.strokeStyle='rgba(255,255,255,.45)';c.beginPath();c.ellipse((hi+0.5)*dx,sky,0.9*dx,1.25*dx,0,0,7);c.stroke();
+for(let i=0;i<cols;i++)for(let j=0;j<rows;j++){const[p,q]=pos(i,j);const sel=i===hi&&j===hj;c.fillStyle=sel?'#fff':'#ffd54f';c.beginPath();c.arc(p,q,sel?4:2.4,0,7);c.fill();}
+c.strokeStyle='#ffd54f';c.lineWidth=2;c.beginPath();for(let i=-1;i<=cols;i++){const[p,q]=pos(i,0);i>-1?c.lineTo(p,q):c.moveTo(p,q);}c.stroke();
+c.fillStyle='#ffd54f';c.font='bold 13.2px system-ui';c.textAlign='left';c.fillText('superficie',4,sky-6);label(c,w,'Vr ≈ 0,92·Vs  →  propagación');
+c.fillStyle='#93a4b5';c.font='12.0px system-ui';c.textAlign='left';c.fillText('el movimiento decae con la profundidad ↓',4,h-5);}}
+function label(c,w,t){c.font='bold 13.2px system-ui';c.textAlign='right';c.fillStyle='rgba(0,0,0,.6)';const m=c.measureText(t).width;c.fillRect(w-m-12,3,m+9,17);c.fillStyle='#fff';c.fillText(t,w-7,15);}
+function tab2Static(){const d=+$('#dist').value;$('#dv').textContent=d+' km';const dist=Math.hypot(d,30);const a={tP:dist/VP,tS:dist/VS,tR:30/VS+d/VR,d:dist,rA:1};const tEnd=a.tR*1.25+30;drawSeis($('#sg2'),a,1e9,tEnd);
+$('#st2').innerHTML=[['Llega P',a.tP.toFixed(1)+' s'],['Llega S',a.tS.toFixed(1)+' s'],['Llega R',a.tR.toFixed(1)+' s'],['S − P',(a.tS-a.tP).toFixed(1)+' s → ≈ '+(8.6*(a.tS-a.tP)).toFixed(0)+' km']].map(s=>`<div class="stat"><span>${s[0]}</span><b>${s[1]}</b></div>`).join('');}
+$('#dist').oninput=tab2Static;
+
+// ================== TAB 3 : EDIFICIO Y SUELO ==================
+const SYS={c:[{n:'Pórticos de concreto (Ct 35)',ct:35},{n:'Dual: pórticos + muros (Ct 45)',ct:45},{n:'Muros estructurales (Ct 60)',ct:60}],a:[{n:'Pórticos de acero a momento (Ct 35)',ct:35},{n:'Pórticos arriostrados (Ct 45)',ct:45}],m:[{n:'Entramado ligero (muros con tableros)',mx:5},{n:'Pórticos de madera (postes y vigas)',mx:4},{n:'Madera contralaminada (CLT)',mx:18}]};
+const PRESETS=[{n:'Conglomerado de Lima (grava / cascajo)',l:[[0,1],[5,30],[6,30]]},{n:'Arenas (eólicas o de playa)',l:[[3,15],[4,25],[5,0]]},{n:'Depósito fino costero (limo y arcilla)',l:[[0,3],[2,15],[1,12]]},{n:'Roca (sin suelo)',l:[[5,0],[5,0],[6,0]]},{n:'Personalizado',l:null}];
+const S3={src:'syn',asSurf:false,recName:'',mat:'c',sys:0,nf:10,pga:0.35,seed:1,layers:PRESETS[0].l.map(([s,h])=>({s,h})),play:false,t:0,grow:false,dirty:true};
+let rock,rockRe,rockIm,R={};
+function newRock(){NS=4096;rock=genRock(S3.seed);rockRe=Float64Array.from(rock);rockIm=new Float64Array(NS);fft(rockRe,rockIm,false);}
+function activeLayers(){return S3.layers.filter(l=>l.h>0).map(l=>Object.assign({},SOILS[l.s],{h:l.h}));}
+const PER=[];for(let i=0;i<=44;i++)PER.push(0.05*Math.pow(100,i/44));
+const DC={c:[0.025,0.02,0.015],a:[0.04,0.025],m:[0.04,0.03,0.025]};
+function bldg(n){const hn=3*n,gam=n===1?1:1.27;if(S3.mat==='m'){const k=S3.sys;return{T:k===1?hn/25:0.0488*Math.pow(hn,0.75),hn,xi:[0.06,0.05,0.03][k],gam,lim:0.010,w:[0.25,0.3,0.45][k],dc:DC.m[k]};}
+const ct=SYS[S3.mat][S3.sys].ct;return{T:hn/ct,hn,xi:S3.mat==='c'?0.05:0.02,gam,lim:S3.mat==='c'?0.007:0.010,w:S3.mat==='c'?1.0:0.8,dc:DC[S3.mat][S3.sys]};}
+function recompute(){S3.hold=false;const L0=activeLayers(),L=S3.asSurf?[]:L0;const re=new Float64Array(NS),im=new Float64Array(NS),dre=new Float64Array(NS),dim=new Float64Array(NS);
+for(let k=0;k<=NS/2;k++){const f=k/(NS*DT);const[hr,hi]=soilTF(L,f);const xr=rockRe[k]*hr-rockIm[k]*hi,xi=rockRe[k]*hi+rockIm[k]*hr;re[k]=xr;im[k]=xi;
+let fac=0;if(f>0.05){const w=2*Math.PI*f;fac=-G/(w*w);if(f<0.15)fac*=(f-0.05)/0.1;}dre[k]=xr*fac;dim[k]=xi*fac;
+if(k>0&&k<NS/2){re[NS-k]=xr;im[NS-k]=-xi;dre[NS-k]=xr*fac;dim[NS-k]=-xi*fac;}}
+fft(re,im,true);fft(dre,dim,true);
+const surf=new Float64Array(NS),sdisp=new Float64Array(NS),rk=new Float64Array(NS);let sp=0;
+for(let i=0;i<NS;i++){surf[i]=re[i]*S3.pga;sdisp[i]=dre[i]*S3.pga;rk[i]=rock[i]*S3.pga;if(Math.abs(surf[i])>sp)sp=Math.abs(surf[i]);}
+const b=bldg(S3.nf);const th=sdof(surf,b.T,b.xi,true,b.gam);
+const site=siteParams(L0);
+const tf=PER.map(T=>{const[a,c]=soilTF(L0,1/T);return Math.hypot(a,c);});
+const saR=PER.map(T=>sdof(rk,T,b.xi).amax),saS=PER.map(T=>sdof(surf,T,b.xi).amax);
+const ep=E030[site.perfil],saE=PER.map(T=>0.45*Cf(T,ep)*ep.S);
+const NN=[],roofN=[],colN=[];for(let n=1;n<=50;n++){const bn=bldg(n);NN.push(n);const rr=sdof(surf,bn.T,bn.xi,false,bn.gam);roofN.push(rr.rmax);if(bn.gam*rr.umax*Math.sin(Math.PI/(2*n))/3>bn.dc)colN.push({x:n,y:rr.rmax,color:'#ff5252',r:3.2});}
+const drift=b.gam*th.umax*Math.sin(Math.PI/(2*S3.nf))/3;
+const col=collapseInfo(b,th.U);
+R={L:L0,surf,sdisp,rk,sp,b,th,site,tf,saR,saS,saE,NN,roofN,colN,drift,col};render3();}
+function collapseInfo(b,U){const N=S3.nf,phi=r=>N===1?r:Math.sin(Math.PI*r/2);const dph=[0];for(let j=1;j<=N;j++)dph.push(phi(j/N)-phi((j-1)/N));
+const td=new Array(N+1).fill(-1);let tc=-1,uc=0,mu=0;const ucol=b.dc*3/(b.gam*dph[1]);
+for(let i=0;i<NS;i++){const a=Math.abs(U[i]);if(a<=mu)continue;mu=a;for(let j=1;j<=N;j++)if(td[j]<0&&mu>b.lim*3/(b.gam*dph[j]))td[j]=i*DT;if(tc<0&&mu>ucol){tc=i*DT;uc=U[i];break;}}
+const deb=[];if(tc>=0){const r=rng(99+N);const per=clamp(Math.floor(240/N),3,12);const pal=S3.mat==='m'?['#b7834f','#8a5a2b','#d6a96c']:S3.mat==='a'?['#5d86b0','#9aa2a9','#c0c8d0']:['#9aa2a9','#6f777e','#c9ced2'];
+for(let k=1;k<=N;k++)for(let q=0;q<per;q++)deb.push({k,fx:r()-0.5,vx:(r()-0.5)*280,vy:-(30+r()*190),s:1.5+r()*3.5,rn:r(),col:pal[q%3]});}
+return{tc,uc,td,deb};}
+function render3(){const{b,site,th,sp}=R;drawGauge($('#cvM'),MQ.M,`Aquí: PGA roca ${S3.pga.toFixed(2)} g → superficie ${sp.toFixed(2)} g · intensidad ≈ ${roman(mmi(sp))} (${MMI_T[Math.round(mmi(sp))-1]})`);$('#nfv').textContent=S3.nf;$('#pgav').textContent=S3.pga.toFixed(2)+' g';
+const ratio=site.Ts>0?b.T/site.Ts:0,res=ratio>0.75&&ratio<1.33;
+const st=[['Periodo del edificio T',b.T.toFixed(2)+' s'],['Periodo del suelo Ts',site.Ts>0?site.Ts.toFixed(2)+' s':'— (roca)'],['Vs30 · perfil E.030',site.vs30.toFixed(0)+' m/s · '+site.perfil],['PGA en superficie',sp.toFixed(2)+' g (×'+(sp/S3.pga).toFixed(2)+')'],
+['Acel. máx. en azotea',th.rmax.toFixed(2)+' g (×'+(th.rmax/sp).toFixed(2)+' vs suelo)'],['Despl. máx. azotea',(b.gam*th.umax*100).toFixed(1)+' cm'],['Deriva máx. entrepiso',(R.drift*1000).toFixed(1)+' ‰ (límite '+(b.lim*1000)+' ‰ · colapso '+(b.dc*1000)+' ‰)',R.drift>b.lim?'bad':'ok'],['T / Ts',ratio?ratio.toFixed(2)+(res?' ⚠ resonancia':''):'—',res?'bad':''],['Peso del edificio',(S3.nf*b.w).toFixed(2)+' t por m² de planta ('+b.w.toFixed(2)+' t/m²·piso)'],['Fuerza sísmica en la base',(0.8*S3.nf*b.w*th.amax).toFixed(2)+' t por m² de planta']];
+$('#st3').innerHTML=st.map(s=>`<div class="stat ${s[2]||''}"><span>${s[0]}</span><b>${s[1]}</b></div>`).join('');
+const mat=S3.mat==='c'?'concreto':S3.mat==='a'?'acero':'madera';let msg=`Edificio de <b>${S3.nf} pisos</b> de ${mat} (H = ${b.hn} m). `;
+if(!site.Ts)msg+='Sin estratos: la onda llega directo de la roca y no hay amplificación por suelo.';
+else if(res)msg+=`<b>Resonancia:</b> su periodo (${b.T.toFixed(2)} s) casi coincide con el del suelo (${site.Ts.toFixed(2)} s). El suelo “empuja” al edificio al mismo ritmo en que oscila y la sacudida se multiplica.`;
+else if(ratio<0.75)msg+=`Es más rígido que el suelo (T &lt; Ts). Si lo haces crecer se acercará a la resonancia.`;
+else msg+=`Es más flexible que el suelo (T &gt; Ts): “se aleja” del pico del suelo y recibe menos aceleración, aunque se desplaza más.`;
+if(S3.mat==='a')msg+=' El acero tiene menos amortiguamiento (2 %): sus picos de resonancia son más agudos.';
+let woodWarn=false;if(S3.mat==='m'){const sy=SYS.m[S3.sys];msg+=` La madera es liviana (${b.w.toFixed(2)} t/m² por piso frente a ≈ 1 t/m² del concreto): con la misma aceleración, la fuerza sísmica es varias veces menor${S3.sys===2?'':', y sus uniones clavadas o empernadas disipan energía'}.`;
+if(S3.nf>sy.mx){woodWarn=true;msg+=` <b>⚠ ${S3.nf} pisos excede lo habitual para este sistema (hasta ≈ ${sy.mx} pisos${S3.sys===2?', como el Mjøstårnet de Noruega con estructura de madera laminada':''}).</b>`;}}
+const C=R.col;let est;if(C.tc>=0)est=`<b>💥 COLAPSA a los ${C.tc.toFixed(1)} s:</b> la deriva del primer piso supera la de colapso (${(b.dc*1000).toFixed(0)} ‰) y los pisos caen uno sobre otro. Pulsa ▶ Sacudir para verlo.<br>`;
+else if(R.drift>b.lim)est=`<b>⚠ Daño:</b> supera la deriva de la E.030 (aparecen fisuras), pero no llega a colapsar.<br>`;else est=`<b>✔ Sin daño importante</b> con este sismo.<br>`;
+const d=$('#diag');d.innerHTML=est+msg;d.className='diag'+(res||R.drift>b.lim||woodWarn?' warn':'');
+chart($('#cvSp'),0.6,{x:PER,xmin:0.05,xmax:5,xlog:true,xlabel:'Periodo T (s)',ylabel:'Sa (g)',series:[{y:R.saE,color:'#81c784',dash:[5,4],w:1.5},{y:R.saR,color:'#90a4ae'},{y:R.saS,color:'#ffb74d',w:2.5}],
+markers:[{x:b.T,color:'#4fc3f7',label:'T edificio'},site.Ts?{x:site.Ts,color:'#ffb74d',dash:[4,3],label:'Ts suelo',row:1}:{}],points:[{x:b.T,y:sdof(R.surf,b.T,b.xi).amax,color:'#4fc3f7'}]});
+chart($('#cvTF'),0.5,{x:PER,xmin:0.05,xmax:5,xlog:true,xlabel:'Periodo (s)',ylabel:'Amplificación (veces)',series:[{y:PER.map(()=>1),color:'#556',dash:[3,3],w:1},{y:R.tf,color:'#ffb74d',w:2.5}],markers:[{x:b.T,color:'#4fc3f7',label:'T edificio'},site.Ts?{x:site.Ts,color:'#ffb74d',dash:[4,3],label:'Ts',row:1}:{}]});
+chart($('#cvN'),0.5,{x:R.NN,xmin:1,xmax:50,xticks:[1,10,20,30,40,50],xlabel:'Número de pisos',ylabel:'Acel. azotea (g)',series:[{y:R.roofN,color:'#ef5350',w:2.5}],points:[...R.colN,{x:S3.nf,y:R.roofN[S3.nf-1],color:'#4fc3f7'}]});
+drawTH();if(!S3.play)drawB();}
+function drawTH(){const{c,w,h}=fit($('#cvTH'),0.62);c.clearRect(0,0,w,h);const rows=[['Roca',R.rk,'#90a4ae'],['Superficie del suelo',R.surf,'#ffb74d'],['Azotea del edificio',R.th.A,'#ef5350']];
+let mx=0;rows.forEach(r=>r[1].forEach(v=>{if(Math.abs(v)>mx)mx=Math.abs(v);}));const rh=h/3,L=4,pw=w-8;
+rows.forEach(([n,arr,col],k)=>{const mid=rh*k+rh*0.58;c.strokeStyle='#22303f';c.beginPath();c.moveTo(L,mid);c.lineTo(L+pw,mid);c.stroke();c.strokeStyle=col;c.lineWidth=1;c.beginPath();
+for(let px=0;px<pw;px++){const i0=Math.floor(px/pw*NS),i1=Math.floor((px+1)/pw*NS);let lo=0,hi=0;for(let i=i0;i<i1;i++){if(arr[i]<lo)lo=arr[i];if(arr[i]>hi)hi=arr[i];}c.moveTo(L+px,mid-hi/mx*rh*0.42);c.lineTo(L+px,mid-lo/mx*rh*0.42+0.5);}c.stroke();
+let pk=0;arr.forEach(v=>{if(Math.abs(v)>pk)pk=Math.abs(v);});c.fillStyle=col;c.font='bold 13.2px system-ui';c.textAlign='left';c.fillText(n+' · máx '+pk.toFixed(2)+' g',L+2,rh*k+13);});
+if(S3.play){const x=L+S3.t/(NS*DT)*pw;c.strokeStyle='#fff';c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke();}
+c.fillStyle='#93a4b5';c.font='12.0px system-ui';c.textAlign='right';c.fillText('0 – '+(NS*DT).toFixed(0)+' s',w-4,h-3);}
+function hsh(a,b){let x=Math.sin(a*127.1+b*311.7)*43758.5453;return x-Math.floor(x);}
+function drawB(){const{c,w,h}=fit($('#cvB'),0.75);c.clearRect(0,0,w,h);const gy=Math.round(h*0.56);
+let g=c.createLinearGradient(0,0,0,gy);g.addColorStop(0,'#0c1a2b');g.addColorStop(1,'#1f3a57');c.fillStyle=g;c.fillRect(0,0,w,gy);
+const L=R.L,Htot=Math.max(R.site.H,1),rockH=28,soilPx=h-gy-rockH,sc=L.length?soilPx/Htot:0;
+const i=(S3.play||S3.hold)?Math.min(NS-1,Math.floor(S3.t/DT)):-1;const sd=i>=0?R.sdisp[i]:0;const shiftPx=clamp(sd*90,-22,22);
+const sh=z=>L.length?shiftPx*Math.cos(Math.PI*Math.min(z,Htot)/(2*Htot)):0;
+let y=gy,z=0;
+L.forEach((l,j)=>{const hp=l.h*sc;c.fillStyle=l.c;c.fillRect(0,y,w,hp+0.6);
+const n=Math.min(260,Math.round(w*hp/(l.t==='stone'?260:l.t==='grav'?120:70)));
+for(let q=0;q<n;q++){const px=hsh(j,q)*w,py=y+hsh(q,j+9)*hp,zz=z+(py-y)/sc,xx=px+sh(zz);
+if(l.t==='dot'){c.fillStyle='rgba(90,60,20,.45)';c.fillRect(xx,py,1.6,1.6);}
+else if(l.t==='line'){c.strokeStyle='rgba(40,25,15,.35)';c.beginPath();c.moveTo(xx,py);c.lineTo(xx+7,py);c.stroke();}
+else if(l.t==='grav'){c.fillStyle='rgba(50,55,60,.6)';c.beginPath();c.ellipse(xx,py,2.6,1.9,q,0,7);c.fill();}
+else if(l.t==='stone'){c.fillStyle='rgba(170,185,200,.55)';c.beginPath();c.ellipse(xx,py,5,3.4,q,0,7);c.fill();c.strokeStyle='rgba(20,30,40,.5)';c.stroke();}
+else{c.fillStyle=q%2?'rgba(40,30,20,.5)':'rgba(220,200,170,.4)';c.fillRect(xx,py,2.4,2.4);}}
+c.strokeStyle='rgba(0,0,0,.35)';c.beginPath();c.moveTo(0,y+hp);c.lineTo(w,y+hp);c.stroke();
+if(hp>13){c.fillStyle='rgba(0,0,0,.55)';const t=`${l.n} · ${l.h} m · Vs ${l.vs}`;c.font='12.6px system-ui';const m=c.measureText(t).width;c.fillRect(w-m-10,y+hp/2-8,m+8,15);c.fillStyle='#fff';c.textAlign='right';c.fillText(t,w-6,y+hp/2+3);}
+y+=hp;z+=l.h;});
+c.fillStyle=ROCK.c;c.fillRect(0,y,w,h-y);c.fillStyle='#cfd8dc';c.font='12.6px system-ui';c.textAlign='right';c.fillText('Roca base · Vs 1200 m/s',w-6,h-6);
+if(S3.play){c.strokeStyle='rgba(255,112,67,.8)';c.lineWidth=1.5;for(let q=0;q<4;q++){const x=w*(0.12+q*0.12),yy=h-4-((S3.t*20+q*7)%(rockH-6));c.beginPath();c.moveTo(x-5,yy+3);c.lineTo(x,yy-3);c.lineTo(x+5,yy+3);c.stroke();}c.fillStyle='#ff8a65';c.textAlign='left';c.fillText('onda S sube',4,h-6);}
+if(L.length){c.strokeStyle='rgba(255,255,255,.28)';c.setLineDash([3,4]);c.lineWidth=1;for(let q=1;q<8;q++){const x0=w*q/8;c.beginPath();for(let s=0;s<=20;s++){const zz=Htot*s/20;const xx=x0+sh(zz),yy=gy+zz*sc;s?c.lineTo(xx,yy):c.moveTo(xx,yy);}c.stroke();}c.setLineDash([]);}
+// edificio
+const N=S3.nf,b=R.b,availB=gy-30,sp=availB/Math.max(N,10),bpx=N*sp,bw=Math.min(w*0.3,180),cx=w*0.4+shiftPx;
+const phi=r=>N===1?r:Math.sin(Math.PI*r/2);const C=R.col,tNow=i>=0?S3.t:-1,showDmg=i>=0&&!S3.grow;
+const colE=(showDmg&&C.tc>=0&&tNow>=C.tc)?tNow-C.tc:-1;
+const u=colE>=0?C.uc:(i>=0?R.th.U[i]:0);const roofPx=clamp(b.gam*u/b.hn*bpx*15,-bw*0.9,bw*0.9)*(colE>=0?0.35:1);
+const rub=Math.max(1.5,sp*0.12),cr=colE>=0?sp*(colE/0.35)**2:0,yF=[gy];for(let k=1;k<=N;k++){yF.push(yF[k-1]-(sp-clamp(cr-(k-1)*sp,0,sp-rub)));}
+const tilt=colE>=0?Math.sign(C.uc||1)*Math.min(0.14,0.07*colE):0;
+const off=[];for(let j=0;j<=N;j++)off.push(roofPx*phi(j/N));
+c.fillStyle='#555';c.fillRect(cx-bw/2-6,gy,bw+12,5);
+c.save();if(tilt){const px=cx+(tilt>0?bw/2:-bw/2);c.translate(px,gy);c.rotate(tilt);c.translate(-px,-gy);}
+const bays=N>30?3:4,steel=S3.mat==='a',wood=S3.mat==='m',brace=steel&&S3.sys===1,wall=!steel&&!wood&&S3.sys>0;
+for(let j=1;j<=N;j++){const yA=yF[j-1],yB=yF[j],hh=yA-yB,oA=off[j-1],oB=off[j];
+c.fillStyle=wood?(S3.sys===2?'#d6a96c':'#b7834f'):steel?'rgba(130,190,240,.28)':'#9aa2a9';c.beginPath();c.moveTo(cx-bw/2+oA,yA);c.lineTo(cx+bw/2+oA,yA);c.lineTo(cx+bw/2+oB,yB);c.lineTo(cx-bw/2+oB,yB);c.fill();
+if(wall){const a=bays/2-0.5,bb=bays/2+0.5;c.fillStyle='#737b82';c.beginPath();c.moveTo(cx-bw/2+bw*a/bays+oA,yA);c.lineTo(cx-bw/2+bw*bb/bays+oA,yA);c.lineTo(cx-bw/2+bw*bb/bays+oB,yB);c.lineTo(cx-bw/2+bw*a/bays+oB,yB);c.fill();if(S3.sys===2){[0,bays-1].forEach(q=>{c.beginPath();c.moveTo(cx-bw/2+bw*q/bays+oA,yA);c.lineTo(cx-bw/2+bw*(q+1)/bays+oA,yA);c.lineTo(cx-bw/2+bw*(q+1)/bays+oB,yB);c.lineTo(cx-bw/2+bw*q/bays+oB,yB);c.fill();});}}
+if(!steel&&hh>9){c.fillStyle='rgba(20,45,75,.85)';for(let q=0;q<bays;q++){if(wall&&(q===bays/2-0.5||q===bays/2||(S3.sys===2&&(q===0||q===bays-1))))continue;const xm=cx-bw/2+bw*(q+0.5)/bays+(oA+oB)/2;c.fillRect(xm-bw/bays*0.28,yB+hh*0.25,bw/bays*0.56,hh*0.45);}}
+if(wood){const P=(fx,fy)=>[cx-bw/2+bw*fx+oA+(oB-oA)*fy,yA-(yA-yB)*fy];c.lineWidth=1;
+if(S3.sys===0){c.strokeStyle='rgba(90,55,25,.55)';for(let q=1;q<16;q++){const a=P(q/16,0),e=P(q/16,1);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(e[0],e[1]);c.stroke();}}
+else if(S3.sys===1){c.strokeStyle='#6e4623';c.lineWidth=1.6;for(let q=0;q<bays;q++){const k=0.22;let a=P(q/bays,1-k*1.2),e=P(q/bays+k/bays,1);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(e[0],e[1]);a=P((q+1)/bays,1-k*1.2);e=P((q+1)/bays-k/bays,1);c.moveTo(a[0],a[1]);c.lineTo(e[0],e[1]);c.stroke();}}
+else{c.strokeStyle='rgba(120,80,40,.6)';for(let q=1;q<bays*2;q++){const a=P(q/(bays*2),0),e=P(q/(bays*2),1);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(e[0],e[1]);c.stroke();}}}
+if(brace){const q=Math.floor(bays/2);c.strokeStyle='#90caf9';c.lineWidth=1.3;const xa=cx-bw/2+bw*q/bays,xb=xa+bw/bays;c.beginPath();c.moveTo(xa+oA,yA);c.lineTo(xb+oB,yB);c.moveTo(xb+oA,yA);c.lineTo(xa+oB,yB);c.stroke();}
+if(showDmg&&C.td[j]>=0&&tNow>=C.td[j]&&hh>4){const P2=(fx,fy)=>[cx-bw/2+bw*fx+oA+(oB-oA)*fy,yA-hh*fy];c.strokeStyle=steel?'rgba(255,140,90,.95)':'rgba(25,15,10,.9)';c.lineWidth=1.3;
+for(let q=0;q<bays;q++){const x0=q/bays,x1=(q+1)/bays,m=(x0+x1)/2;let A=P2(x0+0.08/bays,0.12),Bm=P2(m+0.06/bays,0.55),Cc=P2(x1-0.08/bays,0.88);c.beginPath();c.moveTo(A[0],A[1]);c.lineTo(Bm[0],Bm[1]);c.lineTo(Cc[0],Cc[1]);
+A=P2(x1-0.08/bays,0.12);Bm=P2(m-0.05/bays,0.5);Cc=P2(x0+0.08/bays,0.88);c.moveTo(A[0],A[1]);c.lineTo(Bm[0],Bm[1]);c.lineTo(Cc[0],Cc[1]);c.stroke();}}
+if(colE>=0){c.fillStyle='rgba(0,0,0,.28)';c.beginPath();c.moveTo(cx-bw/2+oA,yA);c.lineTo(cx+bw/2+oA,yA);c.lineTo(cx+bw/2+oB,yB);c.lineTo(cx-bw/2+oB,yB);c.fill();}
+const sdr=b.gam*u*(phi(j/N)-phi((j-1)/N))/3,rr=Math.abs(sdr)/b.lim;
+c.strokeStyle=colE>=0?'#4e3b31':i<0?(wood?'#ecd2ad':steel?'#9cc3e6':'#d7dde2'):(rr<0.5?'#9ccc65':rr<1?'#ffd54f':'#ff5252');c.lineWidth=Math.max(1.5,Math.min(3,sp*0.18));c.beginPath();c.moveTo(cx-bw/2+oB-1,yB);c.lineTo(cx+bw/2+oB+1,yB);c.stroke();}
+c.strokeStyle=wood?'#6e4623':steel?'#5d86b0':'#c3c9ce';c.lineWidth=steel?1.6:wood?2.2:2;for(let q=0;q<=bays;q++){c.beginPath();for(let j=0;j<=N;j++){const x=cx-bw/2+bw*q/bays+off[j],yy=yF[j];j?c.lineTo(x,yy):c.moveTo(x,yy);}c.stroke();}
+c.restore();
+c.fillStyle='#fff';c.font='bold 13.8px system-ui';c.textAlign='center';c.fillText(`${N} pisos · ${b.hn} m · ${wood?'madera':steel?'acero':'concreto'}`,cx+off[N],yF[N]-8);
+c.textAlign='left';c.font='12.6px system-ui';c.fillStyle='#cfd8dc';
+if(i>=0){c.fillText(`t = ${S3.t.toFixed(1)} s`,6,14);c.fillText(`suelo: ${R.surf[i].toFixed(2)} g`,6,28);c.fillText(`azotea: ${R.th.A[i].toFixed(2)} g`,6,42);c.fillStyle='#93a4b5';c.fillText('deformación ×15',6,56);
+c.fillStyle='#9ccc65';c.fillText('■ deriva <50 %',w-96,14);c.fillStyle='#ffd54f';c.fillText('■ 50–100 %',w-96,28);c.fillStyle='#ff5252';c.fillText('■ > límite',w-96,42);}
+else{c.fillText('Pulsa ▶ Sacudir',6,14);}
+if(colE>=0){const g2=260;C.deb.forEach(p=>{const tau=colE-0.35*Math.sqrt(p.k-1);if(tau<0)return;const x0=cx+off[0]+p.fx*bw,y0=gy-Math.min(p.k-1,N)*rub*0.9-3;
+let x=x0+p.vx*tau,y=y0+p.vy*tau+g2*tau*tau;const pile=Math.max(4,N*rub*0.7)*Math.exp(-Math.abs(x-cx)/(bw*0.9));const yg=gy-1-p.rn*pile;
+if(y>yg&&tau>0.02){const cq=y0-yg,tl=(-p.vy+Math.sqrt(Math.max(0,p.vy*p.vy-4*g2*cq)))/(2*g2);x=x0+p.vx*tl;y=gy-1-p.rn*Math.max(4,N*rub*0.7)*Math.exp(-Math.abs(x-cx)/(bw*0.9));}
+c.fillStyle=p.col;c.fillRect(x-p.s/2,y-p.s/2,p.s,p.s);});
+const stepK=Math.max(1,Math.floor(N/6));for(let k=1;k<=N;k+=stepK){const tau=colE-0.35*Math.sqrt(k-1);if(tau<0||tau>6)continue;const r=12+40*tau,al=0.42*Math.exp(-tau/1.8);const xx=cx+((k/stepK)%2?-1:1)*bw*0.35;
+const gr=c.createRadialGradient(xx,gy-8,0,xx,gy-8,r);gr.addColorStop(0,`rgba(190,180,165,${al})`);gr.addColorStop(1,'rgba(190,180,165,0)');c.fillStyle=gr;c.beginPath();c.arc(xx,gy-8,r,0,7);c.fill();}
+c.fillStyle='#ff5252';c.font='bold 21.6px system-ui';c.textAlign='center';c.fillText('💥 COLAPSO',w/2,gy*0.42);c.font='13.2px system-ui';c.fillStyle='#ffcdd2';c.fillText(`a los ${C.tc.toFixed(1)} s · deriva 1er piso > ${(b.dc*1000).toFixed(0)} ‰`,w/2,gy*0.42+16);}}
+// controles
+function fillSys(){$('#sys').innerHTML=SYS[S3.mat].map((s,k)=>`<option value="${k}">${s.n}</option>`).join('');S3.sys=0;}
+document.querySelectorAll('#mat button').forEach(bt=>bt.onclick=()=>{document.querySelectorAll('#mat button').forEach(x=>x.classList.remove('on'));bt.classList.add('on');S3.mat=bt.dataset.v;fillSys();S3.dirty=true;});
+$('#sys').onchange=e=>{S3.sys=+e.target.value;S3.dirty=true;};
+$('#nf').oninput=e=>{S3.nf=+e.target.value;S3.dirty=true;};
+$('#pga').oninput=e=>{S3.pga=+e.target.value;syncMfromPga();S3.dirty=true;};
+function syncMfromPga(){MQ.M=Math.min(9.5,mFromPga(S3.pga));$('#mag').value=String(Math.round(MQ.M*10)/10);$('#mv').textContent=MQ.M>=9.5?'≥ 9,5 (a esta distancia; acerca la ruptura)':MQ.M.toFixed(1)+' (equivalente)';}
+function syncPgaFromM(){$('#mv').textContent=MQ.M.toFixed(1);$('#rv').textContent=MQ.R+' km';let p=youngs(MQ.M,MQ.R,mH(),MQ.zt);S3.pga=clamp(Math.round(p*100)/100,0.02,1);$('#pga').value=S3.pga;S3.dirty=true;}
+$('#mag').oninput=e=>{MQ.M=+e.target.value;syncPgaFromM();};
+$('#mdist').oninput=e=>{MQ.R=+e.target.value;syncPgaFromM();};
+document.querySelectorAll('#mtype button').forEach(bt=>bt.onclick=()=>{document.querySelectorAll('#mtype button').forEach(x=>x.classList.toggle('on',x===bt));MQ.zt=+bt.dataset.v;syncPgaFromM();});
+$('#preset').innerHTML=PRESETS.map((p,k)=>`<option value="${k}">${p.n}</option>`).join('');
+$('#preset').onchange=e=>{const p=PRESETS[+e.target.value];if(!p.l)return;S3.layers=p.l.map(([s,h])=>({s,h}));buildLayers();S3.dirty=true;};
+function buildLayers(){const box=$('#layers');box.innerHTML='';S3.layers.forEach((l,j)=>{const d=document.createElement('div');d.className='layer';
+d.innerHTML=`<div><label>Estrato ${j+1}</label><br><select data-j="${j}">${SOILS.map((s,q)=>`<option value="${q}"${q===l.s?' selected':''}>${s.n} (Vs≈${s.vs})</option>`).join('')}</select></div><div><label>Espesor: <b>${l.h} m</b></label><input type="range" min="0" max="60" step="1" value="${l.h}" data-j="${j}"></div>`;box.appendChild(d);});
+box.querySelectorAll('select').forEach(s=>s.onchange=()=>{S3.layers[+s.dataset.j].s=+s.value;$('#preset').value=PRESETS.length-1;S3.dirty=true;});
+box.querySelectorAll('input').forEach(s=>s.oninput=()=>{S3.layers[+s.dataset.j].h=+s.value;s.previousElementSibling.querySelector('b').textContent=s.value+' m';$('#preset').value=PRESETS.length-1;S3.dirty=true;});}
+$('#shake').onclick=()=>{S3.grow=false;S3.hold=false;S3.play=!S3.play;S3.t=0;$('#shake').textContent=S3.play?'■ Detener':'▶ Sacudir';if(!S3.play)drawB();};
+let growTimer=null;
+$('#grow').onclick=()=>{if(growTimer){clearInterval(growTimer);growTimer=null;S3.grow=false;S3.play=false;$('#grow').textContent='🏗 Hacer crecer';drawB();return;}
+S3.grow=true;S3.play=true;S3.t=4;S3.nf=1;$('#nf').value=1;S3.dirty=true;$('#grow').textContent='■ Parar';
+growTimer=setInterval(()=>{if(S3.nf>=50){clearInterval(growTimer);growTimer=null;S3.grow=false;S3.play=false;$('#grow').textContent='🏗 Hacer crecer';drawB();return;}S3.nf++;$('#nf').value=S3.nf;S3.dirty=true;},260);};
+$('#newq').onclick=()=>{S3.seed++;setSrc('syn');};
+
+
+// ---------- registro real ----------
+const REC={raw:null,cols:1,hdrDt:null,hdrUn:null,name:''};
+function setSrc(v){S3.src=v;document.querySelectorAll('#src button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));$('#recbox').style.display=v==='rec'?'block':'none';
+if(v==='syn'){S3.asSurf=false;newRock();$('#srcinfo').textContent='Sismo sintético (ruido filtrado, semilla '+S3.seed+'). Cambia con 🎲.';S3.dirty=true;}
+else $('#srcinfo').textContent=S3.recName?('Usando: '+S3.recName):'Carga un archivo y pulsa «Usar registro».';}
+document.querySelectorAll('#src button').forEach(b=>b.onclick=()=>setSrc(b.dataset.v));
+function parseRec(txt){const lines=txt.split(/\r?\n/);let dt=null,un=null,rows=[];
+const hdr=lines.slice(0,60).join(' ');
+let m=hdr.match(/DT\s*=\s*([0-9.]+)/i)||hdr.match(/(?:intervalo|muestreo|sampling|delta)[^0-9\n]{0,40}([0-9]*\.[0-9]+)/i);if(m)dt=parseFloat(m[1]);
+m=hdr.match(/([0-9]+)\s*(?:sps|muestras\s*por\s*segundo|samples\s*per\s*sec)/i)||hdr.match(/(?:frecuencia\s*de\s*muestreo|sampling\s*rate)[^0-9\n]{0,30}([0-9]+)/i);if(!dt&&m)dt=1/parseFloat(m[1]);
+if(/units?\s*of\s*g|in\s*g\b|\(g\)/i.test(hdr))un='g';else if(/gal|cm\/s/i.test(hdr))un='gal';
+const at2=/NPTS/i.test(hdr);
+for(const ln of lines){const t=ln.trim();if(!t)continue;const nums=t.replace(/,/g,' ').split(/[\s;]+/).filter(x=>x!=='');if(!nums.every(x=>/^[-+]?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?$/.test(x)))continue;rows.push(nums.map(Number));}
+let cols,data;
+if(at2){data=[rows.flat()];cols=1;}
+else{const nc={};rows.forEach(r=>nc[r.length]=(nc[r.length]||0)+1);const k=+Object.keys(nc).sort((a,b)=>nc[b]-nc[a])[0];const rr=rows.filter(r=>r.length===k);
+data=[];for(let c=0;c<k;c++)data.push(rr.map(r=>r[c]));
+if(k>=2){const t=data[0];let mono=true;for(let i=1;i<Math.min(t.length,200);i++)if(!(t[i]>t[i-1]))mono=false;if(mono&&t.length>10){const d=(t[t.length-1]-t[0])/(t.length-1);if(d>0&&d<0.2){if(!dt)dt=d;data=data.slice(1);}}}
+if(data.length===1&&rows.length>rr.length*1.5){data=[rows.flat()];}cols=data.length;}
+return{dt,un,data};}
+$('#recfile').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const r=parseRec(rd.result);REC.raw=r;REC.name=f.name;
+$('#reccol').innerHTML=r.data.map((d,i)=>`<option value="${i}">${i+1} (${d.length} datos)</option>`).join('');
+if(r.dt)$('#recdt').value=String(Math.round(r.dt*1e5)/1e5);if(r.un)$('#recun').value=r.un;
+$('#recmsg').innerHTML=`Leído <b>${f.name}</b>: ${r.data.length} columna(s), ${r.data[0].length} datos${r.dt?', dt detectado '+String(r.dt).replace('.',',')+' s':' — revisa el dt'}. Pulsa «Usar registro».`;}catch(err){$('#recmsg').textContent='No pude leer el archivo: '+err.message;}};rd.readAsText(f);};
+$('#recuse').onclick=()=>{if(!REC.raw){$('#recmsg').textContent='Primero elige un archivo.';return;}
+const dt=parseFloat($('#recdt').value);if(!(dt>0)){$('#recmsg').textContent='dt no válido.';return;}
+let a=REC.raw.data[+$('#reccol').value].slice();if(a.length<20){$('#recmsg').textContent='Muy pocos datos.';return;}
+let mean=0;a.forEach(v=>mean+=v);mean/=a.length;a=a.map(v=>v-mean);let pk=0;a.forEach(v=>{if(Math.abs(v)>pk)pk=Math.abs(v);});
+let un=$('#recun').value;if(un==='auto')un=pk>20?'gal':pk>2.5?'ms2':'g';const fac=un==='g'?1:un==='gal'?1/981:1/G;
+const dur=(a.length-1)*dt;NS=1;while(NS*DT<dur+2)NS*=2;NS=Math.min(Math.max(NS,1024),32768);
+const out=new Float64Array(NS);for(let i=0;i<NS;i++){const t=i*DT,x=t/dt,j=Math.floor(x);if(j>=a.length-1)break;out[i]=(a[j]+(a[j+1]-a[j])*(x-j))*fac;}
+const nt=Math.min(Math.round(1/DT),Math.floor(NS/10));const last=Math.min(NS,Math.ceil(dur/DT));for(let i=0;i<nt;i++){const w=0.5-0.5*Math.cos(Math.PI*i/nt);out[i]*=w;if(last-1-i>=0)out[last-1-i]*=w;}
+let p2=0;out.forEach(v=>{if(Math.abs(v)>p2)p2=Math.abs(v);});
+rock=out.map(v=>v/p2);rockRe=Float64Array.from(rock);rockIm=new Float64Array(NS);fft(rockRe,rockIm,false);
+S3.asSurf=$('#recas').value==='surf';S3.recName=REC.name+' (col. '+(+$('#reccol').value+1)+', PGA '+p2.toFixed(3)+' g, '+dur.toFixed(1)+' s)';
+if($('#recscale').checked){S3.pga=Math.round(p2*100)/100;$('#pga').value=S3.pga;syncMfromPga();}
+S3.play=false;S3.t=0;$('#shake').textContent='▶ Sacudir';
+$('#srcinfo').textContent='Usando: '+S3.recName+(S3.asSurf?' — aplicado directo en superficie (sin filtrar por los estratos).':' — aplicado en la roca base y filtrado por los estratos.');
+$('#recmsg').innerHTML='✅ Registro cargado: '+(un==='g'?'unidades g':un==='gal'?'convertido de gal':'convertido de m/s²')+', remuestreado a 0,01 s.';S3.dirty=true;};
+
+$('#infob').onclick=()=>{$('#infom').style.display='flex';};$('#closem').onclick=()=>{$('#infom').style.display='none';};
+$('#infom').onclick=e=>{if(e.target.id==='infom')$('#infom').style.display='none';};
+$('#copym').onclick=async()=>{try{await navigator.clipboard.writeText('neptaliagiphoyos@gmail.com');$('#copymsg').textContent='Correo copiado.';}catch(e){$('#copymsg').textContent='No se pudo copiar; anótalo: neptaliagiphoyos@gmail.com';}};
+
+// ---------- teclado y mouse (computadora) ----------
+function setTab(t){document.querySelector(`nav button[data-t="${t}"]`).click();}
+function bump(id,dv){const e=$(id);e.value=String(Math.round((+e.value+dv)*100)/100);e.dispatchEvent(new Event('input'));}
+document.addEventListener('keydown',e=>{const tg=e.target;if(tg&&(tg.tagName==='SELECT'||(tg.tagName==='INPUT'&&tg.type!=='range')))return;
+if(tg&&tg.type==='range'&&e.key.startsWith('Arrow'))return;if(e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toLowerCase();let h=true;
+if(k==='1'||k==='2'||k==='3')setTab(+k);
+else if(k===' '){if(cur===1)$('#go1').click();else if(cur===3)$('#shake').click();}
+else if(k==='+'||k==='='){if(cur===2)bump('#dist',10);else bump('#nf',1);}
+else if(k==='-'||k==='_'){if(cur===2)bump('#dist',-10);else bump('#nf',-1);}
+else if(k==='arrowup')bump('#mag',0.1);else if(k==='arrowdown')bump('#mag',-0.1);
+else if(k==='c'||k==='a'||k==='m'){const b=document.querySelector(`#mat button[data-v="${k}"]`);b&&b.click();}
+else if(k==='g')$('#grow').click();else if(k==='n')$('#newq').click();else if(k==='l')$('#spd1').click();
+else if(k==='i')$('#infob').click();else if(k==='escape')$('#closem').click();else h=false;
+if(h)e.preventDefault();});
+$('#cvB').addEventListener('wheel',e=>{e.preventDefault();bump('#nf',e.deltaY<0?1:-1);},{passive:false});
+
+// ---------- navegación y bucle ----------
+let cur=1;
+document.querySelectorAll('nav button').forEach(bt=>bt.onclick=()=>{cur=+bt.dataset.t;document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===bt));document.querySelectorAll('.tab').forEach((t,k)=>t.classList.toggle('on',k+1===cur));window.scrollTo(0,0);if(cur===2)tab2Static();if(cur===3)S3.dirty=true;});
+window.addEventListener('resize',()=>{if(cur===2)tab2Static();if(cur===3)S3.dirty=true;});
+let last=performance.now();
+function loop(now){const dt=Math.min(0.05,(now-last)/1000);last=now;
+if(cur===1)draw1(dt);
+else if(cur===2)drawWaves(now/1000);
+else if(cur===3){if(S3.dirty){S3.dirty=false;recompute();}
+if(S3.play){S3.t+=dt;if(S3.grow){if(S3.t>24)S3.t=4;}else if(S3.t>NS*DT-0.1){S3.play=false;S3.hold=true;S3.t=NS*DT-0.1;$('#shake').textContent='▶ Sacudir';drawB();}drawB();drawTH();}}
+requestAnimationFrame(loop);}
+newRock();fillSys();buildLayers();syncPgaFromM();stats1();requestAnimationFrame(loop);
+</script>
+</body></html>
