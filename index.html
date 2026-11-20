@@ -26,6 +26,14 @@ a{color:inherit}
 .cover::before{content:"";position:absolute;inset:0;opacity:.07;
   background-image:linear-gradient(var(--ink) 1px,transparent 1px),linear-gradient(90deg,var(--ink) 1px,transparent 1px);
   background-size:32px 32px;mask-image:linear-gradient(180deg,#000,transparent 85%)}
+.topnav{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin:-40px 0 26px}
+.topnav a{text-decoration:none;font-size:13px;font-weight:600;border:1px solid var(--line);border-radius:99px;padding:7px 14px;background:rgba(23,26,33,.75)}
+.topnav a[aria-current]{background:var(--gold);color:#1a1408;border-color:var(--gold)}
+.cross{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:0 0 36px}
+.cross a{display:flex;gap:14px;align-items:center;padding:18px;border:1px solid var(--line);border-radius:var(--radius);text-decoration:none;background:var(--panel)}
+.cross .big{font-size:36px}
+.cross b{display:block;font-size:16px}
+.cross span{color:var(--mute);font-size:13px}
 .eyebrow{display:inline-flex;gap:8px;align-items:center;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold2);
   border:1px solid rgba(232,180,74,.4);border-radius:99px;padding:5px 12px;background:rgba(232,180,74,.08)}
 .cover h1{font-family:Georgia,"Times New Roman",serif;font-weight:700;font-size:clamp(34px,8vw,64px);line-height:1.05;margin:18px 0 10px;letter-spacing:-.01em}
@@ -103,6 +111,7 @@ footer b{color:var(--ink)}
 
 <header class="cover">
   <div class="wrap" style="position:relative">
+    <nav class="topnav"><a href="./" aria-current="page">🔬 Simuladores</a><a href="juegos/">🎮 Juegos</a><a href="libros/">📖 Libros</a></nav>
     <span class="eyebrow">📚 Biblioteca abierta · gratis</span>
     <h1>Biblioteca de <em>Simuladores</em></h1>
     <p class="lead">Simuladores interactivos de física, astronomía e ingeniería para aprender viendo y tocando. Revisa la ficha de cada uno, ábrelo en línea o descárgalo para usarlo sin internet.</p>
@@ -140,11 +149,16 @@ footer b{color:var(--ink)}
     <p>Diseño simuladores para cursos, obras, proyectos y presentaciones: personalizados con tus datos y pensados para celular, computadora o TV.</p>
     <button class="btn primary" data-feedback>💬 Escríbeme tu idea</button>
   </section>
+
+  <div class="cross">
+    <a href="juegos/"><span class="big">🎮</span><div><b>Biblioteca de Juegos →</b><span>Juegos para jugar en familia.</span></div></a>
+    <a href="libros/"><span class="big">📖</span><div><b>Biblioteca de Libros →</b><span>La saga El Sastre de Grid y sus secuelas.</span></div></a>
+  </div>
 </main>
 
 <footer>
   <div class="wrap">
-    <b>Biblioteca de Simuladores · Miguel Agip</b><br>
+    <b>Biblioteca de Simuladores · una creación de Miguel Agip</b><br>
     Todos los simuladores son de libre uso educativo. Si lo compartes o lo usas en clase, menciona al autor.<br>
     © <span id="yr"></span> Miguel Agip · neptaliagiphoyos@gmail.com
   </div>

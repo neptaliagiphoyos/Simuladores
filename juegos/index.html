@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Biblioteca de Juegos · Miguel Agip</title>
+<meta name="description" content="Juegos para niños creados por Miguel Agip. Juégalos en línea o descárgalos.">
+<meta property="og:title" content="Biblioteca de Juegos · Miguel Agip">
+<meta property="og:description" content="Juegos para niños: juégalos en línea o descárgalos. ¡Envía tu idea y la volvemos realidad!">
+<style>
+:root{--bg:#1a1030;--panel:#251a40;--line:#3b2d5e;--ink:#fff7fb;--mute:#c9bcdf;--pink:#ff5fa8;--pink2:#ffb3d6;--sun:#ffd166;--radius:18px}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:inherit}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+
+.topnav{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;padding:12px 0 0}
+.topnav a[aria-current]{background:var(--pink);border-color:var(--pink)}
+.topnav a{display:inline-flex;gap:6px;align-items:center;text-decoration:none;font-size:13px;font-weight:600;border:1px solid var(--line);border-radius:99px;padding:7px 14px;background:rgba(37,26,64,.7)}
+
+.cover{position:relative;overflow:hidden;padding:8px 0 40px;border-bottom:1px solid var(--line);
+  background:radial-gradient(900px 380px at 85% -10%,rgba(255,95,168,.35),transparent 60%),
+             radial-gradient(700px 300px at 0% 110%,rgba(255,209,102,.18),transparent 60%),
+             linear-gradient(180deg,#24124a,#1a1030)}
+.stars{position:absolute;inset:0;pointer-events:none;opacity:.55;
+  background-image:radial-gradient(2px 2px at 12% 30%,#fff,transparent),radial-gradient(1.5px 1.5px at 70% 20%,#fff,transparent),
+  radial-gradient(2px 2px at 40% 70%,#ffd166,transparent),radial-gradient(1.5px 1.5px at 88% 60%,#ffb3d6,transparent),
+  radial-gradient(1.5px 1.5px at 25% 85%,#fff,transparent),radial-gradient(2px 2px at 55% 40%,#ffb3d6,transparent)}
+.eyebrow{display:inline-flex;gap:8px;align-items:center;margin-top:28px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--pink2);
+  border:1px solid rgba(255,95,168,.5);border-radius:99px;padding:5px 12px;background:rgba(255,95,168,.1)}
+.cover h1{font-family:"Trebuchet MS",system-ui,sans-serif;font-weight:800;font-size:clamp(36px,9vw,66px);line-height:1.02;margin:18px 0 10px}
+.cover h1 em{font-style:normal;color:var(--pink)}
+.lead{font-size:clamp(16px,3.6vw,19px);color:#eadff5;max-width:680px;margin:0 0 20px}
+.author{display:flex;gap:14px;align-items:center;padding:14px 16px;border:1px solid var(--line);border-radius:var(--radius);background:rgba(37,26,64,.75);max-width:520px}
+.seal{flex:none;width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:20px;color:#3a0b24;
+  background:conic-gradient(from 30deg,var(--pink),var(--sun),var(--pink2),var(--pink));box-shadow:0 0 0 3px #24124a,0 0 0 4px rgba(255,95,168,.6)}
+.author b{display:block;font-size:16px}
+.author span{color:var(--mute);font-size:13px}
+.promise{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:22px;max-width:760px}
+.promise div{border:1px solid var(--line);border-radius:14px;padding:12px;background:rgba(37,26,64,.65);font-size:13px;color:#eadff5}
+.promise div strong{display:block;color:var(--sun);font-size:14px;margin-bottom:2px}
+.stats{margin-top:20px;color:var(--mute);font-size:13px}
+.stats b{color:var(--ink)}
+
+.shelf-title{font-family:"Trebuchet MS",system-ui,sans-serif;font-size:24px;margin:30px 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.book{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);overflow:hidden}
+.jacket{position:relative;height:170px;display:flex;align-items:flex-end;padding:16px;color:#fff;background:linear-gradient(135deg,var(--c1),var(--c2))}
+.jacket::after{content:"";position:absolute;inset:0;background:radial-gradient(260px 140px at 85% 10%,rgba(255,255,255,.3),transparent 60%)}
+.glyph{position:absolute;right:14px;top:12px;font-size:62px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.3))}
+.jacket h3{position:relative;z-index:1;margin:0;font-family:"Trebuchet MS",system-ui,sans-serif;font-size:22px;line-height:1.1;text-shadow:0 2px 8px rgba(0,0,0,.35);max-width:75%}
+.jacket small{position:absolute;left:16px;top:14px;z-index:1;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+.body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:10px;flex:1}
+.desc{margin:0;color:#eadff5;font-size:14px}
+.learn{margin:0;color:var(--mute);font-size:13px}
+.learn b{color:var(--ink)}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:11.5px;border:1px solid var(--line);border-radius:99px;padding:3px 9px;color:#eadff5}
+.ver{display:flex;gap:8px;align-items:center;margin-top:auto}
+.ver span{flex:1;font-size:12.5px;color:var(--mute)}
+.btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none;border-radius:12px;padding:9px 14px;font-size:14px;font-weight:700;border:1px solid var(--line);background:#30234f;color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--pink);border-color:var(--pink);color:#fff}
+.btn[aria-disabled=true]{opacity:.4;pointer-events:none}
+.soon{font-size:12px;color:var(--sun)}
+.ghost{border:2px dashed var(--line);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px 18px;gap:8px;min-height:300px;color:var(--mute)}
+.ghost .big{font-size:52px}
+.ghost b{color:var(--ink);font-size:17px}
+
+.idea{margin:36px 0;border:2px dashed rgba(255,95,168,.6);border-radius:var(--radius);padding:22px;background:rgba(255,95,168,.08)}
+.idea h2{font-family:"Trebuchet MS",system-ui,sans-serif;margin:0 0 6px;font-size:24px}
+.idea p{margin:0 0 14px;color:#eadff5}
+.crossrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:0 0 36px}
+.cross{display:flex;gap:14px;align-items:center;padding:18px;border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(135deg,#141821,#22304d);text-decoration:none}
+.cross .big{font-size:40px}
+.cross b{display:block;font-size:17px}
+.cross span{color:var(--mute);font-size:13px}
+footer{border-top:1px solid var(--line);padding:22px 0 90px;color:var(--mute);font-size:13px}
+footer b{color:var(--ink)}
+
+.fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:20;border:none;border-radius:99px;padding:13px 18px;background:var(--pink);color:#fff;font-weight:800;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.45);cursor:pointer}
+.sheet{position:fixed;inset:0;z-index:30;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55)}
+.sheet.open{display:flex}
+.sheet .card{width:100%;max-width:460px;background:var(--panel);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px))}
+.sheet h3{margin:0 0 4px;font-size:20px}
+.sheet p{margin:0 0 16px;color:var(--mute);font-size:14px}
+.sheet .btn{width:100%;justify-content:center;padding:12px;margin-bottom:10px;font-size:15px}
+@media(min-width:700px){.sheet{align-items:center}.sheet .card{border-radius:20px}}
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <div class="stars"></div>
+  <div class="wrap" style="position:relative">
+    <nav class="topnav"><a href="../">🔬 Simuladores</a><a href="./" aria-current="page">🎮 Juegos</a><a href="../libros/">📖 Libros</a></nav>
+    <span class="eyebrow">🎮 Juegos para niños · gratis</span>
+    <h1>Biblioteca de <em>Juegos</em></h1>
+    <p class="lead">Juegos creados con cariño para jugar en familia. Mira de qué trata cada uno, juégalo en línea o descárgalo para jugar sin internet.</p>
+
+    <div class="author">
+      <div class="seal">MA</div>
+      <div><b>Creado por Miguel Agip</b><span>Lima, Perú</span></div>
+    </div>
+
+    <div class="promise">
+      <div><strong>🚀 Vienen más juegos</strong>Nuevas aventuras se suman a la biblioteca.</div>
+      <div><strong>💡 Tu idea, hecha juego</strong>Si me envías tus ideas, las volvemos realidad.</div>
+      <div><strong>👨‍👧 Para jugar en familia</strong>Pensados para papás, mamás, hijos e hijas.</div>
+    </div>
+    <p class="stats"><b id="nTotal">0</b> juego(s) en la biblioteca · <b id="nReady">0</b> disponible(s) hoy</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <h2 class="shelf-title">🌟 Juegos</h2>
+  <div class="grid" id="grid"></div>
+
+  <section class="idea">
+    <h2>¿Tienes una idea para un juego?</h2>
+    <p>Cuéntame qué juego te gustaría: un personaje, un lugar, una aventura. Si me envías tus ideas, las volvemos realidad.</p>
+    <button class="btn primary" data-feedback>💡 Enviar mi idea</button>
+  </section>
+
+  <div class="crossrow">
+    <a class="cross" href="../"><span class="big">🔬</span><div><b>Biblioteca de Simuladores →</b><span>Física, astronomía e ingeniería.</span></div></a>
+    <a class="cross" href="../libros/"><span class="big">📖</span><div><b>Biblioteca de Libros →</b><span>La saga El Sastre de Grid.</span></div></a>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <b>Biblioteca de Juegos · una creación de Miguel Agip</b><br>
+    Juegos de libre uso familiar y educativo. Si lo compartes, menciona al autor.<br>
+    © <span id="yr"></span> Miguel Agip · neptaliagiphoyos@gmail.com
+  </div>
+</footer>
+
+<button class="fab" data-feedback>💬 Comentarios</button>
+
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetT">
+  <div class="card">
+    <h3 id="sheetT">Envíame tus comentarios o ideas</h3>
+    <p>¿Qué te pareció el juego? ¿Qué juego nuevo te gustaría? Si me envías tus ideas, las volvemos realidad.</p>
+    <a class="btn primary" id="wa" target="_blank" rel="noopener">🟢 WhatsApp · 975 525 627</a>
+    <a class="btn" id="mail">✉️ Correo · neptaliagiphoyos@gmail.com</a>
+    <button class="btn" id="close">Cerrar</button>
+  </div>
+</div>
+
+<script>
+/* Para agregar un juego: añade un bloque y sube su .html a la carpeta /juegos con el mismo nombre de "f". */
+const GAMES = [
+  {t:"El Carro Rosa de Cattleya", cat:"Aventura", g:"🚗", c:["#ff5fa8","#ffb86b"],
+   d:"Maneja el carro rosa de Cattleya nivel por nivel hasta llegar al castillo en la playa.",
+   l:"Para niñas y niños. Los papás pueden cambiar las voces del juego desde su propio celular.",
+   tags:["Niñas y niños","Celular","Voces propias"], f:"carro-rosa-cattleya.html"}
+];
+
+const $ = s => document.querySelector(s);
+const ready = new Set();
+$("#yr").textContent = new Date().getFullYear();
+$("#nTotal").textContent = GAMES.length;
+
+function render(){
+  $("#grid").innerHTML = GAMES.map(g => {
+    const on = ready.has(g.f);
+    return `<article class="book" style="--c1:${g.c[0]};--c2:${g.c[1]}">
+      <div class="jacket"><small>${g.cat}</small><span class="glyph" aria-hidden="true">${g.g}</span><h3>${g.t}</h3></div>
+      <div class="body">
+        <p class="desc">${g.d}</p>
+        <p class="learn"><b>Para quién:</b> ${g.l}</p>
+        <div class="tags">${g.tags.map(t => `<span class="tag">${t}</span>`).join("")}</div>
+        ${on ? "" : `<span class="soon">⏳ Muy pronto en la biblioteca</span>`}
+        <div class="ver"><span>Juego</span>
+          <a class="btn primary" href="${g.f}" target="_blank" rel="noopener" aria-disabled="${!on}">▶ Jugar</a>
+          <a class="btn" href="${g.f}" download aria-disabled="${!on}">⬇</a></div>
+      </div></article>`;
+  }).join("") + `<div class="ghost"><span class="big">🎁</span><b>Próximo juego…</b>
+      <span>Se vienen más juegos. ¿Cuál quieres que sea?</span>
+      <button class="btn primary" data-feedback>💡 Proponer idea</button></div>`;
+}
+render();
+
+Promise.all(GAMES.map(g => fetch(g.f, {method:"HEAD", cache:"no-store"}).then(r => { if (r.ok) ready.add(g.f); }).catch(() => {})))
+  .then(() => { $("#nReady").textContent = ready.size; render(); });
+
+const msg = encodeURIComponent("Hola Miguel, le escribo desde la Biblioteca de Juegos: ");
+$("#wa").href = "https://wa.me/51975525627?text=" + msg;
+$("#mail").href = "mailto:neptaliagiphoyos@gmail.com?subject=" + encodeURIComponent("Comentario / idea – Biblioteca de Juegos") + "&body=" + msg;
+const sheet = $("#sheet");
+document.addEventListener("click", e => {
+  if (e.target.closest("[data-feedback]")) { e.preventDefault(); sheet.classList.add("open"); }
+  if (e.target === sheet || e.target.id === "close") sheet.classList.remove("open");
+});
+</script>
+</body>
+</html>
