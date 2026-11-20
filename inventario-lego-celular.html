@@ -445,7 +445,7 @@ $("#addFound").addEventListener("click",()=>{let n=0;
 });
 
 // ---------- Información y sugerencias ----------
-const CONTACT={email:"neptaliagiphoyos@gmail.com",whatsapp:"51975525627"}; // whatsapp: código de país + número, solo dígitos (ej. 51987654321)
+const CONTACT={email:"neptaliagiphoyos@gmail.com",whatsapp:""}; // whatsapp: código de país + número, solo dígitos (ej. 51987654321)
 $("#mailTxt").textContent=CONTACT.email;
 $("#mailLink").href="mailto:"+CONTACT.email+"?subject="+encodeURIComponent("Sugerencia para el Inventario LEGO");
 if(CONTACT.whatsapp){$("#cWa").hidden=false;$("#waTxt").textContent="+"+CONTACT.whatsapp;$("#waLink").href="https://wa.me/"+CONTACT.whatsapp+"?text="+encodeURIComponent("Hola, tengo una sugerencia para el Inventario LEGO: ")}

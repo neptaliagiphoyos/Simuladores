@@ -465,10 +465,10 @@ resize();syncColl();load(PRESETS[0]);updBasis();requestAnimationFrame(frame);
 </script>
 <div class="fbm" id="fbm" role="dialog" aria-label="Comentarios"><div class="fbbox"><button class="x" id="fbX" aria-label="Cerrar">×</button>
   <h3>💬 ¿Comentarios o ideas?</h3><p>«El problema de los tres cuerpos» lo está desarrollando el <b>Ing. Miguel Agip</b>. Cuéntame qué te pareció, qué falló o qué te gustaría que agregue.</p>
-  <a class="fbb wa" href="https://wa.me/51975525627?text=Hola%20Miguel%2C%20te%20escribo%20sobre%20%C2%ABEl%20problema%20de%20los%20tres%20cuerpos%C2%BB.%20Mi%20comentario%3A%20" target="_blank" rel="noopener">🟢 <span>WhatsApp<small>975 525 627</small></span></a>
+  <a class="fbb wa" href="#?text=Hola%20Miguel%2C%20te%20escribo%20sobre%20%C2%ABEl%20problema%20de%20los%20tres%20cuerpos%C2%BB.%20Mi%20comentario%3A%20" target="_blank" rel="noopener" style="display:none!important;">🟢 <span>WhatsApp</span></a>
   <a class="fbb ml" href="mailto:neptaliagiphoyos@gmail.com?subject=Comentarios%20sobre%20El%20problema%20de%20los%20tres%20cuerpos&body=Hola%20Miguel%2C%0A%0AEstuve%20usando%20%C2%ABEl%20problema%20de%20los%20tres%20cuerpos%C2%BB%20y%20quer%C3%ADa%20comentarte%3A%0A%0A" target="_blank" rel="noopener">✉️ <span>Correo<small>neptaliagiphoyos@gmail.com</small></span></a>
-  <a class="fbb tl" href="tel:+51975525627">📞 <span>Llamar<small>+51 975 525 627</small></span></a>
-  <div class="fbcp"><button id="fbCm">Copiar correo</button><button id="fbCt">Copiar número</button></div>
+  <a class="fbb tl" href="tel:+51" style="display:none!important;">📞 <span>Llamar</span></a>
+  <div class="fbcp"><button id="fbCm">Copiar correo</button><button id="fbCt" style="display:none!important">Copiar número</button></div>
   <p class="fbnote">Si algún botón no abre nada en tu equipo, copia el dato y escríbeme desde tu app.</p></div></div>
 <script>(()=>{const m=document.getElementById('fbm'),b=document.getElementById('fbBtn');if(!b)return;
   b.addEventListener('click',e=>{e.stopPropagation();m.classList.add('show');});
@@ -476,7 +476,7 @@ resize();syncColl();load(PRESETS[0]);updBasis();requestAnimationFrame(frame);
   window.addEventListener('keydown',e=>{if(e.key==='Escape'&&m.classList.contains('show')){m.classList.remove('show');e.stopImmediatePropagation();}},true);
   const cp=(t,btn)=>{const ok=()=>{const o=btn.textContent;btn.textContent='✓ Copiado';setTimeout(()=>btn.textContent=o,1500);};
     try{navigator.clipboard.writeText(t).then(ok,()=>{btn.textContent=t;});}catch(_){btn.textContent=t;}};
-  document.getElementById('fbCm').onclick=e=>cp('neptaliagiphoyos@gmail.com',e.target);document.getElementById('fbCt').onclick=e=>cp('+51975525627',e.target);
+  document.getElementById('fbCm').onclick=e=>cp('neptaliagiphoyos@gmail.com',e.target);document.getElementById('fbCt').onclick=e=>cp('',e.target);
   b.classList.add('pulse');})();
 // ---- fila de escenarios deslizable también con mouse (rueda o arrastre) ----
 document.querySelectorAll('.presets').forEach(el=>{

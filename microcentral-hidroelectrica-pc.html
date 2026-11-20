@@ -137,10 +137,10 @@ button{cursor:pointer}
  <h2 style="font-size:15px;margin:0 0 8px">Envía tus comentarios o sugerencias</h2>
  <textarea id="fbt" placeholder="Escribe tu comentario sobre el simulador…"></textarea>
  <div class="btns">
-  <a id="fbW" href="#"><button style="width:100%">📱 Enviar por WhatsApp<small>975 525 627</small></button></a>
+  <a id="fbW" href="#" style="display:none!important;"><button style="width:100%">📱 Enviar por WhatsApp</button></a>
   <a id="fbM" href="#"><button style="width:100%">✉️ Enviar por correo<small>neptaliagiphoyos@gmail.com</small></button></a>
  </div>
- <p class="note">Si el botón no abre la aplicación, escribe a <b>neptaliagiphoyos@gmail.com</b> o al WhatsApp <b>+51 975 525 627</b>. Neptalí Agip.</p>
+ <p class="note">Si el botón no abre la aplicación, escribe a <b>neptaliagiphoyos@gmail.com</b>. Neptalí Agip.</p>
  <button id="fbC" style="width:100%;margin-top:6px">Cerrar</button>
 </div></div>
 
@@ -416,7 +416,7 @@ function ui(){
 
 $('fb').onclick=()=>{$('fbp').style.display='flex';upFb();};$('fbC').onclick=()=>{$('fbp').style.display='none';};
 function upFb(){const t=encodeURIComponent('Comentario sobre el simulador Microcentral hidroeléctrica: '+($('fbt').value||''));
- $('fbW').href='https://wa.me/51975525627?text='+t;$('fbM').href='mailto:neptaliagiphoyos@gmail.com?subject='+encodeURIComponent('Simulador Microcentral hidroeléctrica')+'&body='+t;}
+ $('fbW').href='#?text='+t;$('fbM').href='mailto:neptaliagiphoyos@gmail.com?subject='+encodeURIComponent('Simulador Microcentral hidroeléctrica')+'&body='+t;}
 $('fbt').oninput=upFb;
 let last=performance.now(),uit=0;
 function sect(fn,sc,ox,oy,sy,ch){ctx.save();ctx.translate(ox,oy);ctx.scale(sc,sc);ctx.beginPath();ctx.rect(0,0,360,ch);ctx.clip();ctx.translate(0,-sy);fn();ctx.restore();}
