@@ -108,6 +108,10 @@
     .gvbot{display:flex;flex-direction:column;align-items:stretch}
   }
   canvas{cursor:grab}canvas.hov{cursor:pointer}canvas:active{cursor:grabbing}
+
+  /* filas de botones: el objetivo del asteroide en varias líneas; las demás filas se mueven con el mouse */
+  #tgt{flex-wrap:wrap;overflow:visible;padding-bottom:0}
+  .chips.dragging{cursor:grabbing;user-select:none}
 </style>
 <style>
   .fbm{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px}
@@ -1500,6 +1504,15 @@ function acLog(){if(scaleMode!=='log'){scaleMode='log';compress=true;orbitCache.
   const upd=()=>{const o=+s.value;AC.setOffset(o);const y=Math.round(YEAR0+sim.t+o);lab.textContent=Math.abs(o)<5?'hoy':(y>0?'año '+fmt(y,0)+' d. C.':'año '+fmt(1-y,0)+' a. C.');};
   s.oninput=upd;document.getElementById('acNear').onclick=()=>{s.value=Math.round(AC.tMin-(YEAR0+sim.t));upd();acLog();cam.follow='ACboth';cam.tdist=62;
     document.querySelectorAll('#views .chip').forEach(c=>{if(!VIEWS.find(x=>x.id===c.dataset.v).tog)c.classList.toggle('on',c.dataset.v==='acBoth');});};})();
+
+// ---- filas de botones deslizables también con mouse (rueda o arrastre) ----
+document.querySelectorAll('.chips').forEach(el=>{
+  el.addEventListener('wheel',e=>{if(el.scrollWidth>el.clientWidth+2&&Math.abs(e.deltaY)>Math.abs(e.deltaX)){el.scrollLeft+=e.deltaY;e.preventDefault();}},{passive:false});
+  let down=null,moved=false;
+  el.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||el.scrollWidth<=el.clientWidth+2)return;down={x:e.clientX,s:el.scrollLeft};moved=false;});
+  window.addEventListener('pointermove',e=>{if(!down)return;const dx=e.clientX-down.x;if(Math.abs(dx)>5){moved=true;el.classList.add('dragging');}if(moved)el.scrollLeft=down.s-dx;});
+  window.addEventListener('pointerup',()=>{if(!down)return;down=null;setTimeout(()=>el.classList.remove('dragging'),0);});
+  el.addEventListener('click',e=>{if(moved){e.stopPropagation();e.preventDefault();moved=false;}},true);});
 resize();reset();setSpeed(0.2);updSheet();updBasis();requestAnimationFrame(frame);
 })();
 </script>
