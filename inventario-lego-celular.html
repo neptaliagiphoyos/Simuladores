@@ -91,6 +91,7 @@ textarea{width:100%;min-height:150px;border-radius:10px;border:1px solid var(--l
 .fgrid input,.fgrid select{padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:inherit;min-width:0;width:100%}
 .fgrid .nm{grid-column:1/-1}
 .conf{font-size:.75rem;color:var(--muted)}
+.alts{display:inline-flex;flex-wrap:wrap;gap:4px;align-items:center;margin-bottom:4px}.alt{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 9px;font-size:.78rem}
 @media (max-width:420px){.fgrid{grid-template-columns:1fr 1fr}.fgrid .q{grid-column:1/-1}}
 .hdr-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .infoBtn{flex:0 0 auto;width:38px;height:38px;border-radius:50%;border:2px solid var(--fg);background:var(--surface);font-family:var(--display);font-weight:700;font-size:1.15rem}
@@ -398,31 +399,96 @@ Si no ves piezas LEGO, responde {"piezas":[]}.`;
 $("#recBtn").addEventListener("click",()=>{if(!photoBlob)return;if(sample)recClaude();else recBrick()});
 function showFound(list){
   $("#found").innerHTML=list.map((x,i)=>{const code=String(x.code).trim(),cid=colorById[+x.color]?+x.color:state.color,p=byCode[code];
-    return `<div class="frow" data-i="${i}"><input type="checkbox" ${i===0||x.checked?"checked":""} aria-label="Sumar esta pieza"><div class="fgrid">
+    return `<div class="frow" data-i="${i}"><input type="checkbox" ${x.checked?"checked":""} aria-label="Sumar esta pieza"><div class="fgrid">
     ${x.img?`<img src="${esc(x.img)}" alt="" style="grid-column:1/-1;max-height:70px;width:auto;justify-self:start;background:#fff;border-radius:6px">`:""}
     <input class="nm" value="${esc(p?p.name:(x.name||"Pieza "+code))}" aria-label="Nombre">
     <input class="cd" value="${esc(code)}" aria-label="Código">
     <select class="cl" aria-label="Color">${colorOpts(cid)}</select>
     <input class="q" type="number" min="1" inputmode="numeric" value="${Math.max(1,parseInt(x.qty,10)||1)}" aria-label="Cantidad"></div>
-    <span></span><span class="conf">${esc(x.note||("Seguridad: "+(x.conf||"media")))}${p?"":" · pieza fuera de la lista, revisa el código"}</span></div>`}).join("");
+    <span></span><span class="conf">${x.alts&&x.alts.length>1?`<span class="alts">¿Otra pieza? ${x.alts.map(a=>`<button type="button" class="alt" data-code="${esc(a.id)}" data-name="${esc(a.name)}">${esc(a.id)}</button>`).join(" ")}</span><br>`:""}${esc(x.note||("Seguridad: "+(x.conf||"media")))}${p?"":" · pieza fuera de la lista, revisa el código"}</span></div>`}).join("");
   $("#addFound").hidden=false;
 }
 function shrink(blob,max){return new Promise(res=>{const img=new Image();img.onload=()=>{const k=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement("canvas");c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext("2d").drawImage(img,0,0,c.width,c.height);c.toBlob(b=>res(b||blob),"image/jpeg",.85)};img.onerror=()=>res(blob);img.src=URL.createObjectURL(blob)})}
+// ---- Detección local de piezas: separa cada pieza del fondo, mide su color y las cuenta ----
+function toLab(r,g,b){const f=v=>{v/=255;return v>.04045?Math.pow((v+.055)/1.055,2.4):v/12.92};r=f(r);g=f(g);b=f(b);
+  let x=(r*.4124+g*.3576+b*.1805)/.95047,y=r*.2126+g*.7152+b*.0722,z=(r*.0193+g*.1192+b*.9505)/1.08883;
+  const h=t=>t>.008856?Math.cbrt(t):7.787*t+16/116;x=h(x);y=h(y);z=h(z);return[116*y-16,500*(x-y),200*(y-z)]}
+const dE=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+const SOLID=COLORS.filter(c=>![47,36,46,33].includes(c.id)).map(c=>{const n=parseInt(c.h.slice(1),16);return{id:c.id,lab:toLab(n>>16,n>>8&255,n&255)}});
+function nearestColor(lab){const A=lab[1]*1.3,B=lab[2]*1.3;let best=SOLID[0],bd=1e9;for(const c of SOLID){const d=Math.hypot(lab[0]-c.lab[0],A-c.lab[1],B-c.lab[2]);if(d<bd){bd=d;best=c}}return best.id}
+const med=a=>{const s=[...a].sort((x,y)=>x-y);return s[Math.floor(s.length/2)]||0};
+function loadImg(blob){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=URL.createObjectURL(blob)})}
+async function detectPieces(blob){
+  const img=await loadImg(blob);const W=220,k=W/Math.max(img.width,img.height);
+  const w=Math.max(20,Math.round(img.width*k)),h=Math.max(20,Math.round(img.height*k));
+  const c=document.createElement("canvas");c.width=w;c.height=h;const g=c.getContext("2d");g.drawImage(img,0,0,w,h);
+  const px=g.getImageData(0,0,w,h).data,N=w*h,lab=new Array(N);
+  for(let i=0;i<N;i++)lab[i]=toLab(px[i*4],px[i*4+1],px[i*4+2]);
+  // Fondo = mediana del borde de la foto
+  const ring=[],m=Math.max(2,Math.round(Math.min(w,h)*.03));
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(x<m||y<m||x>=w-m||y>=h-m)ring.push(lab[y*w+x]);
+  const bg=[med(ring.map(v=>v[0])),med(ring.map(v=>v[1])),med(ring.map(v=>v[2]))];
+  const bgr=[0,1,2].map(ch=>{const v=[];for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(x<m||y<m||x>=w-m||y>=h-m){const i=y*w+x;v.push(px[i*4+ch])}return med(v)});
+  const light=bg[0]>55,gain=bgr.map(v=>light?Math.min(2.2,235/Math.max(40,v)):1);
+  const labWB=i=>toLab(Math.min(255,px[i*4]*gain[0]),Math.min(255,px[i*4+1]*gain[1]),Math.min(255,px[i*4+2]*gain[2]));
+  const fg=new Uint8Array(N);for(let i=0;i<N;i++)fg[i]=dE(lab[i],bg)>22?1:0;
+  // Limpieza: quita puntos sueltos (erosión ligera)
+  const fg2=new Uint8Array(N);for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x;if(fg[i]&&fg[i-1]+fg[i+1]+fg[i-w]+fg[i+w]>=3)fg2[i]=1}
+  // Componentes conectados
+  const lbl=new Int32Array(N).fill(-1),blobs=[];
+  for(let s=0;s<N;s++){if(!fg2[s]||lbl[s]>=0)continue;const st=[s],pix=[];lbl[s]=blobs.length;
+    while(st.length){const i=st.pop();pix.push(i);const x=i%w,y=(i/w)|0;
+      for(const j of [x>0?i-1:-1,x<w-1?i+1:-1,y>0?i-w:-1,y<h-1?i+w:-1])if(j>=0&&fg2[j]&&lbl[j]<0&&dE(lab[i],lab[j])<20){lbl[j]=blobs.length;st.push(j)}}
+    let x0=w,y0=h,x1=0,y1=0;for(const i of pix){const x=i%w,y=(i/w)|0;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
+    blobs.push({pix,area:pix.length,x0,y0,x1,y1})}
+  const minA=Math.max(25,N*.0015);let bl=blobs.filter(b=>b.area>=minA);
+  if(!bl.length)return{pieces:[],img,k};
+  const big=med(bl.map(b=>b.area));bl=bl.filter(b=>b.area>=big*.2);
+  for(const b of bl){let L=b.pix.map(labWB);const cut=[...L.map(v=>v[0])].sort((x,y)=>x-y)[Math.floor(L.length*.75)];L=L.filter(v=>v[0]<=cut);b.lab=[med(L.map(v=>v[0])),med(L.map(v=>v[1])),med(L.map(v=>v[2]))];b.color=nearestColor(b.lab)}
+  const M=med(bl.map(b=>b.area));bl.forEach(b=>{const r=b.area/M;b.n=r>=1.7?Math.round(r):1;b.unit=b.area/b.n});
+  // Clases de tamaño (piezas de distinto tamaño = posible tipo distinto)
+  const sorted=[...bl].sort((a,b)=>a.unit-b.unit);let cls=0;sorted.forEach((b,i)=>{if(i&&b.unit>sorted[i-1].unit*1.6)cls++;b.size=cls});
+  return{pieces:bl,img,k};
+}
+function cropBlob(img,k,b){return new Promise(res=>{const pad=.15,bw=(b.x1-b.x0+1)/k,bh=(b.y1-b.y0+1)/k;
+  const sx=Math.max(0,b.x0/k-bw*pad),sy=Math.max(0,b.y0/k-bh*pad),sw=Math.min(img.width-sx,bw*(1+2*pad)),sh=Math.min(img.height-sy,bh*(1+2*pad));
+  const s=Math.min(1,800/Math.max(sw,sh)),c=document.createElement("canvas");c.width=Math.round(sw*s);c.height=Math.round(sh*s);
+  c.getContext("2d").drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height);c.toBlob(r=>res(r),"image/jpeg",.9)})}
+function markPreview(img,k,pieces){try{const c=document.createElement("canvas"),s=Math.min(1,900/Math.max(img.width,img.height));c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);
+  const g=c.getContext("2d");g.drawImage(img,0,0,c.width,c.height);const f=s/k;g.lineWidth=Math.max(2,c.width/250);g.font=`bold ${Math.round(c.width/28)}px sans-serif`;
+  pieces.forEach((b,i)=>{g.strokeStyle="#ffffff";g.strokeRect(b.x0*f,b.y0*f,(b.x1-b.x0+1)*f,(b.y1-b.y0+1)*f);g.strokeStyle="#d81e1e";g.strokeRect(b.x0*f+2,b.y0*f+2,(b.x1-b.x0+1)*f-4,(b.y1-b.y0+1)*f-4);
+    const t=String(i+1)+(b.n>1?"×"+b.n:"");g.fillStyle="#d81e1e";g.fillRect(b.x0*f+2,b.y0*f+2,g.measureText(t).width+10,c.width/24);g.fillStyle="#fff";g.fillText(t,b.x0*f+7,b.y0*f+c.width/30)});
+  $("#prev").src=c.toDataURL("image/jpeg",.85)}catch(e){}}
+async function brickognize(blob,signal){const fd=new FormData();fd.append("query_image",blob,"pieza.jpg");
+  const r=await fetch("https://api.brickognize.com/predict/parts/",{method:"POST",body:fd,signal});if(!r.ok)throw new Error("http "+r.status);
+  const j=await r.json();return(j&&Array.isArray(j.items)?j.items:[]).slice(0,3)}
 async function recBrick(){
   ctl=new AbortController();$("#recBtn").disabled=true;$("#stopBtn").hidden=false;$("#found").innerHTML="";
-  $("#camMsg").textContent="Buscando la pieza en Brickognize… unos segundos.";
+  $("#camMsg").textContent="Buscando las piezas en la foto…";
   try{
-    const fd=new FormData();fd.append("query_image",await shrink(photoBlob,1024),"foto.jpg");
-    const r=await fetch("https://api.brickognize.com/predict/parts/",{method:"POST",body:fd,signal:ctl.signal});
-    if(!r.ok)throw new Error("http "+r.status);
-    const j=await r.json();const items=(j&&Array.isArray(j.items)?j.items:[]).slice(0,3);
-    if(!items.length){$("#camMsg").textContent="No reconocí la pieza. Prueba con una sola pieza, de cerca y con buena luz.";return}
-    showFound(items.map(it=>({code:it.id,name:it.name,color:state.color,qty:1,img:it.img_url,note:`Parecido: ${Math.round((it.score||0)*100)}% · elige el color`})));
-    $("#camMsg").textContent="Marca la opción correcta, elige el color y la cantidad, y toca Sumar.";
+    let det={pieces:[]};try{det=await detectPieces(photoBlob)}catch(e){}
+    const P=det.pieces;
+    if(!P.length){ // No se pudo separar: reconoce la foto entera
+      const items=await brickognize(await shrink(photoBlob,1024),ctl.signal);
+      if(!items.length){$("#camMsg").textContent="No reconocí piezas. Usa un fondo liso y claro, con las piezas separadas.";return}
+      showFound([{code:items[0].id,name:items[0].name,color:state.color,qty:1,img:items[0].img_url,checked:true,alts:items,note:"No pude separar las piezas. Elige el color y la cantidad."}]);
+      $("#camMsg").textContent="Revisa color y cantidad, y toca Sumar.";return}
+    markPreview(det.img,det.k,P);
+    const sizes=[...new Set(P.map(b=>b.size))].slice(0,4),bySize={};
+    for(let n=0;n<sizes.length;n++){const s=sizes[n];$("#camMsg").textContent=`Encontré ${P.reduce((a,b)=>a+b.n,0)} piezas. Reconociendo el tipo ${n+1} de ${sizes.length}…`;
+      const rep=P.filter(b=>b.size===s&&b.n===1).sort((a,b)=>b.area-a.area)[0]||P.find(b=>b.size===s);
+      try{bySize[s]=await brickognize(await cropBlob(det.img,det.k,rep),ctl.signal)}catch(e){if(e&&e.name==="AbortError")throw e;bySize[s]=[]}}
+    const groups={};let joined=false;P.forEach((b,i)=>{const key=b.size+"_"+b.color;(groups[key]=groups[key]||{size:b.size,color:b.color,n:0,nums:[]}).n+=b.n;groups[key].nums.push(i+1);if(b.n>1)joined=true});
+    const rows=Object.values(groups).sort((a,b)=>b.n-a.n).map(gr=>{const it=(bySize[gr.size]||[]);const top=it[0];
+      return{code:top?top.id:"",name:top?top.name:"Pieza sin reconocer",color:gr.color,qty:gr.n,img:top&&top.img_url,checked:!!top,alts:it,
+        note:`Piezas ${gr.nums.join(", ")} · ${(colorById[gr.color]||{}).n||""}${top?` · parecido ${Math.round((top.score||0)*100)}%`:" · escribe el código"}`}});
+    showFound(rows);
+    const tot=P.reduce((a,b)=>a+b.n,0);$("#camMsg").textContent=(joined?"Algunas piezas estaban pegadas y las conté por tamaño. ":"")+`Encontré ${tot} piezas en ${rows.length} grupo${rows.length>1?"s":""}. Revisa color y cantidad, y toca "Sumar las marcadas".`;
   }catch(e){
-    $("#camMsg").textContent=e&&e.name==="AbortError"?"Detenido.":"No pude conectar con el reconocedor. Revisa tu internet. Si sigue sin funcionar, abre la página dentro de Claude o cuenta con los botones +.";
+    $("#camMsg").textContent=e&&e.name==="AbortError"?"Detenido.":"No pude conectar con el reconocedor. Revisa tu internet. Si sigue sin funcionar, cuenta con los botones +.";
   }finally{$("#recBtn").disabled=false;$("#stopBtn").hidden=true}
 }
+window.__detectPieces=detectPieces;
 async function recClaude(){
   ctl=new AbortController();$("#recBtn").disabled=true;$("#stopBtn").hidden=false;$("#camMsg").textContent="Mirando la foto… puede tardar unos 20 a 40 segundos.";$("#found").innerHTML="";
   try{
@@ -436,6 +502,7 @@ async function recClaude(){
   }finally{$("#recBtn").disabled=false;$("#stopBtn").hidden=true}
 }
 $("#stopBtn").addEventListener("click",()=>ctl&&ctl.abort());
+$("#found").addEventListener("click",e=>{const b=e.target.closest(".alt");if(!b)return;const r=b.closest(".frow");r.querySelector(".cd").value=b.dataset.code;const p=byCode[b.dataset.code];r.querySelector(".nm").value=p?p.name:b.dataset.name;r.querySelector("input[type=checkbox]").checked=true});
 $("#addFound").addEventListener("click",()=>{let n=0;
   document.querySelectorAll("#found .frow").forEach(r=>{if(!r.querySelector("input[type=checkbox]").checked)return;
     const code=r.querySelector(".cd").value.trim();if(!code)return;const q=Math.max(1,parseInt(r.querySelector(".q").value,10)||1);
@@ -458,7 +525,7 @@ $("#infoCard").addEventListener("click",e=>{const b=e.target.closest("[data-copy
 localLoad();renderColors();renderTabs();render();
 (async()=>{
   const cl=window.claude;
-  const standaloneHint=()=>{$("#camHint").textContent="Fuera de Claude se reconoce UNA pieza por foto. Ponla sola, de cerca, sobre un fondo liso. Luego eliges el color.";$("#dlBtn").hidden=false};
+  const standaloneHint=()=>{$("#camHint").textContent="Pon las piezas separadas, sin tocarse, sobre un fondo liso y claro (una hoja blanca). Cuento cada pieza y detecto su color. Las piezas blancas o beige se ven mejor sobre un fondo oscuro.";$("#dlBtn").hidden=false};
   if(!cl||!cl.use){setStatus("Guardado en este celular");standaloneHint();return}
   cl.use("sample").then(async sm=>{if(!sm)return;const lim=await sm.limits().catch(()=>null);if(lim&&lim.images){sample=sm}else standaloneHint()}).catch(()=>standaloneHint());
   cl.use("downloads").then(d=>{downloads=d;if(d)$("#dlBtn").hidden=false}).catch(()=>{});
