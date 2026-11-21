@@ -444,10 +444,15 @@ async function detectPieces(blob){
   const minA=Math.max(25,N*.0015);let bl=blobs.filter(b=>b.area>=minA);
   if(!bl.length)return{pieces:[],img,k};
   const big=med(bl.map(b=>b.area));bl=bl.filter(b=>b.area>=big*.2);
-  for(const b of bl){let L=b.pix.map(labWB);const cut=[...L.map(v=>v[0])].sort((x,y)=>x-y)[Math.floor(L.length*.75)];L=L.filter(v=>v[0]<=cut);b.lab=[med(L.map(v=>v[0])),med(L.map(v=>v[1])),med(L.map(v=>v[2]))];b.color=nearestColor(b.lab)}
+  for(const b of bl){let L=b.pix.map(labWB);const cut=[...L.map(v=>v[0])].sort((x,y)=>x-y)[Math.floor(L.length*.75)];L=L.filter(v=>v[0]<=cut);b.lab=[med(L.map(v=>v[0])),med(L.map(v=>v[1])),med(L.map(v=>v[2]))]}
+  // Junta los colores parecidos: todas las piezas de un mismo tono reciben el mismo color
+  const cl=[],bst=v=>[v[0],v[1]*1.3,v[2]*1.3];
+  [...bl].sort((a,b)=>b.area-a.area).forEach(b=>{let best=null,bd=1e9;for(const c of cl){const d=dE(bst(b.lab),bst(c.seed));if(d<bd){bd=d;best=c}}
+    if(best&&bd<16)best.m.push(b);else cl.push({seed:b.lab,m:[b]})});
+  cl.forEach(c=>{const L=c.m.map(b=>b.lab),col=nearestColor([med(L.map(v=>v[0])),med(L.map(v=>v[1])),med(L.map(v=>v[2]))]);c.m.forEach(b=>b.color=col)});
   const M=med(bl.map(b=>b.area));bl.forEach(b=>{const r=b.area/M;b.n=r>=1.7?Math.round(r):1;b.unit=b.area/b.n});
   // Clases de tamaño (piezas de distinto tamaño = posible tipo distinto)
-  const sorted=[...bl].sort((a,b)=>a.unit-b.unit);let cls=0;sorted.forEach((b,i)=>{if(i&&b.unit>sorted[i-1].unit*1.6)cls++;b.size=cls});
+  const sorted=[...bl].sort((a,b)=>a.unit-b.unit);let cls=0;sorted.forEach((b,i)=>{if(i&&b.unit>sorted[i-1].unit*2.2)cls++;b.size=cls});
   return{pieces:bl,img,k};
 }
 function cropBlob(img,k,b){return new Promise(res=>{const pad=.15,bw=(b.x1-b.x0+1)/k,bh=(b.y1-b.y0+1)/k;
@@ -478,7 +483,7 @@ async function recBrick(){
     for(let n=0;n<sizes.length;n++){const s=sizes[n];$("#camMsg").textContent=`Encontré ${P.reduce((a,b)=>a+b.n,0)} piezas. Reconociendo el tipo ${n+1} de ${sizes.length}…`;
       const rep=P.filter(b=>b.size===s&&b.n===1).sort((a,b)=>b.area-a.area)[0]||P.find(b=>b.size===s);
       try{bySize[s]=await brickognize(await cropBlob(det.img,det.k,rep),ctl.signal)}catch(e){if(e&&e.name==="AbortError")throw e;bySize[s]=[]}}
-    const groups={};let joined=false;P.forEach((b,i)=>{const key=b.size+"_"+b.color;(groups[key]=groups[key]||{size:b.size,color:b.color,n:0,nums:[]}).n+=b.n;groups[key].nums.push(i+1);if(b.n>1)joined=true});
+    const groups={};let joined=false;P.forEach((b,i)=>{const it=bySize[b.size]||[],code=it[0]?it[0].id:"s"+b.size,key=code+"_"+b.color;(groups[key]=groups[key]||{size:b.size,color:b.color,n:0,nums:[]}).n+=b.n;groups[key].nums.push(i+1);if(b.n>1)joined=true});
     const rows=Object.values(groups).sort((a,b)=>b.n-a.n).map(gr=>{const it=(bySize[gr.size]||[]);const top=it[0];
       return{code:top?top.id:"",name:top?top.name:"Pieza sin reconocer",color:gr.color,qty:gr.n,img:top&&top.img_url,checked:!!top,alts:it,
         note:`Piezas ${gr.nums.join(", ")} · ${(colorById[gr.color]||{}).n||""}${top?` · parecido ${Math.round((top.score||0)*100)}%`:" · escribe el código"}`}});
@@ -489,6 +494,7 @@ async function recBrick(){
   }finally{$("#recBtn").disabled=false;$("#stopBtn").hidden=true}
 }
 window.__detectPieces=detectPieces;
+
 async function recClaude(){
   ctl=new AbortController();$("#recBtn").disabled=true;$("#stopBtn").hidden=false;$("#camMsg").textContent="Mirando la foto… puede tardar unos 20 a 40 segundos.";$("#found").innerHTML="";
   try{
