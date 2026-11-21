@@ -112,7 +112,7 @@ a{color:var(--accent)}
 </style>
 
 <div class="wrap">
-<div class="vsw" style="max-width:1200px;margin:0 auto 10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font:700 14px system-ui,sans-serif"><a href="./" style="text-decoration:none;padding:8px 12px;border-radius:99px;border:1px solid var(--line);color:inherit;background:var(--surface,var(--card))">← Biblioteca de Simuladores</a><span style="flex:1"></span><span style="color:var(--muted)">Versión 📱 Celular</span><a href="inventario-lego-pc.html?v=20261121d" style="text-decoration:none;padding:8px 12px;border-radius:99px;background:var(--accent);color:#fff">Cambiar a 💻 Computadora</a></div>
+<div class="vsw" style="max-width:1200px;margin:0 auto 10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font:700 14px system-ui,sans-serif"><a href="./" style="text-decoration:none;padding:8px 12px;border-radius:99px;border:1px solid var(--line);color:inherit;background:var(--surface,var(--card))">← Biblioteca de Simuladores</a><span style="flex:1"></span><span style="color:var(--muted)">Versión 📱 Celular</span><a href="inventario-lego-pc.html?v=20261121e" style="text-decoration:none;padding:8px 12px;border-radius:99px;background:var(--accent);color:#fff">Cambiar a 💻 Computadora</a></div>
   <header class="hdr">
     <div class="hdr-top"><h1>Inventario de Fichas LEGO</h1><button class="infoBtn" id="infoBtn" type="button" aria-expanded="false" aria-controls="infoCard" aria-label="Información y sugerencias">i</button></div>
     <p class="sub">Toma una foto de tus piezas para reconocerlas, o elige un color y toca <b>+</b> cada vez que cuentes una. Se guarda sola.</p>
@@ -159,7 +159,7 @@ a{color:var(--accent)}
     <img id="prev" alt="Foto de las piezas" hidden>
     <div class="actions"><button class="btn" id="recBtn" type="button" hidden>Reconocer piezas</button><button class="btn ghost" id="stopBtn" type="button" hidden>Detener</button></div>
     <p class="status" id="camMsg"></p>
-    <p class="status" id="camVer">Versión del reconocedor: 21-nov-2026 · 4. Si ves otra fecha, recarga la página.</p>
+    <p class="status" id="camVer">Versión del reconocedor: 21-nov-2026 · 5. Si ves otra fecha, recarga la página.</p>
     <div class="found" id="found"></div>
     <div class="actions"><button class="btn" id="addFound" type="button" hidden>Sumar las marcadas al inventario</button></div>
   </section>
@@ -490,14 +490,14 @@ async function recBrick(){
     const P=det.pieces;
     if(!P.length){ // No se pudo separar: reconoce la foto entera
       const items=await brickognize(await shrink(photoBlob,1024),ctl.signal);
-      if(!items.length){$("#camMsg").textContent="No reconocí piezas. Usa un fondo liso y claro, con las piezas separadas.";return}
+      if(!items.length){$("#camMsg").textContent="No reconocí piezas. Usa un fondo liso y claro, con las piezas separadas.";return}rememberGuess(items);
       showFound([{code:items[0].id,name:items[0].name,color:state.color,qty:1,img:items[0].img_url,checked:true,alts:items,note:"No pude separar las piezas. Elige el color y la cantidad."}]);
       $("#camMsg").textContent="Revisa color y cantidad, y toca Sumar.";return}
     markPreview(det.img,det.k,P);
     // Reconoce cada pieza por separado (3 a la vez)
     const res=new Array(P.length);let done=0,next=0;
     const work=async()=>{while(next<P.length){const i=next++;
-      try{res[i]=await brickognize(await cropBlob(det.img,det.k,P[i]),ctl.signal)}catch(e){if(e&&e.name==="AbortError")throw e;res[i]=[]}
+      try{res[i]=await brickognize(await cropBlob(det.img,det.k,P[i]),ctl.signal);rememberGuess(res[i])}catch(e){if(e&&e.name==="AbortError")throw e;res[i]=[]}
       done++;$("#camMsg").textContent=`Encontré ${P.length} piezas. Reconociendo ${done} de ${P.length}…`}};
     await Promise.all([work(),work(),work()]);
     if(res.every(r=>!r||!r.length)&&P.length)throw new Error("sin respuesta");
@@ -511,7 +511,157 @@ async function recBrick(){
     $("#camMsg").textContent=e&&e.name==="AbortError"?"Detenido.":"No pude conectar con el reconocedor. Revisa tu internet. Si sigue sin funcionar, cuenta con los botones +.";
   }finally{$("#recBtn").disabled=false;$("#stopBtn").hidden=true}
 }
+// ---- Forma de piezas que no están en la lista (según el nombre que da el reconocedor) ----
+const GUESS={};
+function guessPart(code,name){
+  const n=String(name||"").toLowerCase(),d=n.match(/(\d+)\s*x\s*(\d+)/),a=d?+d[1]:1,b=d?+d[2]:(n.includes("1 x 1")?1:2);
+  const w=Math.min(a,b),l=Math.max(a,b),hole=/axle hole|hole|pin hole|donut|ring/.test(n);
+  let shape="plate";
+  if(/tire|tyre/.test(n))shape="tire";else if(/wheel|rim/.test(n))shape="wheel";
+  else if(/round|dish|cylinder|cone|disk|disc|donut|ring|radar/.test(n))shape="round";
+  else if(/tile/.test(n))shape="tile";else if(/slope|wedge|roof/.test(n))shape="slope";
+  else if(/technic.*brick|brick.*hole/.test(n))shape="tbrick";else if(/\bpin\b|\baxle\b/.test(n)&&!hole)shape="pin";
+  else if(/window|windscreen|glass|frame/.test(n))shape="window";else if(/door/.test(n))shape="door";
+  else if(/plate/.test(n))shape="plate";else if(/brick/.test(n))shape="brick";
+  return{code,name:name||"Pieza "+code,shape,w:w||1,l:l||1,hole,tall:/brick|cylinder|cone/.test(n)&&!/plate/.test(n)};
+}
+function partInfo(code){if(byCode[code])return byCode[code];
+  const inv=Object.values(state.inv).find(e=>e.part===code&&e.name);return guessPart(code,(GUESS[code]||inv||{}).name||"")}
+const baseIcon=icon;
+icon=function(p,hex){let s=baseIcon(p,hex);
+  if(p&&p.shape==="round"){const r=p.w>=2?18:13,st=shade(hex,-.35),hi=shade(hex,.25);
+    s=`<svg viewBox="0 0 56 44" aria-hidden="true"><circle cx="28" cy="25" r="${r}" fill="${shade(hex,-.2)}" stroke="${st}"/><circle cx="28" cy="22" r="${r}" fill="${hex}" stroke="${st}"/>`+
+      (p.hole?`<rect x="25.5" y="15" width="5" height="14" fill="${st}"/><rect x="21" y="19.5" width="14" height="5" fill="${st}"/>`:`<circle cx="28" cy="22" r="6" fill="${hi}" stroke="${st}"/>`)+(p.w>=2&&!p.hole?"":"")+"</svg>"}
+  return s};
+function refreshIco(r){const code=r.querySelector(".cd").value.trim(),c=colorById[+r.querySelector(".cl").value]||{h:"#999999"};
+  if(!byCode[code]&&!GUESS[code]){const nm=r.querySelector(".nm").value.trim();if(nm)GUESS[code]={name:nm}}
+  r.querySelector(".ico").innerHTML=icon(partInfo(code),c.h)}
+function rememberGuess(items){(items||[]).forEach(it=>{if(it&&it.id&&!GUESS[it.id])GUESS[it.id]={name:it.name}})}
+
+// ---- Fotos guardadas de piezas especiales ----
+const PHOTO_KEY="lego-fotos";
+function loadPhotos(){try{return JSON.parse(localStorage.getItem(PHOTO_KEY)||"{}")||{}}catch(e){return{}}}
+function savePhotos(o){try{localStorage.setItem(PHOTO_KEY,JSON.stringify(o));return true}catch(e){return false}}
+function thumb(blob,max){return new Promise(res=>{loadImg(blob).then(img=>{const s=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext("2d").drawImage(img,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",.8))}).catch(()=>res(""))})}
+
+// ---- Vista 3D ----
+let THREEp=null;
+function loadThree(){if(window.THREE)return Promise.resolve(window.THREE);if(THREEp)return THREEp;
+  THREEp=new Promise((res,rej)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";s.onload=()=>res(window.THREE);s.onerror=()=>{THREEp=null;rej(new Error("three"))};document.head.appendChild(s)});return THREEp}
+function build3D(T,p,hex){
+  const g=new T.Group(),mat=new T.MeshStandardMaterial({color:hex,roughness:.35,metalness:.05}),dark=new T.MeshStandardMaterial({color:shade(hex,-.55),roughness:.6});
+  const PH=.4,BH=1.2,SR=.3,SH=.18,w=Math.min(p.w||1,16),l=Math.min(p.l||1,16);
+  const studs=(cols,rows,y)=>{for(let i=0;i<cols;i++)for(let j=0;j<rows;j++){const m=new T.Mesh(new T.CylinderGeometry(SR,SR,SH,24),mat);m.position.set(i-(cols-1)/2,y+SH/2,j-(rows-1)/2);g.add(m)}};
+  const box=(x,y,z,h)=>{const m=new T.Mesh(new T.BoxGeometry(x,h,z),mat);m.position.y=h/2;g.add(m)};
+  const h=p.shape==="brick"||p.shape==="tbrick"||p.tall?BH:PH;
+  switch(p.shape){
+    case "round":{const r=Math.max(w,l)/2-.02,hh=p.tall?BH:PH;{const cy=new T.Mesh(new T.CylinderGeometry(r,r,hh,48),mat);cy.position.y=hh/2;g.add(cy)}
+      if(p.hole){const a=new T.Mesh(new T.BoxGeometry(.48,.02,.16),dark),b=new T.Mesh(new T.BoxGeometry(.16,.02,.48),dark);a.position.y=b.position.y=hh+.011;g.add(a,b);
+        const a2=a.clone(),b2=b.clone();a2.position.y=b2.position.y=-.011;g.add(a2,b2);
+        if(w>=2)[[.5,.5],[-.5,.5],[.5,-.5],[-.5,-.5]].forEach(([x,z])=>{const m=new T.Mesh(new T.CylinderGeometry(SR,SR,SH,24),mat);m.position.set(x,hh+SH/2,z);g.add(m)})}
+      else studs(1,1,hh);break}
+    case "tile":box(l,0,w,PH);break;
+    case "slope":{const sh=new T.Shape();sh.moveTo(-l/2,0);sh.lineTo(l/2,0);sh.lineTo(l/2,BH);sh.lineTo(l/2-1,BH);sh.lineTo(-l/2,PH/2);sh.lineTo(-l/2,0);
+      const m=new T.Mesh(new T.ExtrudeGeometry(sh,{depth:w,bevelEnabled:false}),mat);m.position.z=-w/2;g.add(m);for(let j=0;j<w;j++){const s=new T.Mesh(new T.CylinderGeometry(SR,SR,SH,24),mat);s.position.set(l/2-.5,BH+SH/2,j-(w-1)/2);g.add(s)}break}
+    case "wheel":case "tire":{const r=p.shape==="tire"?1.1:.8,m=new T.Mesh(p.shape==="tire"?new T.TorusGeometry(r*.7,r*.32,20,48):new T.CylinderGeometry(r,r,.7,40),mat);m.rotation.x=Math.PI/2;m.position.y=r;g.add(m);break}
+    case "pin":{const m=new T.Mesh(new T.CylinderGeometry(.24,.24,Math.max(2,l),24),mat);m.rotation.z=Math.PI/2;m.position.y=.3;g.add(m);break}
+    case "window":case "door":{box(l,0,Math.max(.3,w*.3),BH*2);break}
+    default:{box(l,0,w,h);studs(l,w,h);if(p.shape==="tbrick")for(let i=0;i<l-1;i++){const m=new T.Mesh(new T.CylinderGeometry(.24,.24,w+.02,24),dark);m.rotation.x=Math.PI/2;m.position.set(i-(l-2)/2,h*.55,0);g.add(m)}}
+  }
+  return g;
+}
+let viewer=null;
+function ensureModal(){let m=document.getElementById("v3d");if(m)return m;
+  m=document.createElement("div");m.id="v3d";m.hidden=true;m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");
+  m.innerHTML=`<div class="v3d-box"><div class="v3d-top"><div><div class="label">Vista 3D</div><h2 id="v3dT"></h2></div><button type="button" class="btn ghost" id="v3dX">Cerrar</button></div>
+  <div class="v3d-c"><canvas id="v3dC"></canvas></div><p class="hint">Arrastra con el dedo para girarla. Es un modelo aproximado según su forma y tamaño.</p><div class="v3d-ph" id="v3dP"></div></div>`;
+  document.body.appendChild(m);m.addEventListener("click",e=>{if(e.target===m||e.target.id==="v3dX")close3D()});return m}
+function close3D(){const m=document.getElementById("v3d");if(m)m.hidden=true;if(viewer){cancelAnimationFrame(viewer.raf);viewer.r.dispose();viewer=null}}
+async function show3D(code,colorId){
+  const m=ensureModal(),p=partInfo(code),c=colorById[colorId]||{h:"#999999",n:""};
+  $("#v3dT").textContent=`${p.name} · ${c.n} · ${code}`;m.hidden=false;
+  const ph=loadPhotos()[key(code,colorId)]||[];$("#v3dP").innerHTML=ph.map(u=>`<img src="${u}" alt="Foto de la pieza">`).join("");
+  let T;try{T=await loadThree()}catch(e){$("#v3dP").insertAdjacentHTML("afterbegin",`<p class="status">No pude cargar el visor 3D. Revisa tu internet.</p>`);return}
+  close3D();m.hidden=false;
+  const cv=$("#v3dC"),box=cv.parentElement,W=box.clientWidth||320,H=Math.round(W*.75);
+  const r=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true});r.setPixelRatio(Math.min(2,window.devicePixelRatio||1));r.setSize(W,H);
+  const sc=new T.Scene();sc.add(new T.HemisphereLight(0xffffff,0x445566,.9));const dl=new T.DirectionalLight(0xffffff,.8);dl.position.set(4,8,6);sc.add(dl);
+  const g=build3D(T,p,c.h);const bb=new T.Box3().setFromObject(g),sz=bb.getSize(new T.Vector3()),ctr=bb.getCenter(new T.Vector3());g.position.sub(ctr);
+  const piv=new T.Group();piv.add(g);sc.add(piv);const cam=new T.PerspectiveCamera(35,W/H,.1,200),dist=Math.max(sz.x,sz.y,sz.z)*2.6+2;cam.position.set(dist*.7,dist*.6,dist*.8);cam.lookAt(0,0,0);
+  piv.rotation.x=.15;let rx=.15,ry=.6,drag=null,auto=true;
+  cv.onpointerdown=e=>{drag=[e.clientX,e.clientY,rx,ry];auto=false;cv.setPointerCapture(e.pointerId)};
+  cv.onpointermove=e=>{if(!drag)return;ry=drag[3]+(e.clientX-drag[0])*.01;rx=Math.max(-1.5,Math.min(1.5,drag[2]+(e.clientY-drag[1])*.01))};
+  cv.onpointerup=cv.onpointercancel=()=>{drag=null};
+  viewer={r,raf:0};const loop=()=>{if(auto)ry+=.01;piv.rotation.set(rx,ry,0);r.render(sc,cam);viewer.raf=requestAnimationFrame(loop)};loop();
+}
+document.addEventListener("click",e=>{
+  const ico=e.target.closest("#found .ico");if(ico){const r=ico.closest(".frow");show3D(r.querySelector(".cd").value.trim(),+r.querySelector(".cl").value);return}
+  const sv=e.target.closest(".row svg");if(sv){const b=sv.closest(".row").querySelector("[data-part]");if(b)show3D(b.dataset.part,+b.dataset.color)}
+});
+
+// ---- Pieza especial: varias fotos de una misma pieza ----
+const VIEWS=[["arriba","Arriba"],["lado1","Un costado"],["lado2","Otro costado"],["abajo","Abajo"]],views={};
+(function setupSpecial(){
+  const css=document.createElement("style");css.textContent=`
+#v3d{position:fixed;inset:0;background:rgba(10,14,20,.6);z-index:20;display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+#v3d[hidden]{display:none!important}
+.v3d-box{background:var(--surface);color:var(--fg);border-radius:16px;padding:14px;width:min(560px,100%);max-height:100%;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.v3d-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.v3d-c canvas{width:100%;display:block;touch-action:none;background:var(--bg);border-radius:12px}
+.v3d-ph{display:flex;gap:6px;flex-wrap:wrap}.v3d-ph img{height:70px;border-radius:8px;border:1px solid var(--line)}
+.esp{display:flex;flex-direction:column;gap:10px;border:1px dashed var(--line);border-radius:12px;padding:12px}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}@media (max-width:420px){.slots{grid-template-columns:repeat(2,1fr)}}
+.slot{display:flex;flex-direction:column;align-items:center;gap:4px;border:1px solid var(--line);border-radius:10px;padding:6px;background:var(--bg);cursor:pointer;text-align:center;font-size:.8rem;font-weight:700}
+.slot img,.slot .ph{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:var(--chip);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:1.6rem}
+.slot input{position:absolute;width:1px;height:1px;opacity:0}.pv .ico{cursor:pointer}`;document.head.appendChild(css);
+  const shot=document.querySelector("#camCard .shot");if(!shot)return;
+  const tg=document.createElement("button");tg.type="button";tg.className="btn ghost";tg.id="espBtn";tg.textContent="Pieza especial (varias fotos)";shot.appendChild(tg);
+  const box=document.createElement("div");box.className="esp";box.id="espBox";box.hidden=true;
+  box.innerHTML=`<div><h3 style="font-size:1rem">Pieza especial</h3><p class="hint">Para piezas raras o sin código visible. Toma una foto de la MISMA pieza desde cada lado. Con 2 fotos ya funciona; con 4 acierta más.</p></div>
+  <div class="slots">${VIEWS.map(([k,t])=>`<label class="slot" for="v_${k}"><span class="ph" id="vp_${k}">+</span>${t}<input id="v_${k}" type="file" accept="image/*" capture="environment" data-view="${k}"></label>`).join("")}</div>
+  <div class="actions"><button class="btn" type="button" id="espGo">Identificar pieza</button><button class="btn ghost" type="button" id="espClr">Borrar fotos</button></div><p class="status" id="espMsg"></p>`;
+  shot.after(box);
+  tg.addEventListener("click",()=>{box.hidden=!box.hidden;tg.setAttribute("aria-expanded",String(!box.hidden))});
+  box.addEventListener("change",e=>{const k=e.target.dataset.view;const f=e.target.files&&e.target.files[0];if(!k||!f)return;views[k]=f;
+    const ph=$("#vp_"+k);ph.outerHTML=`<img id="vp_${k}" src="${URL.createObjectURL(f)}" alt="">`;e.target.value=""});
+  $("#espClr").addEventListener("click",()=>{VIEWS.forEach(([k])=>{delete views[k];const el=$("#vp_"+k);if(el)el.outerHTML=`<span class="ph" id="vp_${k}">+</span>`});$("#espMsg").textContent=""});
+  $("#espGo").addEventListener("click",identifySpecial);
+})();
+async function identifySpecial(){
+  const ks=VIEWS.map(v=>v[0]).filter(k=>views[k]);if(!ks.length){$("#espMsg").textContent="Primero toma al menos una foto.";return}
+  const go=$("#espGo");go.disabled=true;ctl=new AbortController();$("#found").innerHTML="";
+  try{
+    // Color: de la foto de arriba (o la primera)
+    let color=state.color,crop="";const first=views.arriba||views[ks[0]];
+    try{const d=await detectPieces(first);if(d.pieces.length){const b=d.pieces.sort((a,c)=>c.area-a.area)[0];color=b.color;crop=cropURL(d.img,d.k,b)}}catch(e){}
+    let cands=[];
+    if(sample){$("#espMsg").textContent="Mirando las fotos…";
+      const r=await sample.json(`Estas ${ks.length} fotos muestran UNA sola pieza LEGO desde distintos lados (${ks.map(k=>VIEWS.find(v=>v[0]===k)[1]).join(", ")}). Identifícala. Usa números de pieza de Rebrickable/BrickLink y para el color SOLO uno de estos IDs: ${COLORS.map(c=>c.id+"="+c.n).join(", ")}. Responde SOLO JSON: {"opciones":[{"code":"4032","name":"nombre en inglés de Rebrickable","nombre":"nombre corto en español","score":0.8}],"color":0}. Da hasta 3 opciones, la más probable primero.`,{images:ks.map(k=>views[k]),signal:ctl.signal});
+      cands=(r&&r.opciones||[]).filter(o=>o&&o.code).map(o=>({id:String(o.code),name:o.name||o.nombre||"",score:+o.score||0,es:o.nombre}));if(r&&colorById[+r.color])color=+r.color}
+    else{const tot={};let n=0;
+      for(const k of ks){n++;$("#espMsg").textContent=`Revisando foto ${n} de ${ks.length}…`;
+        let items=[];try{items=await brickognize(await shrink(views[k],1024),ctl.signal)}catch(e){if(e&&e.name==="AbortError")throw e}
+        items.forEach((it,i)=>{const t=tot[it.id]||(tot[it.id]={id:it.id,name:it.name,score:0,hits:0,img:it.img_url});t.score+=(it.score||0);t.rank=(t.rank||0)+(it.score||0)*(i===0?1.2:1);t.hits++})}
+      cands=Object.values(tot).sort((a,b)=>b.rank-a.rank).slice(0,4).map(c=>({...c,score:c.score/c.hits}))}
+    if(!cands.length){$("#espMsg").textContent="No la pude identificar. Prueba con fotos más de cerca, con buena luz y fondo liso.";return}
+    rememberGuess(cands);const top=cands[0];
+    const thumbs=await Promise.all(ks.map(k=>thumb(views[k],220)));
+    showFound([{code:top.id,name:top.es||top.name,color,qty:1,photo:crop||thumbs[0],checked:true,alts:cands,views:thumbs,
+      note:`Coincide en ${top.hits||ks.length} de ${ks.length} fotos · parecido ${Math.round((top.score||0)*100)}% · toca el dibujo para verla en 3D`}]);
+    const row=document.querySelector("#found .frow");if(row){row._views=thumbs;refreshIco(row)}
+    $("#espMsg").textContent="Listo. Revisa la pieza abajo y toca Sumar.";$("#camMsg").textContent="";
+  }catch(e){$("#espMsg").textContent=e&&(e.name==="AbortError"||e.code==="cancelled")?"Detenido.":"No pude conectar con el reconocedor. Revisa tu internet e intenta otra vez."}
+  finally{go.disabled=false}
+}
+// Al sumar, guarda las fotos de la pieza especial para verlas luego en su vista 3D
+$("#addFound").addEventListener("click",()=>{const all=loadPhotos();let ch=false;
+  document.querySelectorAll("#found .frow").forEach(r=>{if(!r._views||!r.querySelector("input[type=checkbox]").checked)return;
+    const code=r.querySelector(".cd").value.trim(),k=key(code,+r.querySelector(".cl").value);all[k]=r._views.slice(0,4);ch=true;
+    const nm=r.querySelector(".nm").value.trim();if(nm&&!byCode[code])GUESS[code]={name:nm}});
+  if(ch)savePhotos(all);
+},true);
+
 window.__detectPieces=detectPieces;
+
 
 
 
@@ -528,7 +678,6 @@ async function recClaude(){
   }finally{$("#recBtn").disabled=false;$("#stopBtn").hidden=true}
 }
 $("#stopBtn").addEventListener("click",()=>ctl&&ctl.abort());
-function refreshIco(r){const code=r.querySelector(".cd").value.trim(),c=colorById[+r.querySelector(".cl").value]||{h:"#999999"};const p=byCode[code]||{code,name:"",shape:"brick",w:1,l:2};r.querySelector(".ico").innerHTML=icon(p,c.h)}
 $("#found").addEventListener("change",e=>{const r=e.target.closest(".frow");if(r&&(e.target.matches(".cl")||e.target.matches(".cd")))refreshIco(r)});
 $("#found").addEventListener("input",e=>{const r=e.target.closest(".frow");if(r&&e.target.matches(".cd"))refreshIco(r)});
 $("#found").addEventListener("click",e=>{const b=e.target.closest(".alt");if(!b)return;const r=b.closest(".frow");r.querySelector(".cd").value=b.dataset.code;const p=byCode[b.dataset.code];r.querySelector(".nm").value=p?p.name:b.dataset.name;r.querySelector("input[type=checkbox]").checked=true;refreshIco(r)});
