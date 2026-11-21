@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<html lang="es"><head><meta http-equiv="Cache-Control" content="no-cache, max-age=0"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Inventario de Fichas LEGO</title>
 <style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -125,7 +125,7 @@ textarea{min-height:220px}
 </style>
 
 <div class="wrap">
-<div class="vsw" style="max-width:1200px;margin:0 auto 10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font:700 14px system-ui,sans-serif"><a href="./" style="text-decoration:none;padding:8px 12px;border-radius:99px;border:1px solid var(--line);color:inherit;background:var(--surface,var(--card))">← Biblioteca de Simuladores</a><span style="flex:1"></span><span style="color:var(--muted)">Versión 💻 Computadora</span><a href="inventario-lego-celular.html" style="text-decoration:none;padding:8px 12px;border-radius:99px;background:var(--accent);color:#fff">Cambiar a 📱 Celular</a></div>
+<div class="vsw" style="max-width:1200px;margin:0 auto 10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font:700 14px system-ui,sans-serif"><a href="./" style="text-decoration:none;padding:8px 12px;border-radius:99px;border:1px solid var(--line);color:inherit;background:var(--surface,var(--card))">← Biblioteca de Simuladores</a><span style="flex:1"></span><span style="color:var(--muted)">Versión 💻 Computadora</span><a href="inventario-lego-celular.html?v=20261121d" style="text-decoration:none;padding:8px 12px;border-radius:99px;background:var(--accent);color:#fff">Cambiar a 📱 Celular</a></div>
   <header class="hdr">
     <div class="hdr-top"><h1>Inventario de Fichas LEGO</h1><button class="infoBtn" id="infoBtn" type="button" aria-expanded="false" aria-controls="infoCard" aria-label="Información y sugerencias">i</button></div>
     <p class="sub">Toma una foto de tus piezas para reconocerlas, o elige un color y haz clic en <b>+</b> cada vez que cuentes una. Se guarda sola.</p>
@@ -173,6 +173,7 @@ textarea{min-height:220px}
     <img id="prev" alt="Foto de las piezas" hidden>
     <div class="actions"><button class="btn" id="recBtn" type="button" hidden>Reconocer piezas</button><button class="btn ghost" id="stopBtn" type="button" hidden>Detener</button></div>
     <p class="status" id="camMsg"></p>
+    <p class="status" id="camVer">Versión del reconocedor: 21-nov-2026 · 4. Si ves otra fecha, recarga la página.</p>
     <div class="found" id="found"></div>
     <div class="actions"><button class="btn" id="addFound" type="button" hidden>Sumar las marcadas al inventario</button></div>
   </section>
@@ -437,7 +438,7 @@ function nearestColor(lab){const A=lab[1]*1.3,B=lab[2]*1.3;let best=SOLID[0],bd=
 const med=a=>{const s=[...a].sort((x,y)=>x-y);return s[Math.floor(s.length/2)]||0};
 function loadImg(blob){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=URL.createObjectURL(blob)})}
 async function detectPieces(blob){
-  const img=await loadImg(blob);const W=220,k=W/Math.max(img.width,img.height);
+  const img=await loadImg(blob);const W=300,k=W/Math.max(img.width,img.height);
   const w=Math.max(20,Math.round(img.width*k)),h=Math.max(20,Math.round(img.height*k));
   const c=document.createElement("canvas");c.width=w;c.height=h;const g=c.getContext("2d");g.drawImage(img,0,0,w,h);
   const px=g.getImageData(0,0,w,h).data,N=w*h,lab=new Array(N);
@@ -452,23 +453,32 @@ async function detectPieces(blob){
   const fg=new Uint8Array(N);for(let i=0;i<N;i++)fg[i]=dE(lab[i],bg)>22?1:0;
   // Limpieza: quita puntos sueltos (erosión ligera)
   const fg2=new Uint8Array(N);for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x;if(fg[i]&&fg[i-1]+fg[i+1]+fg[i-w]+fg[i+w]>=3)fg2[i]=1}
+  // Tono de cada pixel: piezas de distinto color no se unen aunque se toquen
+  const hue=new Float32Array(N),chr=new Float32Array(N);for(let i=0;i<N;i++){chr[i]=Math.hypot(lab[i][1],lab[i][2]);hue[i]=Math.atan2(lab[i][2],lab[i][1])*180/Math.PI}
+  const same=(i,j)=>{const ni=chr[i]<14,nj=chr[j]<14;if(ni||nj)return ni&&nj&&Math.abs(lab[i][0]-lab[j][0])<30;let d=Math.abs(hue[i]-hue[j]);if(d>180)d=360-d;return d<35&&dE(lab[i],lab[j])<30};
   // Componentes conectados
   const lbl=new Int32Array(N).fill(-1),blobs=[];
   for(let s=0;s<N;s++){if(!fg2[s]||lbl[s]>=0)continue;const st=[s],pix=[];lbl[s]=blobs.length;
     while(st.length){const i=st.pop();pix.push(i);const x=i%w,y=(i/w)|0;
-      for(const j of [x>0?i-1:-1,x<w-1?i+1:-1,y>0?i-w:-1,y<h-1?i+w:-1])if(j>=0&&fg2[j]&&lbl[j]<0&&dE(lab[i],lab[j])<20){lbl[j]=blobs.length;st.push(j)}}
+      for(const j of [x>0?i-1:-1,x<w-1?i+1:-1,y>0?i-w:-1,y<h-1?i+w:-1])if(j>=0&&fg2[j]&&lbl[j]<0&&same(i,j)){lbl[j]=blobs.length;st.push(j)}}
     let x0=w,y0=h,x1=0,y1=0;for(const i of pix){const x=i%w,y=(i/w)|0;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
     blobs.push({pix,area:pix.length,x0,y0,x1,y1})}
-  const minA=Math.max(25,N*.0015);let bl=blobs.filter(b=>b.area>=minA);
+  const minA=Math.max(30,N*.0006);let bl=blobs.filter(b=>b.area>=minA);
   if(!bl.length)return{pieces:[],img,k};
-  const big=med(bl.map(b=>b.area));bl=bl.filter(b=>b.area>=big*.2);
+  // Une pedazos de una misma pieza (brillos o sombras la parten) y quita bordes de la foto
+  bl.sort((a,b)=>b.area-a.area);const keep=[];
+  for(const b of bl){const host=keep.find(k=>{const ox=Math.max(0,Math.min(k.x1,b.x1)-Math.max(k.x0,b.x0)+1),oy=Math.max(0,Math.min(k.y1,b.y1)-Math.max(k.y0,b.y0)+1);return ox*oy>=.5*(b.x1-b.x0+1)*(b.y1-b.y0+1)});
+    if(host){host.pix=host.pix.concat(b.pix);host.area+=b.area;host.x0=Math.min(host.x0,b.x0);host.y0=Math.min(host.y0,b.y0);host.x1=Math.max(host.x1,b.x1);host.y1=Math.max(host.y1,b.y1)}else keep.push(b)}
+  bl=keep.filter(b=>{const edge=b.x0<=m||b.y0<=m||b.x1>=w-1-m||b.y1>=h-1-m,bw=b.x1-b.x0+1,bh=b.y1-b.y0+1;return!(edge&&(b.area<(bw*bh)*.45||Math.min(bw,bh)<Math.max(bw,bh)*.2))});
+  if(!bl.length)return{pieces:[],img,k};
+  const big=med(bl.map(b=>b.area));bl=bl.filter(b=>b.area>=big*.06);
   for(const b of bl){let L=b.pix.map(labWB);const cut=[...L.map(v=>v[0])].sort((x,y)=>x-y)[Math.floor(L.length*.75)];L=L.filter(v=>v[0]<=cut);b.lab=[med(L.map(v=>v[0])),med(L.map(v=>v[1])),med(L.map(v=>v[2]))]}
   // Junta los colores parecidos: todas las piezas de un mismo tono reciben el mismo color
   const cl=[],bst=v=>[v[0],v[1]*1.3,v[2]*1.3];
   [...bl].sort((a,b)=>b.area-a.area).forEach(b=>{let best=null,bd=1e9;for(const c of cl){const d=dE(bst(b.lab),bst(c.seed));if(d<bd){bd=d;best=c}}
     if(best&&bd<16)best.m.push(b);else cl.push({seed:b.lab,m:[b]})});
   cl.forEach(c=>{const L=c.m.map(b=>b.lab),col=nearestColor([med(L.map(v=>v[0])),med(L.map(v=>v[1])),med(L.map(v=>v[2]))]);c.m.forEach(b=>b.color=col)});
-  const M=med(bl.map(b=>b.area));bl.forEach(b=>{const r=b.area/M;b.n=r>=1.7?Math.round(r):1;b.unit=b.area/b.n});
+  const M=med(bl.map(b=>b.area)),uniform=bl.filter(b=>b.area>M*.7&&b.area<M*1.4).length>=bl.length*.7;bl.forEach(b=>{const r=b.area/M;b.n=uniform&&r>=1.7?Math.round(r):1;b.unit=b.area/b.n});
   // Clases de tamaño (piezas de distinto tamaño = posible tipo distinto)
   const sorted=[...bl].sort((a,b)=>a.unit-b.unit);let cls=0;sorted.forEach((b,i)=>{if(i&&b.unit>sorted[i-1].unit*2.2)cls++;b.size=cls});
   return{pieces:bl,img,k};
@@ -501,12 +511,15 @@ async function recBrick(){
       showFound([{code:items[0].id,name:items[0].name,color:state.color,qty:1,img:items[0].img_url,checked:true,alts:items,note:"No pude separar las piezas. Elige el color y la cantidad."}]);
       $("#camMsg").textContent="Revisa color y cantidad, y toca Sumar.";return}
     markPreview(det.img,det.k,P);
-    const sizes=[...new Set(P.map(b=>b.size))].slice(0,4),bySize={};
-    for(let n=0;n<sizes.length;n++){const s=sizes[n];$("#camMsg").textContent=`Encontré ${P.reduce((a,b)=>a+b.n,0)} piezas. Reconociendo el tipo ${n+1} de ${sizes.length}…`;
-      const rep=P.filter(b=>b.size===s&&b.n===1).sort((a,b)=>b.area-a.area)[0]||P.find(b=>b.size===s);
-      try{bySize[s]=await brickognize(await cropBlob(det.img,det.k,rep),ctl.signal)}catch(e){if(e&&e.name==="AbortError")throw e;bySize[s]=[]}}
-    const groups={};let joined=false;P.forEach((b,i)=>{const it=bySize[b.size]||[],code=it[0]?it[0].id:"s"+b.size,key=code+"_"+b.color;(groups[key]=groups[key]||{size:b.size,color:b.color,n:0,nums:[],rep:b}).n+=b.n;if(b.n===1&&groups[key].rep.n>1)groups[key].rep=b;groups[key].nums.push(i+1);if(b.n>1)joined=true});
-    const rows=Object.values(groups).sort((a,b)=>b.n-a.n).map(gr=>{const it=(bySize[gr.size]||[]);const top=it[0];
+    // Reconoce cada pieza por separado (3 a la vez)
+    const res=new Array(P.length);let done=0,next=0;
+    const work=async()=>{while(next<P.length){const i=next++;
+      try{res[i]=await brickognize(await cropBlob(det.img,det.k,P[i]),ctl.signal)}catch(e){if(e&&e.name==="AbortError")throw e;res[i]=[]}
+      done++;$("#camMsg").textContent=`Encontré ${P.length} piezas. Reconociendo ${done} de ${P.length}…`}};
+    await Promise.all([work(),work(),work()]);
+    if(res.every(r=>!r||!r.length)&&P.length)throw new Error("sin respuesta");
+    const groups={};let joined=false;P.forEach((b,i)=>{const it=res[i]||[],code=it[0]?it[0].id:"?"+i,key=code+"_"+b.color;(groups[key]=groups[key]||{size:b.size,color:b.color,n:0,nums:[],rep:b,it,best:0}).n+=b.n;if(b.n===1&&groups[key].rep.n>1)groups[key].rep=b;if(it[0]&&(it[0].score||0)>groups[key].best){groups[key].best=it[0].score||0;groups[key].it=it}groups[key].nums.push(i+1);if(b.n>1)joined=true});
+    const rows=Object.values(groups).sort((a,b)=>b.n-a.n).map(gr=>{const it=gr.it||[];const top=it[0];
       return{code:top?top.id:"",name:top?top.name:"Pieza sin reconocer",color:gr.color,qty:gr.n,photo:cropURL(det.img,det.k,gr.rep),checked:!!top,alts:it,
         note:`Piezas ${gr.nums.join(", ")} · ${(colorById[gr.color]||{}).n||""}${top?` · parecido ${Math.round((top.score||0)*100)}%`:" · escribe el código"}`}});
     showFound(rows);
@@ -516,6 +529,7 @@ async function recBrick(){
   }finally{$("#recBtn").disabled=false;$("#stopBtn").hidden=true}
 }
 window.__detectPieces=detectPieces;
+
 
 
 async function recClaude(){
