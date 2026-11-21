@@ -91,6 +91,7 @@ textarea{width:100%;min-height:150px;border-radius:10px;border:1px solid var(--l
 .fgrid input,.fgrid select{padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:inherit;min-width:0;width:100%}
 .fgrid .nm{grid-column:1/-1}
 .conf{font-size:.75rem;color:var(--muted)}
+.pv{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pv img{height:64px;width:auto;border-radius:8px;border:1px solid var(--line)}.pv .ico svg{width:80px;height:64px;display:block}.pv .hint{margin-right:6px}
 .alts{display:inline-flex;flex-wrap:wrap;gap:4px;align-items:center;margin-bottom:4px}.alt{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 9px;font-size:.78rem}
 @media (max-width:420px){.fgrid{grid-template-columns:1fr 1fr}.fgrid .q{grid-column:1/-1}}
 .hdr-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
@@ -280,7 +281,7 @@ function shade(hex,f){const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b
 
 function icon(p,hex){
   const W=56,H=44,stroke=shade(hex,-.35),top=hex,side=shade(hex,-.2),hi=shade(hex,.25);
-  const cols=Math.min(p.l,8),rows=Math.min(p.w,4);
+  const cols=Math.min(p.l,8),rows=Math.min(p.w,6);
   const cs=Math.min(48/cols,34/rows),bw=cs*cols,bh=cs*rows,x0=(W-bw)/2,y0=(H-bh)/2;
   let s=`<svg viewBox="0 0 ${W} ${H}" aria-hidden="true">`;
   const studs=()=>{let o="";for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)o+=`<circle cx="${x0+cs*(c+.5)}" cy="${y0+cs*(r+.5)}" r="${cs*.3}" fill="${hi}" stroke="${stroke}" stroke-width="1"/>`;return o};
@@ -417,7 +418,7 @@ $("#recBtn").addEventListener("click",()=>{if(!photoBlob)return;if(sample)recCla
 function showFound(list){
   $("#found").innerHTML=list.map((x,i)=>{const code=String(x.code).trim(),cid=colorById[+x.color]?+x.color:state.color,p=byCode[code];
     return `<div class="frow" data-i="${i}"><input type="checkbox" ${x.checked?"checked":""} aria-label="Sumar esta pieza"><div class="fgrid">
-    ${x.img?`<img src="${esc(x.img)}" alt="" style="grid-column:1/-1;max-height:70px;width:auto;justify-self:start;background:#fff;border-radius:6px">`:""}
+    <div class="pv">${x.photo?`<img src="${x.photo}" alt="Pieza en tu foto"><span class="hint">Tu pieza</span>`:""}<span class="ico">${icon(partInfo(code),(colorById[cid]||{h:"#999999"}).h)}</span><span class="hint">Modelo y color</span></div>
     <input class="nm" value="${esc(p?p.name:(x.name||"Pieza "+code))}" aria-label="Nombre">
     <input class="cd" value="${esc(code)}" aria-label="Código">
     <select class="cl" aria-label="Color">${colorOpts(cid)}</select>
@@ -481,6 +482,10 @@ function markPreview(img,k,pieces){try{const c=document.createElement("canvas"),
   pieces.forEach((b,i)=>{g.strokeStyle="#ffffff";g.strokeRect(b.x0*f,b.y0*f,(b.x1-b.x0+1)*f,(b.y1-b.y0+1)*f);g.strokeStyle="#d81e1e";g.strokeRect(b.x0*f+2,b.y0*f+2,(b.x1-b.x0+1)*f-4,(b.y1-b.y0+1)*f-4);
     const t=String(i+1)+(b.n>1?"×"+b.n:"");g.fillStyle="#d81e1e";g.fillRect(b.x0*f+2,b.y0*f+2,g.measureText(t).width+10,c.width/24);g.fillStyle="#fff";g.fillText(t,b.x0*f+7,b.y0*f+c.width/30)});
   $("#prev").src=c.toDataURL("image/jpeg",.85)}catch(e){}}
+function cropURL(img,k,b){try{const pad=.12,bw=(b.x1-b.x0+1)/k,bh=(b.y1-b.y0+1)/k;
+  const sx=Math.max(0,b.x0/k-bw*pad),sy=Math.max(0,b.y0/k-bh*pad),sw=Math.min(img.width-sx,bw*(1+2*pad)),sh=Math.min(img.height-sy,bh*(1+2*pad));
+  const s=Math.min(1,160/Math.max(sw,sh)),c=document.createElement("canvas");c.width=Math.round(sw*s);c.height=Math.round(sh*s);
+  c.getContext("2d").drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height);return c.toDataURL("image/jpeg",.85)}catch(e){return""}}
 async function brickognize(blob,signal){const fd=new FormData();fd.append("query_image",blob,"pieza.jpg");
   const r=await fetch("https://api.brickognize.com/predict/parts/",{method:"POST",body:fd,signal});if(!r.ok)throw new Error("http "+r.status);
   const j=await r.json();return(j&&Array.isArray(j.items)?j.items:[]).slice(0,3)}
@@ -500,9 +505,9 @@ async function recBrick(){
     for(let n=0;n<sizes.length;n++){const s=sizes[n];$("#camMsg").textContent=`Encontré ${P.reduce((a,b)=>a+b.n,0)} piezas. Reconociendo el tipo ${n+1} de ${sizes.length}…`;
       const rep=P.filter(b=>b.size===s&&b.n===1).sort((a,b)=>b.area-a.area)[0]||P.find(b=>b.size===s);
       try{bySize[s]=await brickognize(await cropBlob(det.img,det.k,rep),ctl.signal)}catch(e){if(e&&e.name==="AbortError")throw e;bySize[s]=[]}}
-    const groups={};let joined=false;P.forEach((b,i)=>{const it=bySize[b.size]||[],code=it[0]?it[0].id:"s"+b.size,key=code+"_"+b.color;(groups[key]=groups[key]||{size:b.size,color:b.color,n:0,nums:[]}).n+=b.n;groups[key].nums.push(i+1);if(b.n>1)joined=true});
+    const groups={};let joined=false;P.forEach((b,i)=>{const it=bySize[b.size]||[],code=it[0]?it[0].id:"s"+b.size,key=code+"_"+b.color;(groups[key]=groups[key]||{size:b.size,color:b.color,n:0,nums:[],rep:b}).n+=b.n;if(b.n===1&&groups[key].rep.n>1)groups[key].rep=b;groups[key].nums.push(i+1);if(b.n>1)joined=true});
     const rows=Object.values(groups).sort((a,b)=>b.n-a.n).map(gr=>{const it=(bySize[gr.size]||[]);const top=it[0];
-      return{code:top?top.id:"",name:top?top.name:"Pieza sin reconocer",color:gr.color,qty:gr.n,img:top&&top.img_url,checked:!!top,alts:it,
+      return{code:top?top.id:"",name:top?top.name:"Pieza sin reconocer",color:gr.color,qty:gr.n,photo:cropURL(det.img,det.k,gr.rep),checked:!!top,alts:it,
         note:`Piezas ${gr.nums.join(", ")} · ${(colorById[gr.color]||{}).n||""}${top?` · parecido ${Math.round((top.score||0)*100)}%`:" · escribe el código"}`}});
     showFound(rows);
     const tot=P.reduce((a,b)=>a+b.n,0);$("#camMsg").textContent=(joined?"Algunas piezas estaban pegadas y las conté por tamaño. ":"")+`Encontré ${tot} piezas en ${rows.length} grupo${rows.length>1?"s":""}. Revisa color y cantidad, y toca "Sumar las marcadas".`;
@@ -511,6 +516,7 @@ async function recBrick(){
   }finally{$("#recBtn").disabled=false;$("#stopBtn").hidden=true}
 }
 window.__detectPieces=detectPieces;
+
 
 async function recClaude(){
   ctl=new AbortController();$("#recBtn").disabled=true;$("#stopBtn").hidden=false;$("#camMsg").textContent="Mirando la foto… puede tardar unos 20 a 40 segundos.";$("#found").innerHTML="";
@@ -525,7 +531,10 @@ async function recClaude(){
   }finally{$("#recBtn").disabled=false;$("#stopBtn").hidden=true}
 }
 $("#stopBtn").addEventListener("click",()=>ctl&&ctl.abort());
-$("#found").addEventListener("click",e=>{const b=e.target.closest(".alt");if(!b)return;const r=b.closest(".frow");r.querySelector(".cd").value=b.dataset.code;const p=byCode[b.dataset.code];r.querySelector(".nm").value=p?p.name:b.dataset.name;r.querySelector("input[type=checkbox]").checked=true});
+function refreshIco(r){const code=r.querySelector(".cd").value.trim(),c=colorById[+r.querySelector(".cl").value]||{h:"#999999"};const p=byCode[code]||{code,name:"",shape:"brick",w:1,l:2};r.querySelector(".ico").innerHTML=icon(p,c.h)}
+$("#found").addEventListener("change",e=>{const r=e.target.closest(".frow");if(r&&(e.target.matches(".cl")||e.target.matches(".cd")))refreshIco(r)});
+$("#found").addEventListener("input",e=>{const r=e.target.closest(".frow");if(r&&e.target.matches(".cd"))refreshIco(r)});
+$("#found").addEventListener("click",e=>{const b=e.target.closest(".alt");if(!b)return;const r=b.closest(".frow");r.querySelector(".cd").value=b.dataset.code;const p=byCode[b.dataset.code];r.querySelector(".nm").value=p?p.name:b.dataset.name;r.querySelector("input[type=checkbox]").checked=true;refreshIco(r)});
 $("#addFound").addEventListener("click",()=>{let n=0;
   document.querySelectorAll("#found .frow").forEach(r=>{if(!r.querySelector("input[type=checkbox]").checked)return;
     const code=r.querySelector(".cd").value.trim();if(!code)return;const q=Math.max(1,parseInt(r.querySelector(".q").value,10)||1);
