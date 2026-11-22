@@ -99,6 +99,9 @@ kbd.num{background:var(--panel);font-family:var(--f-lcd);font-size:1.05rem}
 .srow{display:grid;grid-template-columns:2.6em minmax(0,1fr);gap:3px;min-height:0;min-width:0}
 .scSpan{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}.scSpan button{border:0;background:var(--bg);color:var(--ink);font:700 .78rem var(--f-display);padding:9px 10px;cursor:pointer}.scSpan button.on{background:var(--ink);color:var(--bg)}
 .sc{font-size:clamp(9px,1.6vw,14px)!important}
+.scells{position:relative}
+.dot{position:absolute;top:18%;width:clamp(16px,3.4vw,30px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 30%,#5a6075,#0d0f16);transform:translateX(-50%);z-index:2;box-shadow:0 1px 3px rgba(0,0,0,.55);cursor:pointer}
+.dot.down{background:var(--accent)}
 @media (orientation:portrait) and (max-width:700px){body .wrap .kb.scales{height:62vh}}
 .srow .lab{display:flex;align-items:center;justify-content:center;font:700 .78rem var(--f-display);color:#cfe0ff;background:#262d55;border-radius:4px}
 .scells{display:grid;gap:2px;min-height:0}
@@ -158,7 +161,7 @@ body.tab .list{max-height:60vh;grid-template-columns:repeat(auto-fill,minmax(260
       <button class="astate off" id="audioState" type="button">🔊 Activar sonido</button>
     </div>
     <div class="kbwrap"><div class="kb" id="kb"></div><div class="kb scales" id="sc" hidden></div></div>
-    <div class="kbhint" id="kbhint">ESCALAS cambia el teclado por 7 franjas con las escalas mayores de Do a Si (elige 1, 2 o 3 octavas por franja y súbelas o bájalas con OCTAVA; la tónica va en azul). La nota suena mientras tengas el dedo encima y se apaga al soltarlo; puedes moverte hacia la derecha y también hacia abajo a otra escala. Con DESLIZAR activo, la nota no se vuelve a pulsar al mover el dedo: sube o baja de forma continua y se queda afinada cuando detienes el dedo sobre una tecla: al deslizar el dedo solo suenan notas de esa escala. Las 5 octavas entran completas: desliza los dedos de izquierda (graves) a derecha (agudos) y suenan las teclas por las que pasas, con varios dedos a la vez. En el celular, gíralo en horizontal para tener teclas más anchas. En computadora también puedes usar el teclado: Z S X D C V… (zona de acordes, en celeste) y Q 2 W 3 E R… (melodía). Con el ritmo andando, la zona celeste detecta el acorde y el acompañamiento lo sigue.</div>
+    <div class="kbhint" id="kbhint">ESCALAS cambia el teclado por 7 franjas con las escalas mayores de Do a Si (elige 1, 2 o 3 octavas por franja y súbelas o bájalas con OCTAVA; la tónica va en azul; los puntos negros entre dos notas son las teclas negras sostenidas y también se tocan). La nota suena mientras tengas el dedo encima y se apaga al soltarlo; puedes moverte hacia la derecha y también hacia abajo a otra escala. Con DESLIZAR activo, la nota no se vuelve a pulsar al mover el dedo: sube o baja de forma continua y se queda afinada cuando detienes el dedo sobre una tecla: al deslizar el dedo solo suenan notas de esa escala. Las 5 octavas entran completas: desliza los dedos de izquierda (graves) a derecha (agudos) y suenan las teclas por las que pasas, con varios dedos a la vez. En el celular, gíralo en horizontal para tener teclas más anchas. En computadora también puedes usar el teclado: Z S X D C V… (zona de acordes, en celeste) y Q 2 W 3 E R… (melodía). Con el ritmo andando, la zona celeste detecta el acorde y el acompañamiento lo sigue.</div>
   </section>
 
   <!-- ARMAR -->
@@ -456,7 +459,9 @@ function buildScales(){scBox.innerHTML="";
  [0,2,4,5,7,9,11].forEach(root=>{const row=document.createElement("div");row.className="srow";
   const base=(scN===1?60:48)+root;const notes=[];for(let o=0;o<scN;o++)MAJ.forEach(iv=>notes.push(base+o*12+iv));notes.push(base+scN*12);
   row.innerHTML='<div class="lab">'+SOL[root]+'</div><div class="scells" style="grid-template-columns:repeat('+notes.length+',minmax(0,1fr))">'+notes.map(m=>'<div class="sc'+(m%12===root?' tonic':'')+'" data-sm="'+m+'">'+(root===5&&m%12===10?"Sib":SOL[m%12])+'</div>').join("")+'</div>';
-  scBox.appendChild(row)});
+  scBox.appendChild(row);
+  const scl=row.querySelector(".scells");const n=notes.length;
+  notes.forEach((m,i)=>{if(i<n-1&&notes[i+1]-m===2){const d=document.createElement("div");d.className="dot";d.dataset.sm=m+1;d.title=SOL[(m+1)%12];d.style.left=((i+1)/n*100)+"%";scl.appendChild(d)}})});
  document.querySelectorAll("#scSpan button").forEach(b=>b.classList.toggle("on",+b.dataset.span===scN))}
 buildScales();
 $("scSpan").onclick=e=>{const b=e.target.closest("[data-span]");if(!b)return;scN=+b.dataset.span;LS.set("vku812-span",scN);buildScales();toast(scN+(scN===1?" octava":" octavas")+" por franja; usa OCTAVA para subir o bajar")};
@@ -465,7 +470,7 @@ async function scDown(id,el){const m=+el.dataset.sm;el.classList.add("down");con
 function scUp(id){const h=scVoices[id];if(!h)return;delete scVoices[id];h.el.classList.remove("down");const t=AC().currentTime;h.v.forEach(v=>release(v,t,sustain?3.5:2))}
 scBox.addEventListener("pointerdown",e=>{const el=e.target.closest("[data-sm]");if(!el)return;if(e.pointerType==="mouse")e.preventDefault();unlock();try{scBox.setPointerCapture(e.pointerId)}catch(er){}scDown(e.pointerId,el)});
 let glide=LS.get("vku812-glide",false);
-function glidePitch(row,x){const cells=[...row.querySelectorAll("[data-sm]")];const r0=cells[0].getBoundingClientRect(),w=r0.width+2;
+function glidePitch(row,x){const cells=[...row.querySelectorAll(".sc")];const r0=cells[0].getBoundingClientRect(),w=r0.width+2;
   let f=(x-r0.left)/w-0.5;f=Math.max(0,Math.min(cells.length-1,f));const i=Math.floor(f),u=f-i;const a=+cells[i].dataset.sm,b=cells[i+1]?+cells[i+1].dataset.sm:a;
   const k=u<0.3?0:u>0.7?1:(u-0.3)/0.4;return{p:a+(b-a)*k,el:cells[u<0.5?i:Math.min(i+1,cells.length-1)]}}
 scBox.addEventListener("pointermove",e=>{const h=scVoices[e.pointerId];if(!h)return;
