@@ -24,6 +24,7 @@
   --lcd:#3350ff; --lcd-hi:#d6e3ff; --lcd-ink:#0a1240; --accent:#ff6a3d; --accent-ink:#1a0d07;
   --chip:#22284a; --ok:#4cc985; --warn:#f0a83a; color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
 .wrap{max-width:1040px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
 header h1{font-family:var(--f-display);font-size:1.7rem;margin:0;letter-spacing:.02em;text-wrap:balance}
@@ -94,6 +95,13 @@ kbd.num{background:var(--panel);font-family:var(--f-lcd);font-size:1.05rem}
 .kb .w.zone{background:linear-gradient(#fff,#e3e9ff)}
 .kb .w.down{background:#ffd0bf}.kb .b.down{background:var(--accent)}
 .kbhint{font-size:.8rem;color:var(--muted)}
+.kb.scales{display:grid;grid-template-rows:repeat(7,1fr);gap:3px}
+.srow{display:grid;grid-template-columns:2.6em 1fr;gap:3px;min-height:0}
+.srow .lab{display:flex;align-items:center;justify-content:center;font:700 .78rem var(--f-display);color:#cfe0ff;background:#262d55;border-radius:4px}
+.scells{display:grid;gap:2px;min-height:0}
+.sc{background:linear-gradient(#fff,#eef1fb);border-radius:3px;display:flex;align-items:flex-end;justify-content:center;font:600 9px var(--f-body);color:#6a7090;padding-bottom:2px;overflow:hidden;min-width:0}
+.sc.tonic{background:linear-gradient(#e3e9ff,#c9d5ff);color:#1b2a8a}
+.sc.down{background:#ffd0bf;color:#7a2a10}
 .astate{font:600 .82rem var(--f-body);padding:8px 12px;border-radius:999px;background:var(--chip);border:1px solid var(--line);cursor:pointer}.astate.off{border-color:var(--warn)}.astate.ok{color:var(--ok)}.astate.off{color:var(--warn)}
 .hear{font:700 .72rem var(--f-body);border:1px solid var(--accent);color:var(--accent);background:transparent;border-radius:6px;padding:4px 7px;cursor:pointer}
 
@@ -140,6 +148,7 @@ body.cel .kbhint{display:none}
       <button class="pb red" id="pStart">START/STOP</button>
       <button class="pb" id="pFill">FILL-IN</button>
       <button class="pb" id="pSus">SUSTAIN</button>
+      <button class="pb" id="pScales" aria-pressed="false">ESCALAS</button>
       <span class="stepper"><button id="tDown" aria-label="Timbre anterior">−</button><span>Timbre</span><button id="tUp" aria-label="Timbre siguiente">+</button></span>
       <span class="stepper"><button id="rDown" aria-label="Ritmo anterior">−</button><span>Ritmo</span><button id="rUp" aria-label="Ritmo siguiente">+</button></span>
       <span class="stepper"><button id="tpDown" aria-label="Más lento">−</button><span>Tempo</span><button id="tpUp" aria-label="Más rápido">+</button></span>
@@ -147,8 +156,8 @@ body.cel .kbhint{display:none}
       <span class="beat" id="beat"><i></i><i></i><i></i><i></i></span>
       <button class="astate off" id="audioState" type="button">🔊 Activar sonido</button>
     </div>
-    <div class="kbwrap"><div class="kb" id="kb"></div></div>
-    <div class="kbhint" id="kbhint">Las 5 octavas entran completas: desliza los dedos de izquierda (graves) a derecha (agudos) y suenan las teclas por las que pasas, con varios dedos a la vez. En el celular, gíralo en horizontal para tener teclas más anchas. En computadora también puedes usar el teclado: Z S X D C V… (zona de acordes, en celeste) y Q 2 W 3 E R… (melodía). Con el ritmo andando, la zona celeste detecta el acorde y el acompañamiento lo sigue.</div>
+    <div class="kbwrap"><div class="kb" id="kb"></div><div class="kb scales" id="sc" hidden></div></div>
+    <div class="kbhint" id="kbhint">ESCALAS cambia el teclado por 7 franjas con las escalas mayores de Do a Si (3 octavas cada una, la tónica en azul): al deslizar el dedo solo suenan notas de esa escala. Las 5 octavas entran completas: desliza los dedos de izquierda (graves) a derecha (agudos) y suenan las teclas por las que pasas, con varios dedos a la vez. En el celular, gíralo en horizontal para tener teclas más anchas. En computadora también puedes usar el teclado: Z S X D C V… (zona de acordes, en celeste) y Q 2 W 3 E R… (melodía). Con el ritmo andando, la zona celeste detecta el acorde y el acompañamiento lo sigue.</div>
   </section>
 
   <!-- ARMAR -->
@@ -431,6 +440,24 @@ document.addEventListener("click",async e=>{const b=e.target.closest("[data-hear
 /* El cambio de ritmo en el constructor ajusta el tempo de ese estilo */
 $("bR").addEventListener("change",()=>{$("bTempo").value=ST[styleOf(clamp($("bR").value,0,299))].t;build()});
 showBeat(-1,4);
+
+/* ===== Modo escalas: 7 franjas con las escalas mayores ===== */
+const SOL=["Do","Do#","Re","Re#","Mi","Fa","Fa#","Sol","Sol#","La","La#","Si"];
+const MAJ=[0,2,4,5,7,9,11];
+const scBox=$("sc");const scVoices={};
+[0,2,4,5,7,9,11].forEach(root=>{const row=document.createElement("div");row.className="srow";
+  const notes=[];for(let o=0;o<3;o++)MAJ.forEach(iv=>notes.push(48+root+o*12+iv));notes.push(48+root+36);
+  row.innerHTML='<div class="lab">'+SOL[root]+'</div><div class="scells" style="grid-template-columns:repeat('+notes.length+',1fr)">'+notes.map(m=>'<div class="sc'+(m%12===root?' tonic':'')+'" data-sm="'+m+'">'+(root===5&&m%12===10?"Sib":SOL[m%12])+'</div>').join("")+'</div>';
+  scBox.appendChild(row)});
+async function scDown(id,el){const m=+el.dataset.sm;el.classList.add("down");const c=cfg();const ps=[gmOf(c.t)];if(c.mode==="dual")ps.push(gmOf(c.t2));
+  scVoices[id]={el,v:[]};await Promise.all(ps.map(ensure));if(!scVoices[id]||scVoices[id].el!==el)return;const t=AC().currentTime;scVoices[id].v=ps.map((q,i)=>note(q,m+c.tr+oct*12,t,0,i?0.5:0.8))}
+function scUp(id){const h=scVoices[id];if(!h)return;delete scVoices[id];h.el.classList.remove("down");const t=AC().currentTime;h.v.forEach(v=>release(v,t,sustain?1.2:0.12))}
+scBox.addEventListener("pointerdown",e=>{const el=e.target.closest("[data-sm]");if(!el)return;if(e.pointerType==="mouse")e.preventDefault();unlock();try{scBox.setPointerCapture(e.pointerId)}catch(er){}scDown(e.pointerId,el)});
+scBox.addEventListener("pointermove",e=>{const h=scVoices[e.pointerId];if(!h)return;const t=document.elementFromPoint(e.clientX,e.clientY);const el=t&&t.closest&&t.closest("[data-sm]");if(el&&el!==h.el){scUp(e.pointerId);scDown(e.pointerId,el)}});
+["pointerup","pointercancel"].forEach(t=>scBox.addEventListener(t,e=>scUp(e.pointerId)));
+function setScales(on){scBox.hidden=!on;kb.hidden=on;$("pScales").classList.toggle("on",on);$("pScales").setAttribute("aria-pressed",on);LS.set("vku812-escalas",on)}
+$("pScales").onclick=()=>setScales(kb.hidden?false:true);
+setScales(LS.get("vku812-escalas",false));
 </script>
 
 <!-- FIC-INFO:inicio (icono de información con el email del autor) -->
