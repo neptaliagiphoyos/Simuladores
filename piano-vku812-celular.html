@@ -92,10 +92,11 @@ kbd.num{background:var(--panel);font-family:var(--f-lcd);font-size:1.05rem}
 .fsbar{display:none}
 body.fs{overflow:hidden}
 body.fs .kbwrap{position:fixed;inset:0;z-index:60;border-radius:0;border:0;margin:0;padding:4px;display:flex;flex-direction:column;gap:4px}
-body.fs .fsbar{display:flex;gap:6px;align-items:center;flex:none}
-.fsbar button{font:inherit;font-size:13px;font-weight:700;padding:6px 10px;border-radius:6px;border:1px solid #3a4270;background:#262d52;color:#e7eaf6}
+body.fs .fsbar{display:flex;flex-wrap:wrap;gap:4px 5px;align-items:center;flex:none}
+.fsbar button{font:inherit;font-size:12px;font-weight:700;white-space:nowrap;padding:6px 8px;border-radius:6px;border:1px solid #3a4270;background:#262d52;color:#e7eaf6}
 .fsbar button.on{background:var(--accent);color:#fff}.fsbar button.red.on{background:#d33}
-.fsbar span{flex:1;min-width:0;color:#9fe8b0;font:600 12px ui-monospace,monospace;text-align:center;white-space:nowrap;overflow:hidden}
+.fsPct{color:#e7eaf6;font-size:12px;min-width:3.2em;text-align:center}
+.fsbar span{flex:1 1 4em;min-width:0;color:#9fe8b0;font:600 12px ui-monospace,monospace;text-align:center;white-space:nowrap;overflow:hidden}
 body.fs .wrap .kbwrap .kb.scales{height:auto!important;flex:1 1 0;min-height:0}
 .kb{position:relative;width:100%;height:clamp(170px,42vh,300px);user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
 .kb .w{position:absolute;top:0;bottom:0;width:calc(100% / 36);background:linear-gradient(#fff,#f1f1f4);border:1px solid #9aa0b5;border-radius:0 0 5px 5px;color:#7a8098;font:600 9px var(--f-body);display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;overflow:hidden;border-radius:0 0 3px 3px}
@@ -167,6 +168,7 @@ body.cel .kbhint{display:none}
       <button class="pb red" id="pStart">START/STOP</button>
       <button class="pb" id="pFill">FILL-IN</button>
       <button class="pb" id="pSus">SUSTAIN</button>
+      <span class="stepper rvol"><button id="rvDown" aria-label="Bajar volumen del ritmo">−</button><span>Vol. ritmo <b class="rvPct">100%</b></span><button id="rvUp" aria-label="Subir volumen del ritmo">+</button></span>
       <button class="pb" id="pScales" aria-pressed="false">ESCALAS</button>
       <span class="scSpan" id="scSpan" hidden><button data-span="1">1 oct</button><button data-span="2">2 oct</button><button data-span="3">3 oct</button></span>
       <button class="pb" id="pGlide" aria-pressed="false" hidden>DESLIZAR</button>
@@ -178,8 +180,8 @@ body.cel .kbhint{display:none}
       <span class="beat" id="beat"><i></i><i></i><i></i><i></i></span>
       <button class="astate off" id="audioState" type="button">🔊 Activar sonido</button>
     </div>
-    <div class="kbwrap"><div class="fsbar" id="fsBar"><button id="fsStart" class="red">▶ RITMO</button><button id="fsGlide">DESLIZAR</button><button id="fsOd">OCT −</button><button id="fsOu">OCT +</button><span id="fsLcd"></span><button id="fsExit">✕ Salir</button></div><div class="kb" id="kb"></div><div class="kb scales" id="sc" hidden></div></div>
-    <div class="kbhint" id="kbhint">ESCALAS cambia el teclado por 12 filas de piano, cada una empezando en una nota distinta (Do, Do#, Re, Re#… hasta Si hacia abajo) (elige 1, 2 o 3 octavas por franja y súbelas o bájalas con OCTAVA; la tónica va en azul; las teclas negras van intercaladas entre sus blancas, del mismo tamaño). La nota suena mientras tengas el dedo encima y se apaga al soltarlo; puedes moverte hacia la derecha y también hacia abajo a otra fila. Con DESLIZAR activo, la nota no se vuelve a pulsar al mover el dedo: sube o baja de forma continua y se queda afinada cuando detienes el dedo sobre una tecla: al deslizar el dedo solo suenan notas de esa escala. Con el ritmo andando (SINGLE o FINGERED), cada vez que pones el dedo en una fila el acompañamiento cambia al acorde mayor de esa nota (tocas Do → Do mayor); al deslizar el dedo el acorde se queda igual. Con ⛶ PANTALLA COMPLETA las 12 filas ocupan toda la pantalla, con una barra pequeña para el ritmo, DESLIZAR, la octava y Salir. Las 5 octavas entran completas: desliza los dedos de izquierda (graves) a derecha (agudos) y suenan las teclas por las que pasas, con varios dedos a la vez. En el celular, gíralo en horizontal para tener teclas más anchas. En computadora también puedes usar el teclado: Z S X D C V… (zona de acordes, en celeste) y Q 2 W 3 E R… (melodía). Con el ritmo andando, la zona celeste detecta el acorde y el acompañamiento lo sigue.</div>
+    <div class="kbwrap"><div class="fsbar" id="fsBar"><button id="fsStart" class="red">▶ RITMO</button><button id="fsGlide">DESLIZAR</button><button id="fsRvD" aria-label="Bajar volumen del ritmo">RIT −</button><b class="rvPct fsPct">100%</b><button id="fsRvU" aria-label="Subir volumen del ritmo">RIT +</button><button id="fsOd">OCT −</button><button id="fsOu">OCT +</button><span id="fsLcd"></span><button id="fsExit">✕ Salir</button></div><div class="kb" id="kb"></div><div class="kb scales" id="sc" hidden></div></div>
+    <div class="kbhint" id="kbhint">ESCALAS cambia el teclado por 12 filas de piano, cada una empezando en una nota distinta (Do, Do#, Re, Re#… hasta Si hacia abajo) (elige 1, 2 o 3 octavas por franja y súbelas o bájalas con OCTAVA; la tónica va en azul; las teclas negras van intercaladas entre sus blancas, del mismo tamaño). La nota suena mientras tengas el dedo encima y se apaga al soltarlo; puedes moverte hacia la derecha y también hacia abajo a otra fila. Con DESLIZAR activo, la nota no se vuelve a pulsar al mover el dedo: sube o baja de forma continua y se queda afinada cuando detienes el dedo sobre una tecla: al deslizar el dedo solo suenan notas de esa escala. Con el ritmo andando (SINGLE o FINGERED), cada vez que pones el dedo en una fila el acompañamiento cambia al acorde mayor de esa nota (tocas Do → Do mayor); al deslizar el dedo el acorde se queda igual. Con ⛶ PANTALLA COMPLETA las 12 filas ocupan toda la pantalla, con una barra pequeña para el ritmo, su volumen (RIT − / RIT +), DESLIZAR, la octava y Salir. Las 5 octavas entran completas: desliza los dedos de izquierda (graves) a derecha (agudos) y suenan las teclas por las que pasas, con varios dedos a la vez. En el celular, gíralo en horizontal para tener teclas más anchas. En computadora también puedes usar el teclado: Z S X D C V… (zona de acordes, en celeste) y Q 2 W 3 E R… (melodía). Con el ritmo andando, la zona celeste detecta el acorde y el acompañamiento lo sigue.</div>
   </section>
 
   <!-- ARMAR -->
@@ -358,7 +360,7 @@ const gmOf=n=>n<128?n:(n-128)%128;
 async function progBufs(p){const P=await pack("f"+String(p>>3).padStart(2,"0"));return{48:P[p+"_48"],72:P[p+"_72"]}}
 function voice(buf,base,midi,when,vel){const c=AC();const s=c.createBufferSource();s.buffer=buf;s.playbackRate.value=Math.pow(2,(midi-base)/12);
   const g=c.createGain();g.gain.setValueAtTime(0,when);g.gain.linearRampToValueAtTime(vel,when+0.006);s.connect(g);g.connect(master);s.start(when);return{s,g}}
-function release(v,when,rel){if(!v)return;try{v.g.gain.cancelScheduledValues(when);v.g.gain.setValueAtTime(v.g.gain.value,when);if(rel>0.5){v.g.gain.setTargetAtTime(0,when,rel/4)}else{v.g.gain.linearRampToValueAtTime(0,when+rel)}v.s.stop(when+rel+0.05)}catch(e){}}
+function release(v,when,rel){if(!v)return;try{const G=v.g.gain;if(G.cancelAndHoldAtTime)G.cancelAndHoldAtTime(when);else{G.cancelScheduledValues(when);if(when<=AC().currentTime+0.01)G.setValueAtTime(G.value,when)}if(rel>0.5){v.g.gain.setTargetAtTime(0,when,rel/4)}else{v.g.gain.linearRampToValueAtTime(0,when+rel)}v.s.stop(when+rel+0.05)}catch(e){}}
 const loaded={};async function ensure(p){if(loaded[p]===undefined){try{const B=await progBufs(p);loaded[p]=(B&&(B[48]||B[72]))?B:null;if(!loaded[p])showErr("No pude cargar los sonidos (no se decodificó el timbre "+p+")")}catch(e){loaded[p]=null}}return loaded[p]}
 /* Respaldo: si las muestras no cargan, sonido sintético con osciladores */
 function synth(p,midi,when,vel){const c=AC();const o=c.createOscillator();const f=c.createBiquadFilter();const g=c.createGain();
@@ -423,16 +425,17 @@ let playing=false,step=0,nextT=0,timer=null,fillNext=false,fillBar=false,held={}
 const ZONE_MAX=54;
 function accOn(){const c=cfg();return playing&&(c.chord==="FINGERED"||c.chord==="SINGLE")}
 async function prep(){const c=cfg();const s=ST[styleOf(c.r)];await Promise.all([ensureDrums(),ensure(gmOf(c.t)),ensure(gmOf(c.t2)),ensure(33),ensure(s.cp),s.pad!=null?ensure(s.pad):0])}
+let RV=+LS.get("vku812-rvol",1);const rhit=(k,t,v)=>hit(k,t,v*RV),rnote=(p,m,t,d,v)=>note(p,m,t,d,v*RV);
 function sched(){const c=AC();const cf=cfg();const s=ST[styleOf(cf.r)];const spb=60/cf.tempo/(s.n/s.b);
   while(nextT<c.currentTime+0.12){const i=step%s.n;
-    if(i===0){fillBar=fillNext;fillNext=false;if(!fillBar&&step>0&&wasFill){hit(49,nextT,0.9)}wasFill=fillBar}
+    if(i===0){fillBar=fillNext;fillNext=false;if(!fillBar&&step>0&&wasFill){rhit(49,nextT,0.9)}wasFill=fillBar}
     const pat=fillBar&&s.n===16?Object.assign({},s.d,FILL):s.d;
-    for(const k in pat){const ch=pat[k][i];if(ch==="x")hit(k,nextT,k==42||k==51||k==54||k==70?0.55:0.95);else if(ch==="o")hit(k,nextT,0.35)}
-    if(i===0&&step===0)hit(49,nextT,0.8);
+    for(const k in pat){const ch=pat[k][i];if(ch==="x")rhit(k,nextT,k==42||k==51||k==54||k==70?0.55:0.95);else if(ch==="o")rhit(k,nextT,0.35)}
+    if(i===0&&step===0)rhit(49,nextT,0.8);
     if(cf.chord!=="CHORD OFF"){const tr=cf.tr,r=chord.root;
-      const bc=s.bass[i];if(bc&&bc!=="."){const off=bc==="5"?7:bc==="o"?12:bc==="6"?9:0;note(33,36+((r+tr)%12+12)%12+off,nextT,spb*0.9,0.85)}
-      const cc=s.ch[i];if(cc==="x"||cc==="L"||cc==="o"){const len=cc==="L"?spb*s.n/2:spb*0.8;chord.iv.forEach(iv=>note(s.cp,55+((r+iv+tr)%12),nextT,len,cc==="o"?0.25:0.4))}
-      if(s.pad!=null&&i===0)chord.iv.forEach(iv=>note(s.pad,60+((r+iv+tr)%12),nextT,spb*s.n*0.98,0.18))}
+      const bc=s.bass[i];if(bc&&bc!=="."){const off=bc==="5"?7:bc==="o"?12:bc==="6"?9:0;rnote(33,36+((r+tr)%12+12)%12+off,nextT,spb*0.9,0.85)}
+      const cc=s.ch[i];if(cc==="x"||cc==="L"||cc==="o"){const len=cc==="L"?spb*s.n/2:spb*0.8;chord.iv.forEach(iv=>rnote(s.cp,55+((r+iv+tr)%12),nextT,len,cc==="o"?0.25:0.4))}
+      if(s.pad!=null&&i===0)chord.iv.forEach(iv=>rnote(s.pad,60+((r+iv+tr)%12),nextT,spb*s.n*0.98,0.18))}
     const beat=Math.floor(i/(s.n/s.b));if(i%(s.n/s.b)===0){const t=nextT;setTimeout(()=>showBeat(beat,s.b),Math.max(0,(t-c.currentTime)*1000))}
     nextT+=spb*(s.n===12&&s.b===4&&styleOf(cf.r)!=="sixeight"&&styleOf(cf.r)!=="slowrock"?1:1);step++}}
 let wasFill=false;
@@ -510,6 +513,9 @@ scBox.addEventListener("pointermove",e=>{const h=scVoices[e.pointerId];if(!h)ret
 ["pointerup","pointercancel"].forEach(t=>scBox.addEventListener(t,e=>scUp(e.pointerId)));
 function setGlide(on){glide=on;$("pGlide").classList.toggle("on",on);$("pGlide").setAttribute("aria-pressed",on);LS.set("vku812-glide",on)}
 $("pGlide").onclick=()=>{setGlide(!glide);toast(glide?"Deslizar: la nota cambia de forma continua":"Notas separadas")};setTimeout(()=>setGlide(glide),0);
+function setRV(v){RV=Math.max(0,Math.min(1,Math.round(v*10)/10));LS.set("vku812-rvol",RV);document.querySelectorAll(".rvPct").forEach(e=>e.textContent=Math.round(RV*100)+"%")}
+setTimeout(()=>setRV(RV),0);
+$("rvDown").onclick=$("fsRvD").onclick=()=>{setRV(RV-0.1);toast("Volumen del ritmo "+Math.round(RV*100)+"%")};$("rvUp").onclick=$("fsRvU").onclick=()=>{setRV(RV+0.1);toast("Volumen del ritmo "+Math.round(RV*100)+"%")};
 function fsSync(){$("fsStart").classList.toggle("on",playing);$("fsStart").textContent=playing?"■ PARAR":"▶ RITMO";$("fsGlide").classList.toggle("on",glide);$("fsLcd").textContent=$("lcdMode").textContent+(oct?" · Oct "+(oct>0?"+":"")+oct:"")}
 function setFull(on){document.body.classList.toggle("fs",on);if(on){fsSync();const d=document.documentElement;try{const r=(d.requestFullscreen||d.webkitRequestFullscreen||function(){}).call(d);if(r&&r.catch)r.catch(()=>{})}catch(e){}}
   else if(document.fullscreenElement||document.webkitFullscreenElement){try{(document.exitFullscreen||document.webkitExitFullscreen).call(document)}catch(e){}}}
