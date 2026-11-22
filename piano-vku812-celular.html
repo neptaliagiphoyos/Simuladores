@@ -89,6 +89,14 @@ kbd.num{background:var(--panel);font-family:var(--f-lcd);font-size:1.05rem}
 .stepper span{font:600 .72rem var(--f-display);letter-spacing:.08em;color:var(--muted);padding:0 8px;text-transform:uppercase}
 .beat{display:flex;gap:5px}.beat i{width:12px;height:12px;border-radius:50%;background:var(--chip)}.beat i.on{background:var(--accent)}
 .kbwrap{border-radius:8px;border:1px solid var(--line);background:#1b2140;padding:6px 4px 4px;touch-action:none}
+.fsbar{display:none}
+body.fs{overflow:hidden}
+body.fs .kbwrap{position:fixed;inset:0;z-index:60;border-radius:0;border:0;margin:0;padding:4px;display:flex;flex-direction:column;gap:4px}
+body.fs .fsbar{display:flex;gap:6px;align-items:center;flex:none}
+.fsbar button{font:inherit;font-size:13px;font-weight:700;padding:6px 10px;border-radius:6px;border:1px solid #3a4270;background:#262d52;color:#e7eaf6}
+.fsbar button.on{background:var(--accent);color:#fff}.fsbar button.red.on{background:#d33}
+.fsbar span{flex:1;min-width:0;color:#9fe8b0;font:600 12px ui-monospace,monospace;text-align:center;white-space:nowrap;overflow:hidden}
+body.fs .wrap .kbwrap .kb.scales{height:auto!important;flex:1 1 0;min-height:0}
 .kb{position:relative;width:100%;height:clamp(170px,42vh,300px);user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
 .kb .w{position:absolute;top:0;bottom:0;width:calc(100% / 36);background:linear-gradient(#fff,#f1f1f4);border:1px solid #9aa0b5;border-radius:0 0 5px 5px;color:#7a8098;font:600 9px var(--f-body);display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;overflow:hidden;border-radius:0 0 3px 3px}
 .kb .b{position:absolute;top:0;height:60%;width:calc(100% / 36 * .62);background:linear-gradient(#2a2d3a,#0d0f16);border-radius:0 0 4px 4px;z-index:2}
@@ -162,6 +170,7 @@ body.cel .kbhint{display:none}
       <button class="pb" id="pScales" aria-pressed="false">ESCALAS</button>
       <span class="scSpan" id="scSpan" hidden><button data-span="1">1 oct</button><button data-span="2">2 oct</button><button data-span="3">3 oct</button></span>
       <button class="pb" id="pGlide" aria-pressed="false" hidden>DESLIZAR</button>
+      <button class="pb" id="pFull" hidden>⛶ PANTALLA COMPLETA</button>
       <span class="stepper"><button id="tDown" aria-label="Timbre anterior">−</button><span>Timbre</span><button id="tUp" aria-label="Timbre siguiente">+</button></span>
       <span class="stepper"><button id="rDown" aria-label="Ritmo anterior">−</button><span>Ritmo</span><button id="rUp" aria-label="Ritmo siguiente">+</button></span>
       <span class="stepper"><button id="tpDown" aria-label="Más lento">−</button><span>Tempo</span><button id="tpUp" aria-label="Más rápido">+</button></span>
@@ -169,8 +178,8 @@ body.cel .kbhint{display:none}
       <span class="beat" id="beat"><i></i><i></i><i></i><i></i></span>
       <button class="astate off" id="audioState" type="button">🔊 Activar sonido</button>
     </div>
-    <div class="kbwrap"><div class="kb" id="kb"></div><div class="kb scales" id="sc" hidden></div></div>
-    <div class="kbhint" id="kbhint">ESCALAS cambia el teclado por 12 filas de piano, cada una empezando en una nota distinta (Do, Do#, Re, Re#… hasta Si hacia abajo) (elige 1, 2 o 3 octavas por franja y súbelas o bájalas con OCTAVA; la tónica va en azul; las teclas negras van intercaladas entre sus blancas, del mismo tamaño). La nota suena mientras tengas el dedo encima y se apaga al soltarlo; puedes moverte hacia la derecha y también hacia abajo a otra fila. Con DESLIZAR activo, la nota no se vuelve a pulsar al mover el dedo: sube o baja de forma continua y se queda afinada cuando detienes el dedo sobre una tecla: al deslizar el dedo solo suenan notas de esa escala. Con el ritmo andando (SINGLE o FINGERED), cada vez que pones el dedo en una fila el acompañamiento cambia al acorde mayor de esa nota (tocas Do → Do mayor); al deslizar el dedo el acorde se queda igual. Las 5 octavas entran completas: desliza los dedos de izquierda (graves) a derecha (agudos) y suenan las teclas por las que pasas, con varios dedos a la vez. En el celular, gíralo en horizontal para tener teclas más anchas. En computadora también puedes usar el teclado: Z S X D C V… (zona de acordes, en celeste) y Q 2 W 3 E R… (melodía). Con el ritmo andando, la zona celeste detecta el acorde y el acompañamiento lo sigue.</div>
+    <div class="kbwrap"><div class="fsbar" id="fsBar"><button id="fsStart" class="red">▶ RITMO</button><button id="fsGlide">DESLIZAR</button><button id="fsOd">OCT −</button><button id="fsOu">OCT +</button><span id="fsLcd"></span><button id="fsExit">✕ Salir</button></div><div class="kb" id="kb"></div><div class="kb scales" id="sc" hidden></div></div>
+    <div class="kbhint" id="kbhint">ESCALAS cambia el teclado por 12 filas de piano, cada una empezando en una nota distinta (Do, Do#, Re, Re#… hasta Si hacia abajo) (elige 1, 2 o 3 octavas por franja y súbelas o bájalas con OCTAVA; la tónica va en azul; las teclas negras van intercaladas entre sus blancas, del mismo tamaño). La nota suena mientras tengas el dedo encima y se apaga al soltarlo; puedes moverte hacia la derecha y también hacia abajo a otra fila. Con DESLIZAR activo, la nota no se vuelve a pulsar al mover el dedo: sube o baja de forma continua y se queda afinada cuando detienes el dedo sobre una tecla: al deslizar el dedo solo suenan notas de esa escala. Con el ritmo andando (SINGLE o FINGERED), cada vez que pones el dedo en una fila el acompañamiento cambia al acorde mayor de esa nota (tocas Do → Do mayor); al deslizar el dedo el acorde se queda igual. Con ⛶ PANTALLA COMPLETA las 12 filas ocupan toda la pantalla, con una barra pequeña para el ritmo, DESLIZAR, la octava y Salir. Las 5 octavas entran completas: desliza los dedos de izquierda (graves) a derecha (agudos) y suenan las teclas por las que pasas, con varios dedos a la vez. En el celular, gíralo en horizontal para tener teclas más anchas. En computadora también puedes usar el teclado: Z S X D C V… (zona de acordes, en celeste) y Q 2 W 3 E R… (melodía). Con el ritmo andando, la zona celeste detecta el acorde y el acompañamiento lo sigue.</div>
   </section>
 
   <!-- ARMAR -->
@@ -501,7 +510,15 @@ scBox.addEventListener("pointermove",e=>{const h=scVoices[e.pointerId];if(!h)ret
 ["pointerup","pointercancel"].forEach(t=>scBox.addEventListener(t,e=>scUp(e.pointerId)));
 function setGlide(on){glide=on;$("pGlide").classList.toggle("on",on);$("pGlide").setAttribute("aria-pressed",on);LS.set("vku812-glide",on)}
 $("pGlide").onclick=()=>{setGlide(!glide);toast(glide?"Deslizar: la nota cambia de forma continua":"Notas separadas")};setTimeout(()=>setGlide(glide),0);
-function setScales(on){scBox.hidden=!on;kb.hidden=on;$("scSpan").hidden=!on;$("pGlide").hidden=!on;$("pScales").classList.toggle("on",on);$("pScales").setAttribute("aria-pressed",on);LS.set("vku812-escalas",on)}
+function fsSync(){$("fsStart").classList.toggle("on",playing);$("fsStart").textContent=playing?"■ PARAR":"▶ RITMO";$("fsGlide").classList.toggle("on",glide);$("fsLcd").textContent=$("lcdMode").textContent+(oct?" · Oct "+(oct>0?"+":"")+oct:"")}
+function setFull(on){document.body.classList.toggle("fs",on);if(on){fsSync();const d=document.documentElement;try{const r=(d.requestFullscreen||d.webkitRequestFullscreen||function(){}).call(d);if(r&&r.catch)r.catch(()=>{})}catch(e){}}
+  else if(document.fullscreenElement||document.webkitFullscreenElement){try{(document.exitFullscreen||document.webkitExitFullscreen).call(document)}catch(e){}}}
+$("pFull").onclick=()=>{unlock();setFull(true)};$("fsExit").onclick=()=>setFull(false);
+["fullscreenchange","webkitfullscreenchange"].forEach(ev=>document.addEventListener(ev,()=>{if(!(document.fullscreenElement||document.webkitFullscreenElement))document.body.classList.remove("fs")}));
+$("fsStart").onclick=async()=>{await startStop();fsSync()};$("fsGlide").onclick=()=>{$("pGlide").click();fsSync()};
+$("fsOd").onclick=()=>{$("oDown").click();fsSync()};$("fsOu").onclick=()=>{$("oUp").click();fsSync()};
+new MutationObserver(()=>{if(document.body.classList.contains("fs"))fsSync()}).observe($("lcdMode"),{childList:true,characterData:true,subtree:true});
+function setScales(on){if(!on&&document.body.classList.contains("fs"))setFull(false);scBox.hidden=!on;kb.hidden=on;$("scSpan").hidden=!on;$("pGlide").hidden=!on;$("pFull").hidden=!on;$("pScales").classList.toggle("on",on);$("pScales").setAttribute("aria-pressed",on);LS.set("vku812-escalas",on)}
 $("pScales").onclick=()=>setScales(kb.hidden?false:true);
 setScales(LS.get("vku812-escalas",false));
 </script>
