@@ -327,28 +327,40 @@ chips();load(LS.get("vku812-draft",EJEMPLOS[0]));show(LS.get("vku812-tab","armar
 let ctx=null,master=null,IDX=null;const packs={};
 try{if(navigator.audioSession)navigator.audioSession.type="playback"}catch(e){}
 function unlock(){const c=AC();try{const b=c.createBuffer(1,1,22050);const s=c.createBufferSource();s.buffer=b;s.connect(c.destination);s.start(0)}catch(e){}if(c.resume)c.resume().catch(()=>{});setAudioState()}
-function setAudioState(){const el=document.getElementById("audioState");if(!el||!ctx)return;el.textContent=ctx.state==="running"?"🔊 Sonido activo":"🔇 Toca aquí para activar el sonido";el.className="astate "+(ctx.state==="running"?"ok":"off")}
+let sampleErr=null;
+function setAudioState(){const el=document.getElementById("audioState");if(!el||!ctx)return;if(sampleErr&&ctx.state==="running"){el.textContent="🎹 Sonido sintético ("+sampleErr+")";el.className="astate off";return}el.textContent=ctx.state==="running"?"🔊 Sonido activo":"🔇 Toca aquí para activar el sonido";el.className="astate "+(ctx.state==="running"?"ok":"off")}
 ["pointerdown","touchstart","touchend","mousedown","keydown","click"].forEach(ev=>document.addEventListener(ev,unlock,{capture:true,passive:true}));
 function AC(){if(!ctx){ctx=new (window.AudioContext||window.webkitAudioContext)();ctx.onstatechange=setAudioState;const comp=ctx.createDynamicsCompressor();master=ctx.createGain();master.gain.value=0.8;master.connect(comp);comp.connect(ctx.destination)}if(ctx.state==="suspended")ctx.resume();return ctx}
 async function getIdx(){if(!IDX)IDX=fetch("vku812-snd/index.json").then(r=>r.json());return IDX}
 function decode(ab){return new Promise((ok,ko)=>{try{const p=AC().decodeAudioData(ab,ok,ko);if(p&&p.then)p.then(ok,ko)}catch(e){ko(e)}})}
 function pack(name){if(!packs[name])packs[name]=(async()=>{const I=await getIdx();const r=await fetch("vku812-snd/"+name+".mp3");if(!r.ok)throw new Error("HTTP "+r.status);const ab=await r.arrayBuffer();const out={};let bad=0;
   await Promise.all(Object.entries(I[name]).map(async([k,[o,l]])=>{try{out[k]=await decode(ab.slice(o,o+l))}catch(e){bad++}}));if(bad&&!Object.keys(out).length)throw new Error("tu navegador no decodifica el audio");return out})().catch(e=>{delete packs[name];showErr("No pude cargar los sonidos ("+e.message+")");throw e});return packs[name]}
-function showErr(m){const el=document.getElementById("audioState");if(el){el.textContent=m;el.className="astate off"}toast(m)}
+function showErr(m){sampleErr=m.replace(/^No pude cargar los sonidos \(|\)$/g,"");const el=document.getElementById("audioState");if(el){el.textContent=m;el.className="astate off"}toast(m)}
 const gmOf=n=>n<128?n:(n-128)%128;
 async function progBufs(p){const P=await pack("f"+String(p>>3).padStart(2,"0"));return{48:P[p+"_48"],72:P[p+"_72"]}}
 function voice(buf,base,midi,when,vel){const c=AC();const s=c.createBufferSource();s.buffer=buf;s.playbackRate.value=Math.pow(2,(midi-base)/12);
   const g=c.createGain();g.gain.setValueAtTime(0,when);g.gain.linearRampToValueAtTime(vel,when+0.006);s.connect(g);g.connect(master);s.start(when);return{s,g}}
 function release(v,when,rel){if(!v)return;try{v.g.gain.cancelScheduledValues(when);v.g.gain.setValueAtTime(v.g.gain.value,when);if(rel>0.5){v.g.gain.setTargetAtTime(0,when,rel/4)}else{v.g.gain.linearRampToValueAtTime(0,when+rel)}v.s.stop(when+rel+0.05)}catch(e){}}
-const loaded={};async function ensure(p){if(!loaded[p])loaded[p]=await progBufs(p);return loaded[p]}
-function note(p,midi,when,dur,vel){const B=loaded[p];if(!B)return null;const base=midi<60?48:72;const bu=B[base]?base:(B[48]?48:72);const v=voice(B[base]||B[48]||B[72],bu,midi,when,vel);v.base=bu;
+const loaded={};async function ensure(p){if(loaded[p]===undefined){try{const B=await progBufs(p);loaded[p]=(B&&(B[48]||B[72]))?B:null;if(!loaded[p])showErr("No pude cargar los sonidos (no se decodificó el timbre "+p+")")}catch(e){loaded[p]=null}}return loaded[p]}
+/* Respaldo: si las muestras no cargan, sonido sintético con osciladores */
+function synth(p,midi,when,vel){const c=AC();const o=c.createOscillator();const f=c.createBiquadFilter();const g=c.createGain();
+  const fam=p>>3;o.type=[0,1,13,14].includes(fam)?"triangle":[2,8].includes(fam)?"square":"sawtooth";
+  o.frequency.value=440*Math.pow(2,(midi-69)/12);f.type="lowpass";f.frequency.value=[0,1,3,4,13].includes(fam)?2200:3200;
+  g.gain.setValueAtTime(0,when);g.gain.linearRampToValueAtTime(vel*0.16,when+0.01);
+  if([0,1,3,4,13,14].includes(fam))g.gain.setTargetAtTime(vel*0.04,when+0.05,0.8);
+  o.connect(f);f.connect(g);g.connect(master);o.start(when);return{s:o,g,synth:true}}
+function note(p,midi,when,dur,vel){const B=loaded[p];if(!B||!(B[48]||B[72])){if(!ctx)return null;const v=synth(p,midi,when,vel);if(dur)release(v,when+dur,0.08);return v}const base=midi<60?48:72;const bu=B[base]?base:(B[48]?48:72);const v=voice(B[base]||B[48]||B[72],bu,midi,when,vel);v.base=bu;
   if(!dur){/* nota sostenida: repetir un tramo del sonido mientras el dedo siga encima */
     const f=440*Math.pow(2,(bu-69)/12),ls=1.4,le=ls+Math.max(1,Math.round(1.2*f))/f;
     if(v.s.buffer.duration>le+0.05){v.s.loop=true;v.s.loopStart=ls;v.s.loopEnd=le}
     if(p<16||(p>=24&&p<=39)||(p>=104&&p<=108)||p>=112)v.g.gain.setTargetAtTime(0,when+1.4,3.5)}
   if(dur)release(v,when+dur,0.08);return v}
-let drums=null;async function ensureDrums(){if(!drums)drums=await pack("drums");return drums}
-function hit(k,when,vel){if(!drums||!drums[k])return;const c=AC();const s=c.createBufferSource();s.buffer=drums[k];const g=c.createGain();g.gain.value=vel;s.connect(g);g.connect(master);s.start(when)}
+let drums=null;async function ensureDrums(){if(!drums){try{drums=await pack("drums")}catch(e){drums={}}}return drums}
+function hit(k,when,vel){if(!drums||!drums[k]){if(!ctx)return;k=+k;const c=ctx;const g=c.createGain();vel*=0.6;g.connect(master);
+    if(k===35||k===36){const o=c.createOscillator();o.frequency.setValueAtTime(140,when);o.frequency.exponentialRampToValueAtTime(45,when+0.15);g.gain.setValueAtTime(vel,when);g.gain.exponentialRampToValueAtTime(0.001,when+0.25);o.connect(g);o.start(when);o.stop(when+0.3)}
+    else{const len=k===42||k===44||k===51||k===54||k===70?0.05:0.18;const b=c.createBuffer(1,Math.floor(c.sampleRate*len),c.sampleRate);const d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+      const n=c.createBufferSource();n.buffer=b;const f=c.createBiquadFilter();f.type="highpass";f.frequency.value=len<0.1?7000:1200;g.gain.setValueAtTime(vel*0.5,when);g.gain.exponentialRampToValueAtTime(0.001,when+len);n.connect(f);f.connect(g);n.start(when)}
+    return}const c=AC();const s=c.createBufferSource();s.buffer=drums[k];const g=c.createGain();g.gain.value=vel;s.connect(g);g.connect(master);s.start(when)}
 
 /* ===== Estilos de ritmo ===== */
 // pasos: x=fuerte o=suave; bajo: x raíz 5 quinta o octava; acorde: x golpe corto L largo
@@ -476,7 +488,7 @@ function glidePitch(row,x){const cells=[...row.querySelectorAll(".sc")];const r0
 scBox.addEventListener("pointermove",e=>{const h=scVoices[e.pointerId];if(!h)return;
   if(glide&&h.v.length){const under=document.elementFromPoint(e.clientX,e.clientY);const nr=under&&under.closest&&under.closest(".srow");if(nr){const sc=nr.querySelector(".scells");if(sc)h.row=sc}
     const g=glidePitch(h.row,e.clientX);const c=cfg();const t=AC().currentTime;
-    h.v.forEach(v=>{if(v&&v.s)v.s.playbackRate.setTargetAtTime(Math.pow(2,(g.p+c.tr+oct*12-v.base)/12),t,0.015)});
+    h.v.forEach(v=>{if(!v||!v.s)return;if(v.synth)v.s.frequency.setTargetAtTime(440*Math.pow(2,(g.p+c.tr+oct*12-69)/12),t,0.015);else v.s.playbackRate.setTargetAtTime(Math.pow(2,(g.p+c.tr+oct*12-v.base)/12),t,0.015)});
     if(g.el!==h.el){h.el.classList.remove("down");g.el.classList.add("down");h.el=g.el}return}const t=document.elementFromPoint(e.clientX,e.clientY);const el=t&&t.closest&&t.closest("[data-sm]");if(el&&el!==h.el){scUp(e.pointerId);scDown(e.pointerId,el)}});
 ["pointerup","pointercancel"].forEach(t=>scBox.addEventListener(t,e=>scUp(e.pointerId)));
 function setGlide(on){glide=on;$("pGlide").classList.toggle("on",on);$("pGlide").setAttribute("aria-pressed",on);LS.set("vku812-glide",on)}
