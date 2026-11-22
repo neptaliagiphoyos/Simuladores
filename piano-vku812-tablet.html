@@ -73,7 +73,7 @@ kbd.num{background:var(--panel);font-family:var(--f-lcd);font-size:1.05rem}
 .preset .c{font-family:var(--f-lcd);font-size:1.15rem;color:var(--lcd);overflow-wrap:anywhere}
 .preset .tag{font-size:.72rem;color:var(--muted)}
 .note{font-size:.85rem;color:var(--muted);max-width:75ch}
-.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-weight:600}
+.toast{pointer-events:none;position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-weight:600}
 .editbox{display:flex;gap:6px;grid-column:1/-1}
 .editbox input{flex:1;min-width:0;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;font-size:.85rem}
 @media (max-width:520px){.lcd .big{font-size:2rem}.lcd{grid-template-columns:1fr}.lcd .tempo{text-align:left}}
@@ -156,7 +156,7 @@ body.tab .list{max-height:60vh;grid-template-columns:repeat(auto-fill,minmax(260
       <button class="astate off" id="audioState" type="button">🔊 Activar sonido</button>
     </div>
     <div class="kbwrap"><div class="kb" id="kb"></div><div class="kb scales" id="sc" hidden></div></div>
-    <div class="kbhint" id="kbhint">ESCALAS cambia el teclado por 7 franjas con las escalas mayores de Do a Si (elige 1, 2 o 3 octavas por franja y súbelas o bájalas con OCTAVA; la tónica va en azul). Con DESLIZAR activo, la nota no se vuelve a pulsar al mover el dedo: sube o baja de forma continua y se queda afinada cuando detienes el dedo sobre una tecla: al deslizar el dedo solo suenan notas de esa escala. Las 5 octavas entran completas: desliza los dedos de izquierda (graves) a derecha (agudos) y suenan las teclas por las que pasas, con varios dedos a la vez. En el celular, gíralo en horizontal para tener teclas más anchas. En computadora también puedes usar el teclado: Z S X D C V… (zona de acordes, en celeste) y Q 2 W 3 E R… (melodía). Con el ritmo andando, la zona celeste detecta el acorde y el acompañamiento lo sigue.</div>
+    <div class="kbhint" id="kbhint">ESCALAS cambia el teclado por 7 franjas con las escalas mayores de Do a Si (elige 1, 2 o 3 octavas por franja y súbelas o bájalas con OCTAVA; la tónica va en azul). La nota suena mientras tengas el dedo encima y se apaga al soltarlo; puedes moverte hacia la derecha y también hacia abajo a otra escala. Con DESLIZAR activo, la nota no se vuelve a pulsar al mover el dedo: sube o baja de forma continua y se queda afinada cuando detienes el dedo sobre una tecla: al deslizar el dedo solo suenan notas de esa escala. Las 5 octavas entran completas: desliza los dedos de izquierda (graves) a derecha (agudos) y suenan las teclas por las que pasas, con varios dedos a la vez. En el celular, gíralo en horizontal para tener teclas más anchas. En computadora también puedes usar el teclado: Z S X D C V… (zona de acordes, en celeste) y Q 2 W 3 E R… (melodía). Con el ritmo andando, la zona celeste detecta el acorde y el acompañamiento lo sigue.</div>
   </section>
 
   <!-- ARMAR -->
@@ -336,7 +336,12 @@ function voice(buf,base,midi,when,vel){const c=AC();const s=c.createBufferSource
   const g=c.createGain();g.gain.setValueAtTime(0,when);g.gain.linearRampToValueAtTime(vel,when+0.006);s.connect(g);g.connect(master);s.start(when);return{s,g}}
 function release(v,when,rel){if(!v)return;try{v.g.gain.cancelScheduledValues(when);v.g.gain.setValueAtTime(v.g.gain.value,when);v.g.gain.linearRampToValueAtTime(0,when+rel);v.s.stop(when+rel+0.05)}catch(e){}}
 const loaded={};async function ensure(p){if(!loaded[p])loaded[p]=await progBufs(p);return loaded[p]}
-function note(p,midi,when,dur,vel){const B=loaded[p];if(!B)return null;const base=midi<60?48:72;const bu=B[base]?base:(B[48]?48:72);const v=voice(B[base]||B[48]||B[72],bu,midi,when,vel);v.base=bu;if(dur)release(v,when+dur,0.08);return v}
+function note(p,midi,when,dur,vel){const B=loaded[p];if(!B)return null;const base=midi<60?48:72;const bu=B[base]?base:(B[48]?48:72);const v=voice(B[base]||B[48]||B[72],bu,midi,when,vel);v.base=bu;
+  if(!dur){/* nota sostenida: repetir un tramo del sonido mientras el dedo siga encima */
+    const f=440*Math.pow(2,(bu-69)/12),ls=1.4,le=ls+Math.max(1,Math.round(1.2*f))/f;
+    if(v.s.buffer.duration>le+0.05){v.s.loop=true;v.s.loopStart=ls;v.s.loopEnd=le}
+    if(p<16||(p>=24&&p<=39)||(p>=104&&p<=108)||p>=112)v.g.gain.setTargetAtTime(0,when+1.4,3.5)}
+  if(dur)release(v,when+dur,0.08);return v}
 let drums=null;async function ensureDrums(){if(!drums)drums=await pack("drums");return drums}
 function hit(k,when,vel){if(!drums||!drums[k])return;const c=AC();const s=c.createBufferSource();s.buffer=drums[k];const g=c.createGain();g.gain.value=vel;s.connect(g);g.connect(master);s.start(when)}
 
@@ -462,7 +467,8 @@ function glidePitch(row,x){const cells=[...row.querySelectorAll("[data-sm]")];co
   let f=(x-r0.left)/w-0.5;f=Math.max(0,Math.min(cells.length-1,f));const i=Math.floor(f),u=f-i;const a=+cells[i].dataset.sm,b=cells[i+1]?+cells[i+1].dataset.sm:a;
   const k=u<0.3?0:u>0.7?1:(u-0.3)/0.4;return{p:a+(b-a)*k,el:cells[u<0.5?i:Math.min(i+1,cells.length-1)]}}
 scBox.addEventListener("pointermove",e=>{const h=scVoices[e.pointerId];if(!h)return;
-  if(glide&&h.v.length){const g=glidePitch(h.row,e.clientX);const c=cfg();const t=AC().currentTime;
+  if(glide&&h.v.length){const under=document.elementFromPoint(e.clientX,e.clientY);const nr=under&&under.closest&&under.closest(".srow");if(nr){const sc=nr.querySelector(".scells");if(sc)h.row=sc}
+    const g=glidePitch(h.row,e.clientX);const c=cfg();const t=AC().currentTime;
     h.v.forEach(v=>{if(v&&v.s)v.s.playbackRate.setTargetAtTime(Math.pow(2,(g.p+c.tr+oct*12-v.base)/12),t,0.015)});
     if(g.el!==h.el){h.el.classList.remove("down");g.el.classList.add("down");h.el=g.el}return}const t=document.elementFromPoint(e.clientX,e.clientY);const el=t&&t.closest&&t.closest("[data-sm]");if(el&&el!==h.el){scUp(e.pointerId);scDown(e.pointerId,el)}});
 ["pointerup","pointercancel"].forEach(t=>scBox.addEventListener(t,e=>scUp(e.pointerId)));
