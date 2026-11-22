@@ -363,10 +363,20 @@ function synth(p,midi,when,vel){const c=AC();const o=c.createOscillator();const 
   g.gain.setValueAtTime(0,when);g.gain.linearRampToValueAtTime(vel*0.16,when+0.01);
   if([0,1,3,4,13,14].includes(fam))g.gain.setTargetAtTime(vel*0.04,when+0.05,0.8);
   o.connect(f);f.connect(g);g.connect(master);o.start(when);return{s:o,g,synth:true}}
-function note(p,midi,when,dur,vel){const B=loaded[p];if(!B||!(B[48]||B[72])){if(!ctx)return null;const v=synth(p,midi,when,vel);if(dur)release(v,when+dur,0.08);return v}const base=midi<60?48:72;const bu=B[base]?base:(B[48]?48:72);const v=voice(B[base]||B[48]||B[72],bu,midi,when,vel);v.base=bu;
+/* Tramo de repetición con fundido cruzado: el final del tramo se mezcla con lo que suena antes de su inicio, así el salto no hace "ploc" */
+const LOOPS=new Map();
+function loopBuf(buf,bu){let L=LOOPS.get(buf);if(L)return L;const f=440*Math.pow(2,(bu-69)/12),ls=1.4,le=ls+Math.max(1,Math.round(1.2*f))/f;
+  if(buf.duration<le+0.05){L={buf,ls:0,le:0};LOOPS.set(buf,L);return L}
+  const sr=buf.sampleRate,a=Math.round(ls*sr),b=Math.round(le*sr),F=Math.min(Math.round(0.25*sr),a,Math.floor((b-a)/2));
+  const out=AC().createBuffer(buf.numberOfChannels,b+1,sr);
+  for(let ch=0;ch<buf.numberOfChannels;ch++){const src=buf.getChannelData(ch),dst=out.getChannelData(ch);dst.set(src.subarray(0,b+1));
+    for(let i=0;i<F;i++){const w=i/F,ga=Math.cos(w*Math.PI/2),gb=Math.sin(w*Math.PI/2);dst[b-F+i]=src[b-F+i]*ga+src[a-F+i]*gb}dst[b]=src[a]}
+  L={buf:out,ls:a/sr,le:b/sr};LOOPS.set(buf,L);return L}
+function note(p,midi,when,dur,vel){const B=loaded[p];if(!B||!(B[48]||B[72])){if(!ctx)return null;const v=synth(p,midi,when,vel);if(dur)release(v,when+dur,0.08);return v}const base=midi<60?48:72;const bu=B[base]?base:(B[48]?48:72);
+  let buf=B[bu],L=null;if(!dur){L=loopBuf(buf,bu);buf=L.buf}
+  const v=voice(buf,bu,midi,when,vel);v.base=bu;
   if(!dur){/* nota sostenida: repetir un tramo del sonido mientras el dedo siga encima */
-    const f=440*Math.pow(2,(bu-69)/12),ls=1.4,le=ls+Math.max(1,Math.round(1.2*f))/f;
-    if(v.s.buffer.duration>le+0.05){v.s.loop=true;v.s.loopStart=ls;v.s.loopEnd=le}
+    if(L.le>0){v.s.loop=true;v.s.loopStart=L.ls;v.s.loopEnd=L.le}
     if(p<16||(p>=24&&p<=39)||(p>=104&&p<=108)||p>=112)v.g.gain.setTargetAtTime(0,when+1.4,3.5)}
   if(dur)release(v,when+dur,0.08);return v}
 let drums=null;async function ensureDrums(){if(!drums){try{drums=await pack("drums")}catch(e){drums={}}}return drums}
