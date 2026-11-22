@@ -95,7 +95,8 @@ kbd.num{background:var(--panel);font-family:var(--f-lcd);font-size:1.05rem}
 .kb .w.zone{background:linear-gradient(#fff,#e3e9ff)}
 .kb .w.down{background:#ffd0bf}.kb .b.down{background:var(--accent)}
 .kbhint{font-size:.8rem;color:var(--muted)}
-.kb.scales{display:grid;grid-template-rows:repeat(7,1fr);gap:3px}
+.kb.scales{display:grid;grid-template-rows:repeat(12,1fr);gap:2px}
+.srow.blkrow .lab{background:#0d0f16;color:#e7eaf6}
 .srow{display:grid;grid-template-columns:2.6em minmax(0,1fr);gap:3px;min-height:0;min-width:0}
 .scSpan{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}.scSpan button{border:0;background:var(--bg);color:var(--ink);font:700 .78rem var(--f-display);padding:9px 10px;cursor:pointer}.scSpan button.on{background:var(--ink);color:var(--bg)}
 .sc{font-size:clamp(9px,1.6vw,14px)!important}
@@ -104,7 +105,7 @@ kbd.num{background:var(--panel);font-family:var(--f-lcd);font-size:1.05rem}
 .dot.down{background:var(--accent)}
 .sc.blk{background:linear-gradient(#2a2d3a,#0d0f16);color:#c9cfe6}
 .sc.blk.down{background:var(--accent);color:#fff}
-@media (orientation:portrait) and (max-width:700px){body .wrap .kb.scales{height:62vh}}
+@media (orientation:portrait) and (max-width:700px){body .wrap .kb.scales{height:72vh}}
 .srow .lab{display:flex;align-items:center;justify-content:center;font:700 .78rem var(--f-display);color:#cfe0ff;background:#262d55;border-radius:4px}
 .scells{display:grid;gap:2px;min-height:0}
 .sc{background:linear-gradient(#fff,#eef1fb);border-radius:3px;display:flex;align-items:flex-end;justify-content:center;font:600 9px var(--f-body);color:#6a7090;padding-bottom:2px;overflow:hidden;min-width:0}
@@ -163,7 +164,7 @@ body.tab .list{max-height:60vh;grid-template-columns:repeat(auto-fill,minmax(260
       <button class="astate off" id="audioState" type="button">🔊 Activar sonido</button>
     </div>
     <div class="kbwrap"><div class="kb" id="kb"></div><div class="kb scales" id="sc" hidden></div></div>
-    <div class="kbhint" id="kbhint">ESCALAS cambia el teclado por 7 filas de piano, cada una empezando en una nota distinta (Do, Re, Mi, Fa, Sol, La, Si hacia abajo) (elige 1, 2 o 3 octavas por franja y súbelas o bájalas con OCTAVA; la tónica va en azul; las teclas negras van intercaladas entre sus blancas, del mismo tamaño). La nota suena mientras tengas el dedo encima y se apaga al soltarlo; puedes moverte hacia la derecha y también hacia abajo a otra escala. Con DESLIZAR activo, la nota no se vuelve a pulsar al mover el dedo: sube o baja de forma continua y se queda afinada cuando detienes el dedo sobre una tecla: al deslizar el dedo solo suenan notas de esa escala. Las 5 octavas entran completas: desliza los dedos de izquierda (graves) a derecha (agudos) y suenan las teclas por las que pasas, con varios dedos a la vez. En el celular, gíralo en horizontal para tener teclas más anchas. En computadora también puedes usar el teclado: Z S X D C V… (zona de acordes, en celeste) y Q 2 W 3 E R… (melodía). Con el ritmo andando, la zona celeste detecta el acorde y el acompañamiento lo sigue.</div>
+    <div class="kbhint" id="kbhint">ESCALAS cambia el teclado por 12 filas de piano, cada una empezando en una nota distinta (Do, Do#, Re, Re#… hasta Si hacia abajo) (elige 1, 2 o 3 octavas por franja y súbelas o bájalas con OCTAVA; la tónica va en azul; las teclas negras van intercaladas entre sus blancas, del mismo tamaño). La nota suena mientras tengas el dedo encima y se apaga al soltarlo; puedes moverte hacia la derecha y también hacia abajo a otra escala. Con DESLIZAR activo, la nota no se vuelve a pulsar al mover el dedo: sube o baja de forma continua y se queda afinada cuando detienes el dedo sobre una tecla: al deslizar el dedo solo suenan notas de esa escala. Las 5 octavas entran completas: desliza los dedos de izquierda (graves) a derecha (agudos) y suenan las teclas por las que pasas, con varios dedos a la vez. En el celular, gíralo en horizontal para tener teclas más anchas. En computadora también puedes usar el teclado: Z S X D C V… (zona de acordes, en celeste) y Q 2 W 3 E R… (melodía). Con el ritmo andando, la zona celeste detecta el acorde y el acompañamiento lo sigue.</div>
   </section>
 
   <!-- ARMAR -->
@@ -470,7 +471,7 @@ const MAJ=[0,2,4,5,7,9,11];
 const scBox=$("sc");const scVoices={};
 let scN=LS.get("vku812-span",innerWidth<600?1:innerWidth<1000?2:3);
 function buildScales(){scBox.innerHTML="";
- [0,2,4,5,7,9,11].forEach(root=>{const row=document.createElement("div");row.className="srow";
+ [0,1,2,3,4,5,6,7,8,9,10,11].forEach(root=>{const row=document.createElement("div");row.className="srow"+(MAJ.includes(root)?"":" blkrow");
   const base=(scN===1?60:48)+root;const notes=[];for(let m=base;m<=base+12*scN;m++)notes.push(m);
   row.innerHTML='<div class="lab">'+SOL[root]+'</div><div class="scells" style="grid-template-columns:repeat('+notes.length+',minmax(0,1fr))">'+notes.map(m=>'<div class="sc'+(m%12===root?' tonic':'')+(MAJ.includes(m%12)?'':' blk')+'" data-sm="'+m+'">'+SOL[m%12]+'</div>').join("")+'</div>';
   scBox.appendChild(row);
