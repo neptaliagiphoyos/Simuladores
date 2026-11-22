@@ -342,7 +342,7 @@ const gmOf=n=>n<128?n:(n-128)%128;
 async function progBufs(p){const P=await pack("f"+String(p>>3).padStart(2,"0"));return{48:P[p+"_48"],72:P[p+"_72"]}}
 function voice(buf,base,midi,when,vel){const c=AC();const s=c.createBufferSource();s.buffer=buf;s.playbackRate.value=Math.pow(2,(midi-base)/12);
   const g=c.createGain();g.gain.setValueAtTime(0,when);g.gain.linearRampToValueAtTime(vel,when+0.006);s.connect(g);g.connect(master);s.start(when);return{s,g}}
-function release(v,when,rel){if(!v)return;try{v.g.gain.cancelScheduledValues(when);v.g.gain.setValueAtTime(v.g.gain.value,when);v.g.gain.linearRampToValueAtTime(0,when+rel);v.s.stop(when+rel+0.05)}catch(e){}}
+function release(v,when,rel){if(!v)return;try{v.g.gain.cancelScheduledValues(when);v.g.gain.setValueAtTime(v.g.gain.value,when);if(rel>0.5){v.g.gain.setTargetAtTime(0,when,rel/4)}else{v.g.gain.linearRampToValueAtTime(0,when+rel)}v.s.stop(when+rel+0.05)}catch(e){}}
 const loaded={};async function ensure(p){if(!loaded[p])loaded[p]=await progBufs(p);return loaded[p]}
 function note(p,midi,when,dur,vel){const B=loaded[p];if(!B)return null;const base=midi<60?48:72;const bu=B[base]?base:(B[48]?48:72);const v=voice(B[base]||B[48]||B[72],bu,midi,when,vel);v.base=bu;
   if(!dur){/* nota sostenida: repetir un tramo del sonido mientras el dedo siga encima */
@@ -427,7 +427,7 @@ async function down(m){if(held[m])return;const c=cfg();keyEl[m]&&keyEl[m].classL
   const p=gmOf(m<=ZONE_MAX&&c.mode==="split"?c.t2:c.t);const ps=[p];if(c.mode==="dual")ps.push(gmOf(c.t2));
   held[m]={v:[]};await Promise.all(ps.map(ensure));if(!held[m])return;const t=AC().currentTime;
   const mm=m+c.tr;held[m].v=ps.map((q,i)=>note(q,mm,t,0,i?0.5:0.8))}
-function up(m){const h=held[m];delete held[m];keyEl[m]&&keyEl[m].classList.remove("down");if(!h||!h.v)return;const t=AC().currentTime;h.v.forEach(v=>release(v,t,sustain?1.2:0.12))}
+function up(m){const h=held[m];delete held[m];keyEl[m]&&keyEl[m].classList.remove("down");if(!h||!h.v)return;const t=AC().currentTime;h.v.forEach(v=>release(v,t,sustain?3.5:2))}
 let ptr={};kb.addEventListener("pointerdown",e=>{const k=e.target.closest("[data-m]");if(!k)return;if(e.pointerType==="mouse")e.preventDefault();unlock();try{kb.setPointerCapture(e.pointerId)}catch(er){}const m=+k.dataset.m;ptr[e.pointerId]=m;down(m)});
 kb.addEventListener("pointermove",e=>{if(!(e.pointerId in ptr))return;const el=document.elementFromPoint(e.clientX,e.clientY);const k=el&&el.closest&&el.closest("[data-m]");if(!k)return;const m=+k.dataset.m;if(m!==ptr[e.pointerId]){up(ptr[e.pointerId]);ptr[e.pointerId]=m;down(m)}});
 ["pointerup","pointercancel"].forEach(t=>kb.addEventListener(t,e=>{if(e.pointerId in ptr){up(ptr[e.pointerId]);delete ptr[e.pointerId]}}));
@@ -468,7 +468,7 @@ buildScales();
 $("scSpan").onclick=e=>{const b=e.target.closest("[data-span]");if(!b)return;scN=+b.dataset.span;LS.set("vku812-span",scN);buildScales();toast(scN+(scN===1?" octava":" octavas")+" por franja; usa OCTAVA para subir o bajar")};
 async function scDown(id,el){const m=+el.dataset.sm;el.classList.add("down");const c=cfg();const ps=[gmOf(c.t)];if(c.mode==="dual")ps.push(gmOf(c.t2));
   scVoices[id]={el,v:[],row:el.parentElement};await Promise.all(ps.map(ensure));if(!scVoices[id]||(!glide&&scVoices[id].el!==el))return;const t=AC().currentTime;scVoices[id].v=ps.map((q,i)=>note(q,m+c.tr+oct*12,t,0,i?0.5:0.8))}
-function scUp(id){const h=scVoices[id];if(!h)return;delete scVoices[id];h.el.classList.remove("down");const t=AC().currentTime;h.v.forEach(v=>release(v,t,sustain?1.2:0.12))}
+function scUp(id){const h=scVoices[id];if(!h)return;delete scVoices[id];h.el.classList.remove("down");const t=AC().currentTime;h.v.forEach(v=>release(v,t,sustain?3.5:2))}
 scBox.addEventListener("pointerdown",e=>{const el=e.target.closest("[data-sm]");if(!el)return;if(e.pointerType==="mouse")e.preventDefault();unlock();try{scBox.setPointerCapture(e.pointerId)}catch(er){}scDown(e.pointerId,el)});
 let glide=LS.get("vku812-glide",false);
 function glidePitch(row,x){const cells=[...row.querySelectorAll("[data-sm]")];const r0=cells[0].getBoundingClientRect(),w=r0.width+2;
