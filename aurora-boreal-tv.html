@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Simulador de Aurora Boreal (computadora)</title>
+<style>
+:root{--bg:#05070f;--card:#0d1324;--tx:#e6ecff;--mut:#8b96b8;--ac:#4dff9a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:1500px;margin:0 auto;padding:14px 18px 28px}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:14px;align-items:start}
+.side{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow-y:auto}
+.side .ctl:first-child{margin-top:0}
+kbd{background:#1a2340;border:1px solid #2f3b66;border-radius:4px;padding:0 4px;font-size:11px;color:#dfe6ff}
+button{cursor:pointer}
+h1{font-size:20px;font-weight:650;line-height:1.25}
+.sub{font-size:12px;color:var(--mut);margin:3px 0 8px}
+.tabs{display:flex;gap:6px;margin-bottom:8px}
+.tabs button{flex:1;padding:10px 4px;border-radius:10px;border:1px solid #223050;background:var(--card);color:var(--mut);font-size:13px;font-weight:600}
+.tabs button.on{background:#0f2e22;color:var(--ac);border-color:#2a8a5a}
+#wrap{position:relative;border-radius:14px;overflow:hidden;border:1px solid #1b2440}
+canvas{display:block;width:100%;touch-action:manipulation}
+.hud{position:absolute;left:10px;bottom:8px;font-size:13px;color:#cfd8ff;text-shadow:0 0 4px #000;pointer-events:none;line-height:1.35}
+.ctl{background:var(--card);border-radius:12px;padding:10px 12px;margin-top:8px}
+.row{margin:4px 0 6px}
+.row label{display:flex;justify-content:space-between;font-size:12.5px;color:var(--mut)}
+.row label b{color:var(--tx);font-weight:600}
+input[type=range]{width:100%;accent-color:#4dff9a;height:26px}
+.tg{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.tg button{padding:8px 11px;border-radius:20px;border:1px solid #2a3558;background:#0a1020;color:var(--mut);font-size:12px}
+.tg button.on{color:#fff;border-color:#4d7cff;background:#14224a}
+.st{font-size:12px;color:var(--mut);margin-bottom:2px}
+.spec{display:flex;gap:8px;align-items:flex-end;height:74px;margin-top:4px}
+.bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:10px;color:var(--mut);text-align:center;line-height:1.2}
+.bar i{display:block;width:70%;border-radius:4px 4px 0 0;min-height:2px;margin-bottom:3px;transition:height .25s}
+.info{font-size:12.5px;line-height:1.55;color:#c9d2ef}
+.info h3{font-size:13.5px;color:#fff;margin-bottom:4px}
+.info p{margin-bottom:6px}
+.leg{display:grid;grid-template-columns:1fr 1fr;gap:5px 10px;font-size:11.5px;color:var(--mut);margin-top:8px}
+.leg span:before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--c);margin-right:5px;vertical-align:-1px;box-shadow:0 0 6px var(--c)}
+#bFb{position:fixed;right:18px;bottom:18px;z-index:8;padding:11px 16px;border-radius:24px;border:1px solid #2a8a5a;background:#0f2e22;color:#4dff9a;font-size:13px;font-weight:600;box-shadow:0 6px 18px rgba(0,0,0,.5)}
+#fbm{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;z-index:9;padding:16px}
+#fbm.show{display:flex}
+#fbm .box{background:#0d1324;border:1px solid #2a3558;border-radius:14px;max-width:400px;width:100%;padding:18px;font-size:13.5px;line-height:1.5;color:#c9d2ef}
+#fbm h3{color:#fff;font-size:16px;margin-bottom:6px}
+#fbm a.lk{display:block;margin:8px 0;padding:10px 12px;border-radius:10px;background:#14224a;border:1px solid #2f3b66;color:#fff;text-decoration:none}
+#fbm a.lk small{display:block;color:#8b96b8}
+#fbm .cl{margin-top:8px;padding:8px 14px;border-radius:20px;border:1px solid #2a3558;background:#0a1020;color:#cdd6f6;font-size:12px}
+</style>
+<style id="tv-jvc">.tvfoco{outline:6px solid #ffd400!important;outline-offset:3px!important}button,select,input,a{min-height:40px}</style></head>
+<body>
+<h1>Aurora boreal: partículas, campo magnético y fluorescencia · versión computadora</h1>
+<div class="sub">Simulador · Polo Norte · Cinturones de Van Allen</div>
+<div class="app">
+ <div>
+  <div class="tabs">
+  <button id="tA" class="on">🌍 Magnetosfera</button>
+  <button id="tB">🌌 Atmósfera polar</button>
+</div>
+
+<div id="wrap"><canvas id="cv"></canvas><div class="hud" id="hud"></div></div>
+
+<div class="ctl info" id="info"></div>
+ </div>
+ <div class="side">
+  <div class="ctl">
+  <div class="row"><label>Actividad solar (índice Kp) <b id="vKp">5</b></label>
+    <input type="range" id="kp" min="1" max="9" step="1" value="5"></div>
+  <div class="row"><label>Energía de los electrones <b id="vE">5,0 keV</b></label>
+    <input type="range" id="en" min="0" max="100" step="1" value="57"></div>
+  <div class="row"><label>Velocidad de simulación <b id="vS">1×</b></label>
+    <input type="range" id="sp" min="0.25" max="2" step="0.25" value="1"></div>
+  <div class="tg">
+    <button id="bSun" class="on">☀ Fotones solares</button>
+    <button id="bBelt" class="on">◯ Van Allen</button>
+    <button id="bLine" class="on">⌇ Líneas de campo</button>
+    <button id="bZoom">🔍 Acercar</button>
+    <button id="bPause">⏸ Pausa</button>
+  </div>
+</div>
+
+<div class="ctl">
+  <div class="st">Espectro de la fluorescencia emitida (fotones/s)</div>
+  <div class="spec">
+    <div class="bar"><i id="sb" style="background:#7a6bff"></i>427,8 nm<br>N₂⁺ azul</div>
+    <div class="bar"><i id="sg" style="background:#45ff8a"></i>557,7 nm<br>O verde</div>
+    <div class="bar"><i id="sr" style="background:#ff3b3b"></i>630 nm<br>O rojo</div>
+    <div class="bar"><i id="spk" style="background:#ff5ab4"></i>~670 nm<br>N₂ rosado</div>
+  </div>
+</div>
+
+<div class="ctl info"><h3>Atajos de teclado</h3><p><kbd>1</kbd> Magnetosfera · <kbd>2</kbd> Atmósfera polar · <kbd>Espacio</kbd> pausa · <kbd>+</kbd>/<kbd>−</kbd> actividad solar Kp · <kbd>Z</kbd> acercar · <kbd>S</kbd> fotones solares</p></div>
+ </div>
+</div>
+
+<button id="bFb">💬 Comentarios</button>
+<div id="fbm"><div class="box">
+  <h3>💬 Información y comentarios</h3>
+  <p>Simulador de la aurora boreal, creado por <b>Neptalí Agip</b>. ¿Te gustó, encontraste un error o tienes una idea? Escríbeme:</p>
+  <a class="lk" href="#?text=Hola%20Neptal%C3%AD%2C%20comentario%20sobre%20el%20Simulador%20de%20Aurora%20Boreal%3A%20" target="_blank" rel="noopener" style="display:none!important;">📱 WhatsApp</a>
+  <a class="lk" href="mailto:neptaliagiphoyos@gmail.com?subject=Comentario%20Simulador%20Aurora%20Boreal">✉️ Correo<small>neptaliagiphoyos@gmail.com</small></a>
+  <button class="cl" id="fbCopy">Copiar correo</button> <button class="cl" id="fbClose">Cerrar</button>
+</div></div>
+<script>
+const $=id=>document.getElementById(id);
+const cv=$('cv'),cx=cv.getContext('2d');
+const glow=document.createElement('canvas'),gx=glow.getContext('2d');
+let W=360,H=460,DPR=1,EX,EY,R,stars=[],mount=[];
+const S={view:'A',kp:5,E:5,spd:1,sun:true,belts:true,lines:true,zoom:false,pause:false};
+let sw=[],cap=[],trap=[],sol=[],elec=[],phot=[],sparks=[];
+const oval={N:{r:0,g:0,b:0,p:0},S:{r:0,g:0,b:0,p:0}};
+const cnt={b:0,g:0,r:0,p:0};
+const acc={sw:0,tail:0,sun:0,e:0};
+let T=0,arrS=0,fr=0;const FS=1.25;
+const SCW=()=>Math.max(1,W/380),SCH=()=>Math.max(1,H/460);
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const gauss=()=>{let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};
+const COL={r:'#ff3b3b',g:'#45ff8a',b:'#7a6bff',p:'#ff5ab4'};
+const RGB={r:[255,60,60],g:[70,255,140],b:[120,105,255],p:[255,90,180]};
+const TOP=450;
+
+/* sprites de brillo */
+const SPR={};
+for(const k in RGB){const c=document.createElement('canvas');c.width=c.height=32;const g=c.getContext('2d');
+  const gr=g.createRadialGradient(16,16,0,16,16,16);const [r,gg,b]=RGB[k];
+  gr.addColorStop(0,`rgba(${r},${gg},${b},1)`);gr.addColorStop(1,`rgba(${r},${gg},${b},0)`);
+  g.fillStyle=gr;g.fillRect(0,0,32,32);SPR[k]=c;}
+
+function geo(){EX=W*0.5;EY=H*0.5;R=Math.min(W*0.04,H*0.05)*(S.zoom?2.3:1);}
+function size(){
+  DPR=Math.min(2,window.devicePixelRatio||1);
+  W=cv.parentElement.clientWidth;
+  H=Math.round(Math.max(520,Math.min(window.innerHeight-130,W*0.72)));
+  cv.style.height=H+'px';cv.width=W*DPR;cv.height=H*DPR;
+  cx.setTransform(DPR,0,0,DPR,0,0);
+  glow.width=W;glow.height=H;
+  geo();
+  stars=[];for(let i=0;i<120;i++)stars.push([Math.random()*W,Math.random()*H,Math.random()*1.1+0.2,Math.random()*6]);
+  mount=[];let y=0;for(let x=0;x<=W+10;x+=8){y+=(Math.random()-0.5)*5;y=Math.max(-16,Math.min(3,y));mount.push([x,y]);}
+}
+
+/* ---------- física simplificada ---------- */
+function r0mp(){return 10-0.35*S.kp;}               // magnetopausa (radios terrestres)
+function dip(L,th,c){                              // línea de campo dipolar r = L·sin²θ
+  let r=L*Math.sin(th)**2;const k=S.kp/9;
+  if(c<0){if(L>3)r*=1-(0.05+0.12*k)*Math.min(1,(L-3)/6)*(-c);}     // lado día comprimido
+  else{if(L>4)r*=1+(0.15+0.35*k)*Math.min(1.5,(L-4)/5)*c;}        // lado noche estirado
+  return [EX+c*r*Math.sin(th)*R, EY-r*Math.cos(th)*R];
+}
+function hstop(E){return Math.max(72,Math.min(280,200-95*Math.log10(E)));}
+function sampleE(){return Math.random()<0.2?rnd(0.3,1):S.E*Math.exp(gauss()*0.45);}
+function colorAt(h){const q=Math.random();
+  if(h>=200)return q<.9?'r':'g';
+  if(h>=150)return q<.45?'r':'g';
+  if(h>=110)return q<.85?'g':(q<.95?'r':'b');
+  if(h>=95)return q<.55?'g':(q<.9?'b':'p');
+  return q<.45?'b':(q<.85?'p':'g');}
+const yh=h=>H-26-(H-44)*h/TOP;
+const hy=y=>(H-26-y)*TOP/(H-44);
+
+function mkTrap(inner){const L=inner?rnd(1.35,2.3):rnd(3.3,6);const thf=Math.asin(Math.sqrt(1/L));const amax=Math.PI/2-thf-0.08;
+  return{inner,L,a:rnd(0.15,1)*amax,psi:rnd(0,6.28),dl:rnd(0,6.28),wb:rnd(0.04,0.08)*(inner?0.6:1),wd:(inner?1:-1)*rnd(0.003,0.008)};}
+function initTrap(){trap=[];for(let i=0;i<70;i++)trap.push(mkTrap(true));for(let i=0;i<120;i++)trap.push(mkTrap(false));}
+
+function spawnCap(side){
+  const north=Math.random()<0.5,L=side<0?rnd(8,11):rnd(6,10);
+  const th=side<0?(north?0.75:Math.PI-0.75):(north?Math.PI/2-0.01:Math.PI/2+0.01);
+  cap.push({L,c:side,th,dir:north?-1:1,ph:rnd(0,6.28),x:0,y:0});
+}
+function arrive(x,y,north){
+  const h=hstop(sampleE()),c=colorAt(h);cnt[c]+=1;(north?oval.N:oval.S)[c]+=1;arrS+=1;
+  sparks.push({x,y,c,l:1});
+}
+
+function stepA(){
+  const k=S.spd,r0=r0mp();
+  acc.sw+=(1.2+S.kp*0.35)*k*SCH();
+  while(acc.sw>1){acc.sw--;if(sw.length<900)sw.push({x:-4,y:rnd(-10,H+10),vx:rnd(2,2.8)*(1+S.kp*0.05),vy:rnd(-.1,.1),hit:0});}
+  for(const p of sw){
+    p.x+=p.vx*k;p.y+=p.vy*k;
+    const dx=(p.x-EX)/R,dy=(EY-p.y)/R,d=Math.hypot(dx,dy),f=Math.atan2(dy,-dx);
+    if(Math.abs(f)<2.6){const rb=r0*Math.pow(2/(1+Math.cos(f)),0.6);
+      if(d<rb){
+        if(!p.hit){p.hit=1;if(Math.random()<0.006*S.kp){spawnCap(-1);p.dead=1;continue;}}
+        const ux=dx/d,uy=dy/d;p.x=EX+ux*rb*R;p.y=EY-uy*rb*R;
+        const nx=ux,ny=-uy,vn=p.vx*nx+p.vy*ny;if(vn<0){p.vx-=vn*nx;p.vy-=vn*ny;}
+        if(Math.abs(p.vy)<0.25)p.vy+=(p.y<EY?-0.25:0.25);
+        const s=Math.hypot(p.vx,p.vy),t=2.4/s;p.vx*=t;p.vy*=t;
+      }}
+    if(p.x>W+6||p.y<-20||p.y>H+20)p.dead=1;
+  }
+  sw=sw.filter(p=>!p.dead);
+  acc.tail+=0.004*S.kp*k;while(acc.tail>1){acc.tail--;if(cap.length<80)spawnCap(1);}
+  for(const p of cap){
+    p.th+=p.dir*0.0055*k;p.ph+=0.5*k;
+    const q=dip(p.L,p.th,p.c);p.x=q[0];p.y=q[1];
+    if(Math.hypot(p.x-EX,p.y-EY)<=R*1.03||p.th<0.02||p.th>Math.PI-0.02){p.dead=1;arrive(p.x,p.y,p.dir<0);}
+  }
+  cap=cap.filter(p=>!p.dead);
+  for(const t of trap){t.psi+=t.wb*k;t.dl+=t.wd*k;}
+  if(S.sun){acc.sun+=1.6*k;while(acc.sun>1){acc.sun--;sol.push({x:-4,y:rnd(0,H),vx:10});}}
+  for(const s of sol){s.x+=s.vx*k;if(s.x>W+10||Math.hypot(s.x-EX,s.y-EY)<R)s.dead=1;}
+  sol=sol.filter(s=>!s.dead);
+  for(const o of [oval.N,oval.S]){for(const c in o)o[c]*=Math.pow(0.985,k);o.g+=0.003*S.kp*k;}
+}
+
+function emit(x,y,c){
+  const a=rnd(0,6.283),s=rnd(1.5,3.5);
+  if(phot.length<1600)phot.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,c,l:1});
+  cnt[c]+=1;
+  gx.globalCompositeOperation='lighter';gx.globalAlpha=0.5;gx.drawImage(SPR[c],x-5*SCH(),y-16*SCH(),10*SCH(),32*SCH());gx.globalAlpha=1;
+}
+const ex=(e,h)=>e.x0+(yh(h===undefined?e.h:h)-yh(TOP))*0.12;
+
+function stepB(){
+  const k=S.spd;
+  gx.globalCompositeOperation='destination-out';gx.fillStyle=`rgba(0,0,0,${0.035*k})`;gx.fillRect(0,0,W,H);
+  acc.e+=(0.08+S.kp*0.07)*k*SCW()*0.8;
+  while(acc.e>1){acc.e--;if(elec.length<450){const kk=Math.floor(Math.random()*3);
+    const c=W*(0.2+0.3*kk)+W*0.07*Math.sin(T*0.004+kk*2.1),E=sampleE();
+    elec.push({x0:c+gauss()*W*0.025-W*0.05,h:TOP,E,hs:hstop(E),ph:rnd(0,6.28)});}}
+  for(const e of elec){
+    e.h-=(1.5+0.3*Math.sqrt(e.E))*k;e.ph+=0.45*k;
+    if(e.h>e.hs){if(Math.random()<Math.min(0.85,0.8*Math.exp(-(e.h-e.hs)/35))*k)emit(ex(e),yh(e.h),colorAt(e.h));}
+    else{for(let i=0;i<3;i++)emit(ex(e),yh(e.h),colorAt(e.h));e.dead=1;}
+  }
+  elec=elec.filter(e=>!e.dead);
+  for(const p of phot){p.x+=p.vx*k;p.y+=p.vy*k;p.l-=0.022*k;}
+  phot=phot.filter(p=>p.l>0);
+  if(S.sun){acc.sun+=0.5*k;while(acc.sun>1){acc.sun--;const q=Math.random();
+    const t=q<.6?'vis':(q<.9?'uv':'euv');
+    sol.push({x:-5,y:rnd(yh(440),yh(10)),vx:7,vy:1.1,t,stop:t==='vis'?0:(t==='uv'?rnd(15,45):rnd(110,320))});}}
+  for(const s of sol){s.x+=s.vx*k;s.y+=s.vy*k;
+    if(hy(s.y)<=s.stop){s.dead=1;sparks.push({x:s.x,y:s.y,c:s.t,l:1});}
+    if(s.x>W+10)s.dead=1;}
+  sol=sol.filter(s=>!s.dead);
+}
+
+/* ---------- dibujo ---------- */
+function dot(x,y,r,col,a){cx.globalAlpha=a;cx.fillStyle=col;cx.beginPath();cx.arc(x,y,r,0,7);cx.fill();}
+function txt(s,x,y,col,al,sz){cx.globalAlpha=1;cx.fillStyle=col||'rgba(220,230,255,.85)';cx.font=`${(sz||10)*FS}px system-ui,sans-serif`;cx.textAlign=al||'left';cx.fillText(s,x,y);}
+function starsDraw(){for(const s of stars){dot(s[0],s[1],s[2],'#fff',0.25+0.25*Math.sin(T*0.03+s[3]));}cx.globalAlpha=1;}
+
+function shue(r0,a){cx.beginPath();let i=0;for(let f=-2.6;f<=2.601;f+=0.05,i++){const r=r0*Math.pow(2/(1+Math.cos(f)),a);
+  const x=EX-r*Math.cos(f)*R,y=EY-r*Math.sin(f)*R;i?cx.lineTo(x,y):cx.moveTo(x,y);}cx.stroke();}
+function linePath(L,c){const th0=Math.asin(Math.sqrt(1/L));cx.beginPath();let i=0;
+  for(let th=th0;th<=Math.PI-th0+1e-6;th+=0.03,i++){const q=dip(L,th,c);i?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1]);}cx.stroke();}
+function beltFill(L1,L2,c,col){const tc=Math.asin(Math.sqrt(1/L1))+0.02;cx.beginPath();let i=0;
+  for(let th=tc;th<=Math.PI-tc;th+=0.04,i++){const q=dip(L2,th,c);i?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1]);}
+  for(let th=Math.PI-tc;th>=tc;th-=0.04){const q=dip(L1,th,c);cx.lineTo(q[0],q[1]);}
+  cx.closePath();cx.fillStyle=col;cx.fill();}
+function trapPos(t){const th=Math.PI/2+t.a*Math.sin(t.psi),c=Math.cos(t.dl);return dip(t.L,th,c);}
+function trapDraw(front){cx.globalCompositeOperation='lighter';
+  const nOut=50+S.kp*8;let io=0;
+  for(const t of trap){if(!t.inner){io++;if(io>nOut)continue;}
+    const f=Math.sin(t.dl)>0;if(f!==front)continue;
+    const q=trapPos(t);if(!front&&Math.hypot(q[0]-EX,q[1]-EY)<R)continue;
+    dot(q[0],q[1],t.inner?1.6:1.3,t.inner?'#ff9f43':'#5ec8ff',front?0.9:0.35);}
+  cx.globalAlpha=1;cx.globalCompositeOperation='source-over';}
+function ovalDraw(o,north){
+  const tot=o.r+o.g+o.b+o.p;if(tot<0.02)return;
+  let rr=0,gg=0,bb=0;for(const c in o){rr+=RGB[c][0]*o[c];gg+=RGB[c][1]*o[c];bb+=RGB[c][2]*o[c];}
+  rr/=tot;gg/=tot;bb/=tot;const a=Math.min(0.95,0.15+tot*0.12),col=Math.min(0.55,0.28+0.025*S.kp);
+  cx.save();cx.globalCompositeOperation='lighter';cx.shadowColor=`rgb(${rr|0},${gg|0},${bb|0})`;cx.shadowBlur=14;
+  cx.strokeStyle=`rgba(${rr|0},${gg|0},${bb|0},${a})`;cx.lineWidth=Math.max(2,R*0.13);
+  cx.beginPath();cx.ellipse(EX,EY-(north?1:-1)*R*Math.cos(col)*1.04,R*Math.sin(col)*1.05,R*0.12,0,0,7);cx.stroke();cx.restore();}
+
+function drawA(){
+  cx.fillStyle='#03050c';cx.fillRect(0,0,W,H);starsDraw();
+  // Sol
+  const sg=cx.createRadialGradient(-W*0.15,EY,0,-W*0.15,EY,W*0.4);
+  sg.addColorStop(0,'rgba(255,220,120,.55)');sg.addColorStop(1,'rgba(255,200,80,0)');cx.fillStyle=sg;cx.fillRect(0,0,W*0.3,H);
+  const r0=r0mp();
+  cx.setLineDash([4,4]);cx.lineWidth=1.2;
+  cx.strokeStyle='rgba(255,170,90,.45)';shue(r0*1.3,0.8);
+  cx.strokeStyle='rgba(120,255,200,.5)';shue(r0,0.6);cx.setLineDash([]);
+  if(S.belts){
+    beltFill(1.3,2.4,-1,'rgba(255,150,60,.16)');beltFill(1.3,2.4,1,'rgba(255,150,60,.16)');
+    const a=0.08+0.015*S.kp;beltFill(3.1,6.4,-1,`rgba(80,180,255,${a})`);beltFill(3.1,6.4,1,`rgba(80,180,255,${a})`);
+  }
+  if(S.lines){
+    cx.lineWidth=1;cx.strokeStyle='rgba(120,160,255,.33)';
+    for(const L of [1.5,2.2,3,4,5,6.5,8,10]){linePath(L,-1);linePath(L,1);}
+    cx.strokeStyle='rgba(120,160,255,.22)';
+    for(const s of [1,-1])for(const c0 of [0.05,0.11,0.17,0.24]){
+      const x0=EX+R*Math.sin(c0),y0=EY-s*R*Math.cos(c0),ye=EY-s*R*(4.4-c0*9);
+      cx.beginPath();cx.moveTo(x0,y0);cx.bezierCurveTo(EX+R*0.5,EY-s*R*3.2,EX+R*4,ye,W+20,ye+s*R*0.3);cx.stroke();}
+  }
+  if(S.belts)trapDraw(false);
+  // fotones solares
+  cx.strokeStyle='rgba(255,210,63,.75)';cx.lineWidth=1.3;cx.beginPath();
+  for(const s of sol){cx.moveTo(s.x,s.y);cx.lineTo(s.x-9,s.y);}cx.stroke();
+  // viento solar
+  cx.globalCompositeOperation='lighter';
+  for(const p of sw)dot(p.x,p.y,1.2,p.hit?'#ffd9a0':'#fff3c4',0.75);
+  cx.globalCompositeOperation='source-over';cx.globalAlpha=1;
+  // Tierra
+  const g=cx.createRadialGradient(EX-R*0.45,EY-R*0.3,R*0.1,EX,EY,R);
+  g.addColorStop(0,'#6fb4ff');g.addColorStop(0.7,'#1d56a8');g.addColorStop(1,'#0b2148');
+  cx.fillStyle=g;cx.beginPath();cx.arc(EX,EY,R,0,7);cx.fill();
+  cx.fillStyle='rgba(0,0,12,.55)';cx.beginPath();cx.arc(EX,EY,R,-Math.PI/2,Math.PI/2);cx.fill();
+  cx.fillStyle='rgba(235,245,255,.85)';cx.beginPath();cx.ellipse(EX,EY-R*0.9,R*0.38,R*0.13,0,0,7);cx.fill();
+  cx.beginPath();cx.ellipse(EX,EY+R*0.9,R*0.4,R*0.13,0,0,7);cx.fill();
+  cx.setLineDash([2,3]);cx.strokeStyle='rgba(255,255,255,.35)';cx.beginPath();cx.moveTo(EX,EY-R*1.6);cx.lineTo(EX,EY+R*1.6);cx.stroke();cx.setLineDash([]);
+  ovalDraw(oval.N,true);ovalDraw(oval.S,false);
+  if(S.belts)trapDraw(true);
+  // partículas guiadas al polo
+  cx.globalCompositeOperation='lighter';
+  for(const p of cap){const q=dip(p.L,p.th+0.01,p.c);let tx=q[0]-p.x,ty=q[1]-p.y;const n=Math.hypot(tx,ty)||1;
+    const o=2.6*Math.sin(p.ph);dot(p.x-ty/n*o,p.y+tx/n*o,1.7,'#9dffcf',0.95);}
+  for(const s of sparks){dot(s.x,s.y,2+8*(1-s.l),COL[s.c]||'#fff',s.l*0.8);}
+  cx.globalCompositeOperation='source-over';cx.globalAlpha=1;
+  // etiquetas
+  txt('☀ Viento solar →',6,16,'#ffe39a','left',11);
+  txt('N',EX,EY-R*1.75,'#fff','center',11);txt('S',EX,EY+R*1.75+9,'#fff','center',11);
+  const lb=(r,a,f,s,col)=>{const rr=r*Math.pow(2/(1+Math.cos(f)),a);txt(s,EX-rr*Math.cos(f)*R,EY-rr*Math.sin(f)*R-3,col,'center',9.5);};
+  lb(r0*1.3,0.8,0.75,'Choque de proa','rgba(255,180,110,.9)');
+  lb(r0,0.6,-0.8,'Magnetopausa','rgba(140,255,210,.9)');
+  if(S.belts){txt('Cinturón interior (protones)',EX+R*2.6,EY+R*0.25,'#ffb36b','left',9.5);
+    txt('Cinturón exterior (electrones)',EX+R*1.2,EY+R*5.2,'#7fd3ff','left',9.5);}
+  txt('Cola magnética →',W-6,EY-R*0.6,'rgba(170,190,255,.8)','right',9.5);
+  txt('Óvalo auroral',EX+R*0.7,EY-R*1.3,'#8dffb8','left',9.5);
+  txt('Cúspide polar',EX-R*1.1,EY-R*4.2,'rgba(200,215,255,.8)','right',9.5);
+}
+
+function drawB(){
+  const sky=cx.createLinearGradient(0,0,0,H);sky.addColorStop(0,'#010208');sky.addColorStop(1,'#0a1430');
+  cx.fillStyle=sky;cx.fillRect(0,0,W,H);starsDraw();
+  // capa de ozono
+  cx.fillStyle='rgba(199,125,255,.07)';cx.fillRect(0,yh(45),W,yh(15)-yh(45));
+  // capas
+  cx.setLineDash([3,5]);cx.strokeStyle='rgba(160,175,220,.22)';cx.lineWidth=1;
+  for(const h of [12,50,85]){cx.beginPath();cx.moveTo(0,yh(h));cx.lineTo(W,yh(h));cx.stroke();}cx.setLineDash([]);
+  // líneas de campo casi verticales
+  if(S.lines){cx.strokeStyle='rgba(110,150,255,.2)';
+    for(let x0=-W*0.2;x0<W;x0+=34){const y0=yh(TOP),y1=yh(0),x1=x0+(y1-y0)*0.12;
+      cx.beginPath();cx.moveTo(x0,y0);cx.lineTo(x1,y1);cx.stroke();
+      const ym=(y0+y1)/2,xm=x0+(ym-y0)*0.12;cx.beginPath();cx.moveTo(xm-3,ym-5);cx.lineTo(xm,ym);cx.lineTo(xm+3.6,ym-4.4);cx.stroke();}}
+  // brillo acumulado (cortinas)
+  cx.globalCompositeOperation='lighter';cx.drawImage(glow,0,0,W,H);
+  // electrones en hélice
+  for(const e of elec){for(let j=8;j>=0;j--){const hh=e.h+j*3;
+    dot(ex(e,hh)+3.5*Math.cos(e.ph-j*0.45),yh(hh),j?1:1.7,'#7fe7ff',(1-j/9)*0.85);}}
+  for(const p of phot)dot(p.x,p.y,1.3,COL[p.c],p.l);
+  cx.globalAlpha=1;cx.lineWidth=1.4;
+  const SC={vis:'#ffe066',uv:'#c77dff',euv:'#66e0ff'};
+  for(const s of sol){cx.strokeStyle=SC[s.t];cx.globalAlpha=0.85;cx.beginPath();cx.moveTo(s.x,s.y);cx.lineTo(s.x-11,s.y-1.7);cx.stroke();}
+  for(const s of sparks){dot(s.x,s.y,1.5+6*(1-s.l),SC[s.c]||COL[s.c]||'#fff',s.l*0.7);}
+  cx.globalCompositeOperation='source-over';cx.globalAlpha=1;
+  // suelo
+  const yg=yh(0);cx.fillStyle='#0b1120';cx.beginPath();cx.moveTo(0,H);
+  for(const m of mount)cx.lineTo(m[0],yg+m[1]);cx.lineTo(W,H);cx.closePath();cx.fill();
+  cx.strokeStyle='rgba(200,220,255,.3)';cx.beginPath();mount.forEach((m,i)=>i?cx.lineTo(m[0],yg+m[1]):cx.moveTo(m[0],yg+m[1]));cx.stroke();
+  const ox=W*0.86,oy=yg+mount[Math.min(mount.length-1,Math.round(ox/8))][1];
+  cx.strokeStyle='#cfd8ff';cx.lineWidth=1.4;cx.beginPath();cx.moveTo(ox,oy);cx.lineTo(ox,oy-8);cx.moveTo(ox-3,oy);cx.lineTo(ox,oy-4);cx.lineTo(ox+3,oy);
+  cx.moveTo(ox,oy-6);cx.lineTo(ox+4,oy-9);cx.stroke();dot(ox,oy-10.5,2,'#cfd8ff',1);cx.globalAlpha=1;
+  txt('observador',ox,oy+11,'rgba(207,216,255,.8)','center',9);
+  // ejes y etiquetas
+  cx.strokeStyle='rgba(200,210,240,.4)';
+  for(const h of [100,200,300,400]){cx.beginPath();cx.moveTo(0,yh(h));cx.lineTo(6,yh(h));cx.stroke();txt(h+' km',8,yh(h)+3,'rgba(200,210,240,.7)','left',9);}
+  txt('Termosfera / ionosfera',46,yh(420),'rgba(180,190,230,.6)','left',9);
+  txt('Mesosfera',46,yh(64),'rgba(180,190,230,.6)','left',9);
+  txt('Estratosfera · ozono (absorbe UV)',46,yh(28),'rgba(205,160,255,.75)','left',9);
+  txt('Troposfera',46,yh(3),'rgba(180,190,230,.5)','left',8.5);
+  txt('630 nm · O',W-6,yh(250),'#ff6b6b','right',9.5);
+  txt('557,7 nm · O',W-6,yh(140),'#6bff9f','right',9.5);
+  txt('427,8 nm · N₂⁺',W-6,yh(100)+2,'#a99cff','right',9.5);
+  txt('N₂ rosado',W-6,yh(84)+2,'#ff7cc4','right',9.5);
+  const hs=hstop(S.E);cx.setLineDash([5,4]);cx.strokeStyle='rgba(127,231,255,.45)';cx.beginPath();cx.moveTo(40,yh(hs));cx.lineTo(W*0.7,yh(hs));cx.stroke();cx.setLineDash([]);
+  txt(`penetración media ≈ ${hs|0} km`,W*0.7-2,yh(hs)-4,'rgba(127,231,255,.85)','right',9);
+  if(S.lines)txt('B ↓ casi vertical en el polo',W-6,16,'rgba(150,180,255,.85)','right',10);
+  txt('e⁻ desde la magnetosfera ↓',6,16,'#9fefff','left',10);
+}
+
+/* ---------- interfaz ---------- */
+const INFO={
+A:`<h3>¿Qué estás viendo?</h3>
+<p>El <b>viento solar</b> es plasma: protones y electrones con carga. Al llegar a la Tierra, el campo magnético lo frena en el <b>choque de proa</b> y la mayor parte se desvía por la <b>magnetopausa</b>. Con Kp alto la magnetosfera se comprime y la cola se estira.</p>
+<p>Una fracción entra por las <b>cúspides polares</b> y por la <b>cola magnética</b> (reconexión). Esas partículas bajan en espiral por las líneas de campo hasta el <b>óvalo auroral</b>, alrededor de cada polo.</p>
+<p>Los <b>cinturones de Van Allen</b> atrapan partículas: rebotan de un hemisferio a otro entre sus puntos de espejo y derivan alrededor de la Tierra. Los protones van hacia el oeste y los electrones hacia el este. El cinturón interior está a 1,2–2,5 radios y el exterior a 3–6.</p>
+<p>Los <b>fotones</b> de la luz solar no tienen carga, así que cruzan el campo magnético en línea recta, sin desviarse.</p>`,
+B:`<h3>Fluorescencia en la atmósfera polar</h3>
+<p>Cerca del polo las líneas de campo son casi verticales, así que los electrones bajan en hélice casi en línea recta. Al chocar con átomos y moléculas los <b>excitan</b>, y al desexcitarse estos emiten <b>fotones</b>: esa es la luz de la aurora.</p>
+<p>• <b style="color:#ff6b6b">630 nm, rojo</b>: oxígeno atómico, sobre ~200 km.<br>• <b style="color:#6bff9f">557,7 nm, verde</b>: oxígeno atómico, 100–200 km (el color típico).<br>• <b style="color:#a99cff">427,8 nm, azul-violeta</b>: N₂⁺, y <b style="color:#ff7cc4">rosado</b> del N₂ en el borde inferior (~90 km).</p>
+<p>Si subes la <b>energía</b>, los electrones penetran más y la base de la cortina se vuelve verde y rosada. Si la bajas, domina el rojo alto. Si activas los fotones solares, verás que el UV muere en la capa de ozono y el EUV en la ionosfera, mientras que la luz visible llega al suelo. En la noche polar el Sol no se ve, y por eso la aurora se distingue.</p>`};
+const LEG={
+A:[['#fff3c4','Viento solar (p⁺, e⁻)'],['#ffd23f','Fotones de luz solar'],['#9dffcf','Partícula guiada al polo'],['#45ff8a','Óvalo auroral'],['#ff9f43','Protones atrapados'],['#5ec8ff','Electrones atrapados']],
+B:[['#7fe7ff','Electrón en hélice'],['#ff3b3b','Fotón 630 nm (O)'],['#45ff8a','Fotón 557,7 nm (O)'],['#7a6bff','Fotón 427,8 nm (N₂⁺)'],['#ff5ab4','Fotón N₂ rosado'],['#ffe066','Luz visible solar'],['#c77dff','UV (absorbe el ozono)'],['#66e0ff','EUV (ioniza)']]};
+function setInfo(){$('info').innerHTML=INFO[S.view]+'<div class="leg">'+LEG[S.view].map(l=>`<span style="--c:${l[0]}">${l[1]}</span>`).join('')+'</div>';}
+function setView(v){S.view=v;$('tA').classList.toggle('on',v==='A');$('tB').classList.toggle('on',v==='B');
+  sol=[];phot=[];elec=[];sparks=[];gx.clearRect(0,0,W,H);setInfo();}
+$('tA').onclick=()=>setView('A');$('tB').onclick=()=>setView('B');
+$('kp').oninput=e=>{S.kp=+e.target.value;$('vKp').textContent=S.kp;};
+const eMap=v=>0.5*Math.pow(60,v/100);
+$('en').oninput=e=>{S.E=eMap(+e.target.value);$('vE').textContent=S.E.toFixed(1).replace('.',',')+' keV';};
+$('sp').oninput=e=>{S.spd=+e.target.value;$('vS').textContent=String(S.spd).replace('.',',')+'×';};
+const tog=(id,key,cb)=>{$(id).onclick=()=>{S[key]=!S[key];$(id).classList.toggle('on',S[key]);cb&&cb();};};
+tog('bSun','sun',()=>{sol=[];});tog('bBelt','belts');tog('bLine','lines');tog('bZoom','zoom',geo);
+tog('bPause','pause',()=>{$('bPause').textContent=S.pause?'▶ Seguir':'⏸ Pausa';});
+
+function bars(){const m=Math.max(cnt.b,cnt.g,cnt.r,cnt.p,1);
+  for(const [id,k] of [['sb','b'],['sg','g'],['sr','r'],['spk','p']])$(id).style.height=(2+48*cnt[k]/m)+'px';}
+
+function frame(){
+  if(!S.pause){
+    T+=S.spd;fr++;
+    if(S.view==='A')stepA();else stepB();
+    for(const s of sparks)s.l-=0.04*S.spd;sparks=sparks.filter(s=>s.l>0);
+    for(const c in cnt)cnt[c]*=Math.pow(0.99,S.spd);arrS*=Math.pow(0.985,S.spd);
+  }
+  if(S.view==='A'){drawA();$('hud').innerHTML=`Kp ${S.kp} · magnetopausa a ${r0mp().toFixed(1).replace('.',',')} R⊕<br>Partículas al óvalo: ~${Math.round(arrS*0.9)}/s`;}
+  else{drawB();const tot=cnt.b+cnt.g+cnt.r+cnt.p;$('hud').innerHTML=`Electrones: ${elec.length} · E ≈ ${S.E.toFixed(1).replace('.',',')} keV<br>Fluorescencia: ~${Math.round(tot*0.6)} fotones/s`;}
+  if(fr%8===0)bars();
+  requestAnimationFrame(frame);
+}
+$('bFb').onclick=()=>$('fbm').classList.add('show');
+$('fbClose').onclick=()=>$('fbm').classList.remove('show');
+$('fbm').onclick=e=>{if(e.target.id==='fbm')$('fbm').classList.remove('show');};
+$('fbCopy').onclick=async()=>{try{await navigator.clipboard.writeText('neptaliagiphoyos@gmail.com');$('fbCopy').textContent='¡Copiado!';}catch(e){$('fbCopy').textContent='neptaliagiphoyos@gmail.com';}};
+window.addEventListener('resize',()=>{size();gx.clearRect(0,0,W,H);});
+document.addEventListener('keydown',ev=>{if((document.activeElement||{}).tagName==='INPUT'&&ev.key!==' ')return;if($('fbm').classList.contains('show'))return;
+  const kp=$('kp');let h=true;
+  switch(ev.key){case'1':setView('A');break;case'2':setView('B');break;case' ':$('bPause').click();break;
+    case'+':case'=':kp.value=Math.min(9,+kp.value+1);kp.oninput({target:kp});break;
+    case'-':kp.value=Math.max(1,+kp.value-1);kp.oninput({target:kp});break;
+    case'z':case'Z':$('bZoom').click();break;case's':case'S':$('bSun').click();break;default:h=false;}
+  if(h)ev.preventDefault();});
+size();initTrap();setInfo();frame();
+</script>
+<!-- Botón volver a la biblioteca · Neptalí Agip -->
+<style id="nav-volver-css">#nav-volver{transition:padding .3s,opacity .3s;opacity:.92}#nav-volver #nav-volver-t{display:inline-block;max-width:160px;overflow:hidden;white-space:nowrap;vertical-align:bottom;transition:max-width .35s}#nav-volver.mini{padding:6px 9px!important;opacity:.7}#nav-volver.mini #nav-volver-t{max-width:0}#nav-volver.mini:hover,#nav-volver.mini:focus-visible{opacity:1;padding:6px 11px!important}#nav-volver.mini:hover #nav-volver-t,#nav-volver.mini:focus-visible #nav-volver-t{max-width:160px}</style>
+<a id="nav-volver" href="https://neptaliagiphoyos.github.io/Simuladores/" title="Volver a la biblioteca"
+ style="position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:8px;z-index:2147483000;display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:99px;background:rgba(15,17,21,.82);color:#fff;font:700 12px/1.2 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;text-decoration:none;border:1px solid rgba(255,255,255,.25);box-shadow:0 4px 14px rgba(0,0,0,.35);backdrop-filter:blur(4px)">⬅ <span id="nav-volver-t">🔬 Simuladores</span></a>
+<script>
+(function(){try{
+  var r=document.referrer,a=document.getElementById('nav-volver'),t=document.getElementById('nav-volver-t');
+  var L={'Programas-de-Ingenieria':'🛠️ Programas','Simuladores':'🔬 Simuladores','Juegos-ni-os/lego':'🧱 LEGO','Juegos-ni-os':'🎮 Juegos','El-Sastre-del-Grid/libros':'📖 Libros','Profe-Agip':'🏫 Profe Agip'};
+  if(r&&r.indexOf('https://neptaliagiphoyos.github.io/')===0&&r.split('#')[0]!==location.href.split('#')[0]){
+    var p=r.replace('https://neptaliagiphoyos.github.io/','').split(/[?#]/)[0];
+    if(/(^|\/)(index\.html)?$/.test(p)){for(var k in L){if(p.replace(/index\.html$/,'').replace(/\/$/,'')===k){a.href=r.split('#')[0];t.textContent=L[k];break;}}}
+  }
+  setTimeout(function(){a.classList.add('mini')},3500);
+}catch(e){}})();
+</script>
+<script>window.__tvgame=false;</script><script>/* Navegacion con control remoto (TV) - ES5 */
+(function(){
+  if (window.__tvnav) return; window.__tvnav = 1;
+  var GAME = !!window.__tvgame;
+  var st = document.createElement('style');
+  st.textContent = '.tvfoco{outline:6px solid #ffd400 !important;outline-offset:3px !important;box-shadow:0 0 0 10px rgba(0,0,0,.55) !important;position:relative;z-index:5}';
+  (document.head||document.documentElement).appendChild(st);
+  var SEL = 'a[href],button,input,select,textarea,[tabindex],[onclick],summary';
+  function visible(el){
+    if (el.disabled) return false;
+    var r = el.getBoundingClientRect();
+    if (r.width < 4 || r.height < 4) return false;
+    var cs = window.getComputedStyle(el);
+    return cs.visibility !== 'hidden' && cs.display !== 'none';
+  }
+  function items(){
+    var all = document.querySelectorAll(SEL), out = [];
+    for (var i=0;i<all.length;i++){ if (all[i].getAttribute('tabindex')==='-1') continue; if (visible(all[i])) out.push(all[i]); }
+    return out;
+  }
+  var cur = null;
+  function setFocus(el){
+    if (cur) cur.className = (' '+cur.className+' ').replace(' tvfoco ',' ').replace(/^\s+|\s+$/g,'');
+    cur = el; if (!el) return;
+    el.className += ' tvfoco';
+    if (!el.hasAttribute('tabindex') && !/^(A|BUTTON|INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) el.setAttribute('tabindex','0');
+    try { el.focus({preventScroll:true}); } catch(e){ try{el.focus();}catch(e2){} }
+    var r = el.getBoundingClientRect(), h = window.innerHeight;
+    if (r.top < 60 || r.bottom > h - 60) window.scrollBy(0, r.top - h/2 + r.height/2);
+  }
+  function center(r){ return {x:r.left+r.width/2, y:r.top+r.height/2}; }
+  function move(dir){
+    var list = items(); if (!list.length) return;
+    if (!cur || list.indexOf(cur) < 0){ setFocus(list[0]); return; }
+    var a = cur.getBoundingClientRect(), ca = center(a), best = null, bd = 1e12;
+    for (var i=0;i<list.length;i++){
+      var el = list[i]; if (el === cur) continue;
+      var b = el.getBoundingClientRect(), cb = center(b), dx = cb.x-ca.x, dy = cb.y-ca.y, main, side;
+      if (dir==='R'){ if (b.left < a.right-4 && dx <= 4) continue; main=dx; side=dy; }
+      else if (dir==='L'){ if (b.right > a.left+4 && dx >= -4) continue; main=-dx; side=dy; }
+      else if (dir==='D'){ if (b.top < a.bottom-4 && dy <= 4) continue; main=dy; side=dx; }
+      else { if (b.bottom > a.top+4 && dy >= -4) continue; main=-dy; side=dx; }
+      if (main <= 0) continue;
+      var d = main + Math.abs(side)*2.5;
+      if (d < bd){ bd = d; best = el; }
+    }
+    if (best) setFocus(best);
+    else if (dir==='D') window.scrollBy(0, window.innerHeight*0.6);
+    else if (dir==='U') window.scrollBy(0, -window.innerHeight*0.6);
+  }
+  window.addEventListener('keydown', function(e){
+    if (e.defaultPrevented) return;
+    var t = e.target && e.target.tagName;
+    if (t==='INPUT' || t==='TEXTAREA' || t==='SELECT') { if (e.keyCode!==38 && e.keyCode!==40) return; }
+    var k = e.keyCode || e.which, dir = null;
+    if (k===37) dir='L'; else if (k===38) dir='U'; else if (k===39) dir='R'; else if (k===40) dir='D';
+    if (dir){ if (GAME) return; e.preventDefault(); move(dir); return; }
+    if ((k===13 || k===23 || k===66) && cur && (!GAME || document.activeElement===cur)){ e.preventDefault(); if (cur.tagName==='INPUT'){cur.focus();return;} cur.click(); }
+  }, false);
+  document.addEventListener('focusin', function(e){ var el=e.target; if (el && el!==cur && el.matches && el.matches(SEL)) setFocus(el); });
+  setTimeout(function(){ if (!cur && !GAME){ var l = items(); for (var i=0;i<l.length;i++){ var r=l[i].getBoundingClientRect(); if (r.top>=0 && r.top < window.innerHeight){ setFocus(l[i]); break; } } } }, 900);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sismos 3D: ciudad con aisladores y amortiguadores</title>
+<style>
+:root{--bg:#0f1720;--card:#16212d;--ink:#e8eef4;--mut:#93a4b5;--acc:#4fc3f7;--line:#26364a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:24px}
+header{max-width:1500px;margin:0 auto;padding:12px 14px 4px;display:flex;gap:10px;align-items:flex-start}
+header .tt{flex:1}h1{font-size:19px;margin:0}header p{margin:3px 0 0;color:var(--mut);font-size:13px}
+main{max-width:1500px;margin:0 auto;padding:0 10px}
+.app{display:grid;grid-template-columns:1fr;gap:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}
+.card h2{font-size:15px;margin:0 0 6px}
+.view{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);margin-top:10px;background:#0b121a}
+#cv{width:100%;display:block;touch-action:none;cursor:grab}
+#cv.drag{cursor:grabbing}
+.hud{position:absolute;left:8px;top:8px;font-size:12px;background:rgba(0,0,0,.55);padding:6px 8px;border-radius:8px;pointer-events:none;line-height:1.35}
+.ctrl{position:absolute;left:8px;right:8px;bottom:8px;display:flex;gap:6px;flex-wrap:wrap}
+.btn{background:var(--acc);color:#04202e;border:0;border-radius:9px;padding:9px 13px;font-weight:700;font-size:14px;cursor:pointer}
+.btn.alt{background:rgba(38,54,74,.92);color:var(--ink)}
+.btn.sm{padding:6px 10px;font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;flex:1}
+.seg button{flex:1;background:none;border:0;color:var(--ink);padding:8px 5px;font-size:13px;cursor:pointer}
+.seg button.on{background:var(--acc);color:#04202e;font-weight:700}
+label{font-size:13px;color:var(--mut)}label b{color:var(--ink)}
+input[type=range]{width:100%;margin:4px 0 8px}
+select{background:#0b121a;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px;font-size:13px;max-width:100%}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{background:#0b121a;border:1px solid var(--line);color:var(--ink);border-radius:20px;padding:6px 11px;font-size:13px;cursor:pointer}
+.chip.on{border-color:var(--acc);color:var(--acc);font-weight:700}
+.note{font-size:13px;color:var(--mut);margin:6px 0}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{padding:5px 4px;border-bottom:1px solid var(--line);text-align:left}th{color:var(--mut);font-weight:600}
+tr.sel td{background:rgba(79,195,247,.08)}
+.ok{color:#9ccc65}.warn{color:#ffd54f}.bad{color:#ff5252}
+ul{padding-left:18px;margin:6px 0}li{font-size:13px;color:var(--mut);margin:3px 0}
+kbd{background:#0b121a;border:1px solid #3a4a5e;border-bottom-width:2px;border-radius:5px;padding:1px 6px;font:12px system-ui}
+.pc{display:none}
+@media(min-width:1000px){.app{grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
+.side{position:sticky;top:8px;max-height:calc(100vh - 16px);overflow-y:auto;padding-right:4px}.pc{display:block}}
+</style><style id="tv-jvc">.tvfoco{outline:6px solid #ffd400!important;outline-offset:3px!important}button,select,input,a{min-height:40px}</style></head>
+<body>
+<header><div class="tt"><h1>Sismos 3D · ciudad con aisladores y amortiguadores</h1><p>Varios edificios sobre el mismo suelo y el mismo sismo: compara alturas, materiales y sistemas de protección</p></div>
+<button id="infob" class="btn alt sm">ⓘ Info</button></header>
+<div id="infom" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:20;align-items:center;justify-content:center;padding:16px">
+<div class="card" style="max-width:420px;width:100%"><h2>Sismos 3D</h2>
+<p class="note">Creado por <b style="color:#e8eef4">Neptalí Agip</b>. Herramienta didáctica: no reemplaza estudios de suelos ni el análisis según las Normas E.030 y E.031.</p>
+<p class="note">¿Comentarios, errores o ideas? Escríbeme:</p>
+<p>✉️ <a href="mailto:neptaliagiphoyos@gmail.com?subject=Simulador%20Sismos%203D" style="color:#4fc3f7">neptaliagiphoyos@gmail.com</a></p>
+<div class="row"><button class="btn alt" id="copym">Copiar correo</button><button class="btn" id="closem">Cerrar</button></div><p class="note" id="copymsg"></p></div></div>
+<main><div class="app">
+<div>
+<div class="view"><canvas id="cv"></canvas>
+<div class="hud" id="hud"></div>
+<div class="ctrl"><button class="btn sm" id="play">▶ Sismo</button><button class="btn alt sm" id="reset">⟲ Reiniciar</button><button class="btn alt sm" id="spd">Velocidad ×1</button><button class="btn alt sm" id="cam">🎥 Vista</button></div>
+</div>
+<p class="note">Arrastra para girar la vista · rueda o pellizco para acercar · toca un edificio para elegirlo.</p>
+<div class="card"><h2>Resultados por edificio</h2><div style="overflow-x:auto"><table id="tab"></table></div>
+<p class="note">Estado: ✔ sin daño · ⚠ daño (supera la deriva de la E.030) · 💥 colapso (supera la deriva última).</p></div>
+<div class="card"><h2>Aceleración del suelo (g)</h2><canvas id="th" style="width:100%;display:block"></canvas></div>
+<div class="card pc"><h2>Atajos de teclado</h2><ul style="list-style:none;padding:0">
+<li><kbd>Espacio</kbd> sismo / pausa · <kbd>R</kbd> reiniciar · <kbd>V</kbd> vista</li>
+<li><kbd>1</kbd>…<kbd>6</kbd> elegir edificio · <kbd>+</kbd> <kbd>−</kbd> pisos del elegido</li>
+<li><kbd>N</kbd> ninguna · <kbd>A</kbd> aisladores · <kbd>D</kbd> amortiguadores</li>
+<li><kbd>↑</kbd> <kbd>↓</kbd> magnitud ±0,1 · <kbd>I</kbd> info</li></ul></div>
+</div>
+<div class="side">
+<div class="card"><h2>Edificios</h2>
+<div class="chips" id="chips"></div>
+<div class="row"><button class="btn alt sm" id="add">＋ Agregar edificio</button><button class="btn alt sm" id="del">− Quitar el elegido</button></div>
+<div id="selbox">
+<label>Número de pisos del <b id="selname"></b>: <b id="nfv"></b></label>
+<div class="row" style="margin:2px 0"><button class="btn alt sm" id="fm">−</button><input type="range" id="nf" min="1" max="40" value="10" style="flex:1;margin:0"><button class="btn alt sm" id="fp">＋</button></div>
+<div class="row"><div class="seg" id="mat"><button data-v="c">Concreto</button><button data-v="a">Acero</button><button data-v="m">Madera</button></div></div>
+<div class="row"><label>Sistema&nbsp;</label><select id="sys"></select></div>
+<label>Protección sísmica</label>
+<div class="row" style="margin-top:4px"><div class="seg" id="prot"><button data-v="0">Ninguna</button><button data-v="1">Aisladores</button><button data-v="2">Amortiguadores</button></div></div>
+<p class="note" id="protnote"></p>
+</div></div>
+<div class="card"><h2>Sismo</h2>
+<label>Magnitud: <b id="mv"></b></label><input type="range" id="mag" min="5" max="9.5" step="0.1" value="8.3">
+<label>Distancia a la ruptura: <b id="rv"></b></label><input type="range" id="dist" min="10" max="300" step="5" value="45">
+<div class="row"><div class="seg" id="mtype"><button data-v="0" class="on">Interplaca</button><button data-v="1">Intraplaca</button></div></div>
+<p class="note" id="mnote"></p>
+<div class="row"><label>Suelo&nbsp;</label><select id="soil"></select></div>
+<p class="note" id="snote"></p>
+<div class="row"><button class="btn alt sm" id="newq">🎲 Otro sismo</button></div>
+</div>
+<div class="card"><h2>¿Cómo funcionan?</h2><ul>
+<li><b>Aisladores</b> (apoyos de caucho y plomo bajo la estructura): alargan el periodo del edificio a ≈ 2,5 s y lo "desacoplan" del suelo. La base se desplaza mucho, pero los pisos casi no se deforman. Funcionan mejor en suelo firme; en suelo muy blando (Ts largo) pierden ventaja y el desplazamiento del aislador crece.</li>
+<li><b>Amortiguadores</b> (disipadores viscosos en diagonales): no cambian el periodo, pero suben el amortiguamiento (+20 %) y transforman la energía del sismo en calor; reducen la deriva y la aceleración, sobre todo en resonancia.</li>
+<li>Modelo: suelo estratificado lineal (ondas S verticales) sobre roca; cada edificio es su modo fundamental (T = hn/Ct de la E.030; madera con aproximación de ASCE 7). El aislado se modela como dos osciladores en serie (aislador T = 2,5 s, 15 % de amortiguamiento + superestructura). Deformaciones exageradas ×12.</li>
+<li>Colapso aproximado: deriva del 1.er piso mayor que la deriva última típica (concreto 1,5–2,5 %, acero 2,5–4 %, madera 2,5–4 %). Herramienta didáctica: no reemplaza un análisis según las Normas E.030 y E.031.</li>
+</ul></div>
+</div>
+</div></main>
+<script>
+"use strict";
+{const tf=Number.prototype.toFixed;Number.prototype.toFixed=function(d){return tf.call(this,d).replace(".",",");};}
+const $=s=>document.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+//<calc>
+function rng(seed){let s=(seed>>>0)||1;return()=>{s^=s<<13;s>>>=0;s^=s>>>17;s^=s<<5;s>>>=0;return s/4294967296;};}
+function fft(re,im,inv){const n=re.length;for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){let t=re[i];re[i]=re[j];re[j]=t;t=im[i];im[i]=im[j];im[j]=t;}}
+for(let len=2;len<=n;len<<=1){const ang=2*Math.PI/len*(inv?1:-1),wr=Math.cos(ang),wi=Math.sin(ang),hl=len>>1;for(let i=0;i<n;i+=len){let cr=1,ci=0;for(let j=0;j<hl;j++){const a=i+j,b=a+hl;const xr=re[b]*cr-im[b]*ci,xi=re[b]*ci+im[b]*cr;re[b]=re[a]-xr;im[b]=im[a]-xi;re[a]+=xr;im[a]+=xi;const nr=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=nr;}}}
+if(inv){for(let i=0;i<n;i++){re[i]/=n;im[i]/=n;}}}
+let NS=4096;const DT=0.01,G=9.81;
+function genRock(seed){const r=rng(seed*7919+13);const re=new Float64Array(NS),im=new Float64Array(NS);
+for(let i=0;i<NS;i++){const u=r()||1e-9,v=r();re[i]=Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+fft(re,im,false);
+const wg=2*Math.PI*2.5,zg=0.6,wf=2*Math.PI*0.2,zf=0.7;
+for(let k=0;k<NS;k++){const kk=k<=NS/2?k:NS-k;const w=2*Math.PI*kk/(NS*DT);
+const r1=(w/wg)**2,kt=(1+4*zg*zg*r1)/((1-r1)**2+4*zg*zg*r1);
+const r2=(w/wf)**2,cp=(r2*r2)/((1-r2)**2+4*zf*zf*r2);
+const f=Math.sqrt(kt*cp);re[k]*=f;im[k]*=f;}
+fft(re,im,true);
+const a=new Float64Array(NS);let mx=0;
+for(let i=0;i<NS;i++){const t=i*DT;let e=t<3?(t/3)**2:(t<16?1:Math.exp(-0.22*(t-16)));if(t>37)e*=Math.max(0,(40.9-t)/3.9);a[i]=re[i]*e;if(Math.abs(a[i])>mx)mx=Math.abs(a[i]);}
+for(let i=0;i<NS;i++)a[i]/=mx;return a;}
+const SOILS=[
+{n:'Relleno',vs:130,rho:1.6,xi:.06,c:'#8a7866',t:'mix'},
+{n:'Arcilla blanda',vs:100,rho:1.6,xi:.06,c:'#76594a',t:'line'},
+{n:'Limo',vs:160,rho:1.75,xi:.05,c:'#b09a80',t:'line'},
+{n:'Arena suelta',vs:190,rho:1.8,xi:.05,c:'#dfbd78',t:'dot'},
+{n:'Arena densa',vs:330,rho:1.95,xi:.04,c:'#c4954a',t:'dot'},
+{n:'Cascajo / grava',vs:600,rho:2.1,xi:.03,c:'#878d92',t:'grav'},
+{n:'Piedras / bolonería',vs:800,rho:2.2,xi:.025,c:'#66788a',t:'stone'}];
+const ROCK={n:'Roca base',vs:1200,rho:2.4,xi:.01,c:'#434d57'};
+function cdiv(ar,ai,br,bi){const d=br*br+bi*bi;return[(ar*br+ai*bi)/d,(ai*br-ar*bi)/d];}
+function soilTF(lay,f){if(!lay.length||f<=0)return[1,0];const w=2*Math.PI*f;let Ar=1,Ai=0,Br=1,Bi=0;
+for(let m=0;m<lay.length;m++){const L=lay[m],R=m+1<lay.length?lay[m+1]:ROCK;
+const vr=L.vs,vi=L.vs*L.xi;const [al,ali]=cdiv(L.rho*vr,L.rho*vi,R.rho*R.vs,R.rho*R.vs*R.xi);
+const [kr,ki]=cdiv(w,0,vr,vi);const h=L.h;
+const c=Math.cos(kr*h),s=Math.sin(kr*h),e1=Math.exp(-ki*h),e2=Math.exp(ki*h);
+const epr=e1*c,epi=e1*s,emr=e2*c,emi=-e2*s;
+const apr=Ar*epr-Ai*epi,api=Ar*epi+Ai*epr,bmr=Br*emr-Bi*emi,bmi=Br*emi+Bi*emr;
+const opr=1+al,opi=ali,omr=1-al,omi=-ali;
+const nAr=0.5*((apr*opr-api*opi)+(bmr*omr-bmi*omi)),nAi=0.5*((apr*opi+api*opr)+(bmr*omi+bmi*omr));
+const nBr=0.5*((apr*omr-api*omi)+(bmr*opr-bmi*opi)),nBi=0.5*((apr*omi+api*omr)+(bmr*opi+bmi*opr));
+Ar=nAr;Ai=nAi;Br=nBr;Bi=nBi;}
+return cdiv(1,0,Ar,Ai);}
+function sdof(ag,T,xi,keep,gam){const w=2*Math.PI/T,k=w*w,c=2*xi*w,dt=DT,kh=k+2*c/dt+4/(dt*dt);gam=gam||1;
+let u=0,v=0,a=-ag[0]*G,amax=0,umax=0,rmax=0;const U=keep?new Float64Array(NS):null,A=keep?new Float64Array(NS):null;
+for(let i=0;i<NS;i++){if(i>0){const p=-ag[i]*G;const ph=p+(4/(dt*dt)*u+4/dt*v+a)+c*(2/dt*u+v);const un=ph/kh;const vn=2/dt*(un-u)-v;const an=4/(dt*dt)*(un-u)-4/dt*v-a;u=un;v=vn;a=an;}
+const aa=a/G+ag[i],rr=ag[i]+gam*a/G;if(keep){U[i]=u;A[i]=rr;}
+if(Math.abs(aa)>amax)amax=Math.abs(aa);if(Math.abs(u)>umax)umax=Math.abs(u);if(Math.abs(rr)>rmax)rmax=Math.abs(rr);}
+return{amax,umax,rmax,U,A};}
+function siteParams(L){let H=0,tt=0;L.forEach(l=>{H+=l.h;tt+=l.h/l.vs;});let d=0,t30=0;for(const l of L){const hh=Math.min(l.h,30-d);if(hh<=0)break;t30+=hh/l.vs;d+=hh;}if(d<30)t30+=(30-d)/ROCK.vs;
+const vs30=30/t30;return{H,Ts:H>0?4*tt:0,vs30,perfil:vs30>1500?'S0':vs30>500?'S1':vs30>180?'S2':'S3'};}
+const E030={S0:{S:0.8,Tp:0.3,TL:3.0},S1:{S:1.0,Tp:0.4,TL:2.5},S2:{S:1.05,Tp:0.6,TL:2.0},S3:{S:1.10,Tp:1.0,TL:1.6}};
+function Cf(T,p){return T<p.Tp?2.5:(T<p.TL?2.5*p.Tp/T:2.5*p.Tp*p.TL/(T*T));}
+//</calc>
+function youngs(M,r,H,zt){return Math.exp(0.2418+1.414*M-2.552*Math.log(r+1.7818*Math.exp(0.554*M))+0.00607*H+0.3846*zt);}
+
+// ---------- modelo ----------
+const SYS={c:[{n:'Pórticos (Ct 35)',ct:35},{n:'Dual: pórticos + muros (Ct 45)',ct:45},{n:'Muros estructurales (Ct 60)',ct:60}],a:[{n:'Pórticos a momento (Ct 35)',ct:35},{n:'Pórticos arriostrados (Ct 45)',ct:45}],m:[{n:'Entramado ligero',mx:5},{n:'Pórticos de madera',mx:4},{n:'Madera contralaminada (CLT)',mx:18}]};
+const DC={c:[0.025,0.02,0.015],a:[0.04,0.025],m:[0.04,0.03,0.025]};
+const PRESETS=[{n:'Conglomerado de Lima (grava / cascajo)',l:[[0,1],[5,30],[6,30]]},{n:'Arenas (eólicas o de playa)',l:[[3,15],[4,25]]},{n:'Depósito fino costero (limo y arcilla)',l:[[0,3],[2,15],[1,12]]},{n:'Roca (sin suelo)',l:[]}];
+const PROT=['Ninguna','Aisladores','Amortiguadores'];
+const MATN={c:'Concreto',a:'Acero',m:'Madera'};
+let nextId=1;
+function mkB(nf,mat,sys,prot){return{id:nextId++,nf,mat,sys,prot};}
+const S={blds:[mkB(5,'c',0,0),mkB(12,'c',0,0),mkB(12,'c',0,1),mkB(12,'c',0,2)],sel:1,soil:2,M:8.3,R:45,zt:0,seed:3,pga:0.3,play:false,t:0,spd:1,dirty:true};
+let rock,rockRe,rockIm,RES={};
+function newRock(){rock=genRock(S.seed);rockRe=Float64Array.from(rock);rockIm=new Float64Array(NS);fft(rockRe,rockIm,false);}
+function layers(){return PRESETS[S.soil].l.map(([s,h])=>Object.assign({},SOILS[s],{h}));}
+function bparams(b){const hn=3*b.nf,gam=b.nf===1?1:1.27;let T,xi,lim,w;
+if(b.mat==='m'){const k=b.sys;T=k===1?hn/25:0.0488*Math.pow(hn,0.75);xi=[0.06,0.05,0.03][k];lim=0.010;w=[0.25,0.3,0.45][k];}
+else{T=hn/SYS[b.mat][b.sys].ct;xi=b.mat==='c'?0.05:0.02;lim=b.mat==='c'?0.007:0.010;w=b.mat==='c'?1:0.8;}
+if(b.prot===2)xi+=0.20;return{hn,gam,T,xi,lim,w,dc:DC[b.mat][b.sys]};}
+function analyze(b,surf){const p=bparams(b);let base=surf,ub=null,ubmax=0;
+if(b.prot===1){const iso=sdof(surf,2.5,0.15,true,1);ub=iso.U;ubmax=iso.umax;base=iso.A;}
+const th=sdof(base,p.T,p.xi,true,p.gam);const N=b.nf,phi=r=>N===1?r:Math.sin(Math.PI*r/2);
+const dph=[0];for(let j=1;j<=N;j++)dph.push(phi(j/N)-phi((j-1)/N));
+const td=new Array(N+1).fill(-1);let tc=-1,uc=0,mu=0;const ucol=p.dc*3/(p.gam*dph[1]);
+for(let i=0;i<NS;i++){const a=Math.abs(th.U[i]);if(a<=mu)continue;mu=a;for(let j=1;j<=N;j++)if(td[j]<0&&mu>p.lim*3/(p.gam*dph[j]))td[j]=i*DT;if(tc<0&&mu>ucol){tc=i*DT;uc=th.U[i];break;}}
+const drift=p.gam*th.umax*dph[1]/3;
+const deb=[];if(tc>=0){const r=rng(17+b.id*31+N);for(let q=0;q<Math.min(160,N*10);q++)deb.push({k:1+Math.floor(r()*N),x:(r()-0.5)*12,z:(r()-0.5)*12,vx:(r()-0.5)*16,vz:(r()-0.5)*16,vy:2+r()*8,s:0.4+r()*0.9,rn:r()});}
+return{p,U:th.U,roof:th.rmax,drift,ub,ubmax,tc,uc,td,dph,deb,state:tc>=0?2:(drift>p.lim?1:0)};}
+function recompute(){S.pga=clamp(youngs(S.M,S.R,S.zt?80:30,S.zt),0.01,1.2);
+const L=layers();const re=new Float64Array(NS),im=new Float64Array(NS),dre=new Float64Array(NS),dim=new Float64Array(NS);
+for(let k=0;k<=NS/2;k++){const f=k/(NS*DT);const[hr,hi]=soilTF(L,f);const xr=rockRe[k]*hr-rockIm[k]*hi,xi=rockRe[k]*hi+rockIm[k]*hr;re[k]=xr;im[k]=xi;
+let fac=0;if(f>0.05){const w=2*Math.PI*f;fac=-G/(w*w);if(f<0.15)fac*=(f-0.05)/0.1;}dre[k]=xr*fac;dim[k]=xi*fac;
+if(k>0&&k<NS/2){re[NS-k]=xr;im[NS-k]=-xi;dre[NS-k]=xr*fac;dim[NS-k]=-xi*fac;}}
+fft(re,im,true);fft(dre,dim,true);const surf=new Float64Array(NS),sdisp=new Float64Array(NS);let sp=0;
+for(let i=0;i<NS;i++){surf[i]=re[i]*S.pga;sdisp[i]=dre[i]*S.pga;if(Math.abs(surf[i])>sp)sp=Math.abs(surf[i]);}
+const site=siteParams(L);const res={};S.blds.forEach(b=>res[b.id]=analyze(b,surf));
+RES={surf,sdisp,sp,site,res};renderUI();}
+function mmi(g){const cm=Math.max(0.1,g*981);let v=3.66*Math.log10(cm)-1.66;if(v<5)v=2.20*Math.log10(cm)+1.00;return clamp(v,1,12);}
+function roman(v){return['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'][clamp(Math.round(v),1,12)-1];}
+
+// ---------- interfaz ----------
+function selB(){return S.blds.find(b=>b.id===S.sel)||S.blds[0];}
+function renderUI(){const b=selB();if(b)S.sel=b.id;
+$('#chips').innerHTML=S.blds.map((x,k)=>`<button class="chip${x.id===S.sel?' on':''}" data-id="${x.id}">${k+1} · ${x.nf} p · ${MATN[x.mat][0]}${x.prot?(x.prot===1?' · aisl.':' · amort.'):''}</button>`).join('');
+document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{S.sel=+c.dataset.id;renderUI();});
+if(b){const k=S.blds.indexOf(b)+1;$('#selname').textContent='edificio '+k;$('#nfv').textContent=b.nf;$('#nf').value=b.nf;
+document.querySelectorAll('#mat button').forEach(x=>x.classList.toggle('on',x.dataset.v===b.mat));
+$('#sys').innerHTML=SYS[b.mat].map((s,q)=>`<option value="${q}"${q===b.sys?' selected':''}>${s.n}</option>`).join('');
+document.querySelectorAll('#prot button').forEach(x=>x.classList.toggle('on',+x.dataset.v===b.prot));
+const r=RES.res&&RES.res[b.id];let pn='';
+if(b.prot===1)pn='Periodo del aislador 2,5 s · amortiguamiento 15 %.'+(r?` Desplazamiento máx. del aislador: <b style="color:${r.ubmax>0.5?'#ff5252':'#e8eef4'}">${(r.ubmax*100).toFixed(0)} cm</b>${r.ubmax>0.5?' (excede ~50 cm típicos: requeriría aisladores mayores)':''}.`:'');
+else if(b.prot===2)pn='Disipadores viscosos: +20 % de amortiguamiento (total '+(bparams(b).xi*100).toFixed(0)+' %).';
+else pn='Base fija, sin dispositivos.';
+if(b.mat==='m'&&b.nf>SYS.m[b.sys].mx)pn+=` <span class="warn">⚠ ${b.nf} pisos excede lo habitual para este sistema de madera (≈ ${SYS.m[b.sys].mx}).</span>`;
+$('#protnote').innerHTML=pn;}
+$('#add').disabled=S.blds.length>=6;$('#del').disabled=S.blds.length<=1;
+$('#mv').textContent=S.M.toFixed(1);$('#rv').textContent=S.R+' km';
+if(RES.sp!=null){$('#mnote').innerHTML=`PGA en roca ≈ <b>${S.pga.toFixed(2)} g</b> → en la superficie ${RES.sp.toFixed(2)} g · intensidad ≈ <b>${roman(mmi(RES.sp))}</b> (Mercalli)`;
+const st=RES.site;$('#snote').innerHTML=st.Ts?`Periodo del suelo Ts = ${st.Ts.toFixed(2)} s · Vs30 = ${st.vs30.toFixed(0)} m/s · perfil ${st.perfil}`:'Roca: sin amplificación del suelo.';
+let h='<tr><th>#</th><th>Edificio</th><th>T (s)</th><th>Azotea</th><th>Deriva</th><th>Estado</th></tr>';
+S.blds.forEach((x,k)=>{const r=RES.res[x.id];if(!r)return;const T=x.prot===1?'2,5*':r.p.T.toFixed(2);
+const st=r.state===2?`<span class="bad">💥 ${r.tc.toFixed(1)} s</span>`:r.state===1?'<span class="warn">⚠ daño</span>':'<span class="ok">✔</span>';
+h+=`<tr class="${x.id===S.sel?'sel':''}"><td>${k+1}</td><td>${x.nf} p · ${MATN[x.mat]}${x.prot?'<br><small>'+PROT[x.prot]+'</small>':''}</td><td>${T}</td><td>${r.roof.toFixed(2)} g</td><td>${(r.drift*1000).toFixed(1)} ‰<br><small>lím. ${(r.p.lim*1000).toFixed(0)}</small></td><td>${st}</td></tr>`;});
+$('#tab').innerHTML=h+(S.blds.some(x=>x.prot===1)?'<tr><td colspan="6" class="note">* periodo del sistema aislado</td></tr>':'');}
+drawTH();}
+function setSel(f){const b=selB();if(!b)return;f(b);S.dirty=true;resetAnim();}
+$('#nf').oninput=e=>setSel(b=>b.nf=+e.target.value);
+$('#fm').onclick=()=>setSel(b=>b.nf=Math.max(1,b.nf-1));$('#fp').onclick=()=>setSel(b=>b.nf=Math.min(40,b.nf+1));
+document.querySelectorAll('#mat button').forEach(x=>x.onclick=()=>setSel(b=>{b.mat=x.dataset.v;b.sys=0;}));
+$('#sys').onchange=e=>setSel(b=>b.sys=+e.target.value);
+document.querySelectorAll('#prot button').forEach(x=>x.onclick=()=>setSel(b=>b.prot=+x.dataset.v));
+$('#add').onclick=()=>{if(S.blds.length>=6)return;const b=selB();const nb=mkB(b?b.nf:8,b?b.mat:'c',b?b.sys:0,0);S.blds.push(nb);S.sel=nb.id;S.dirty=true;resetAnim();};
+$('#del').onclick=()=>{if(S.blds.length<=1)return;S.blds=S.blds.filter(b=>b.id!==S.sel);S.sel=S.blds[0].id;S.dirty=true;resetAnim();};
+$('#mag').oninput=e=>{S.M=+e.target.value;S.dirty=true;resetAnim();};
+$('#dist').oninput=e=>{S.R=+e.target.value;S.dirty=true;resetAnim();};
+document.querySelectorAll('#mtype button').forEach(x=>x.onclick=()=>{document.querySelectorAll('#mtype button').forEach(y=>y.classList.toggle('on',y===x));S.zt=+x.dataset.v;S.dirty=true;resetAnim();});
+$('#soil').innerHTML=PRESETS.map((p,k)=>`<option value="${k}"${k===S.soil?' selected':''}>${p.n}</option>`).join('');
+$('#soil').onchange=e=>{S.soil=+e.target.value;S.dirty=true;resetAnim();};
+$('#newq').onclick=()=>{S.seed++;newRock();S.dirty=true;resetAnim();};
+function resetAnim(){S.play=false;S.t=0;$('#play').textContent='▶ Sismo';}
+$('#play').onclick=()=>{if(S.t>=NS*DT-0.2)S.t=0;S.play=!S.play;$('#play').textContent=S.play?'⏸ Pausa':'▶ Sismo';};
+$('#reset').onclick=resetAnim;
+$('#spd').onclick=e=>{S.spd=S.spd===1?0.5:S.spd===0.5?2:1;e.target.textContent='Velocidad ×'+String(S.spd).replace('.',',');};
+$('#infob').onclick=()=>{$('#infom').style.display='flex';};$('#closem').onclick=()=>{$('#infom').style.display='none';};
+$('#infom').onclick=e=>{if(e.target.id==='infom')$('#infom').style.display='none';};
+$('#copym').onclick=async()=>{try{await navigator.clipboard.writeText('neptaliagiphoyos@gmail.com');$('#copymsg').textContent='Correo copiado.';}catch(e){$('#copymsg').textContent='Anótalo: neptaliagiphoyos@gmail.com';}};
+
+// ---------- registro ----------
+function drawTH(){const cv=$('#th');const w=cv.clientWidth||600,h=110,d=Math.min(2,devicePixelRatio||1);cv.width=w*d;cv.height=h*d;cv.style.height=h+'px';const c=cv.getContext('2d');c.setTransform(d,0,0,d,0,0);
+c.fillStyle='#0b121a';c.fillRect(0,0,w,h);if(!RES.surf)return;const a=RES.surf,mx=RES.sp||1,mid=h/2;c.strokeStyle='#22303f';c.beginPath();c.moveTo(0,mid);c.lineTo(w,mid);c.stroke();
+c.strokeStyle='#ffb74d';c.beginPath();for(let px=0;px<w;px++){const i0=Math.floor(px/w*NS),i1=Math.floor((px+1)/w*NS);let lo=0,hi=0;for(let i=i0;i<i1;i++){if(a[i]<lo)lo=a[i];if(a[i]>hi)hi=a[i];}c.moveTo(px,mid-hi/mx*h*0.42);c.lineTo(px,mid-lo/mx*h*0.42+0.5);}c.stroke();
+c.fillStyle='#ffb74d';c.font='bold 11px system-ui';c.fillText('máx '+mx.toFixed(2)+' g',6,13);
+if(S.t>0){const x=S.t/(NS*DT)*w;c.strokeStyle='#fff';c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke();}}
+
+// ---------- motor 3D (canvas 2D) ----------
+const cv=$('#cv');let ctx,W=0,H=0;
+const CAM={yaw:-0.55,pitch:0.32,dist:150,ty:14};
+function resize(){const d=Math.min(2,devicePixelRatio||1);W=cv.clientWidth;H=Math.round(innerWidth>=1000?Math.max(480,Math.min(innerHeight-150,W*0.66)):Math.max(380,Math.min(innerHeight*0.62,W*1.05)));cv.width=W*d;cv.height=H*d;cv.style.height=H+'px';ctx=cv.getContext('2d');ctx.setTransform(d,0,0,d,0,0);}
+let camB;
+function camSetup(){const cy=Math.cos(CAM.pitch),C=[CAM.dist*cy*Math.sin(CAM.yaw),CAM.ty+CAM.dist*Math.sin(CAM.pitch),CAM.dist*cy*Math.cos(CAM.yaw)];const T=[0,CAM.ty,0];
+let f=[T[0]-C[0],T[1]-C[1],T[2]-C[2]];let n=Math.hypot(...f);f=f.map(v=>v/n);let r=[f[2]*0-0*f[1],0*f[0]-f[2]*0,0];r=[-f[2],0,f[0]];n=Math.hypot(...r);r=r.map(v=>v/n);
+const u=[r[1]*f[2]-r[2]*f[1],r[2]*f[0]-r[0]*f[2],r[0]*f[1]-r[1]*f[0]];camB={C,f,r,u,F:Math.min(W,H*1.3)*1.1};}
+function proj(p){const d0=p[0]-camB.C[0],d1=p[1]-camB.C[1],d2=p[2]-camB.C[2];const z=d0*camB.f[0]+d1*camB.f[1]+d2*camB.f[2];const x=d0*camB.r[0]+d1*camB.r[1]+d2*camB.r[2];const y=d0*camB.u[0]+d1*camB.u[1]+d2*camB.u[2];const zz=Math.max(z,0.5);return[W/2+x*camB.F/zz,H/2-y*camB.F/zz,z];}
+const LIGHT=(()=>{const v=[0.45,0.8,0.55];const n=Math.hypot(...v);return v.map(x=>x/n);})();
+function shade(hex,k){const n=parseInt(hex.slice(1),16);const r=(n>>16)&255,g=(n>>8)&255,b=n&255;return`rgb(${Math.round(r*k)},${Math.round(g*k)},${Math.round(b*k)})`;}
+function mix(h1,h2,t){const a=parseInt(h1.slice(1),16),b=parseInt(h2.slice(1),16);const f=(s)=>Math.round(((a>>s)&255)*(1-t)+((b>>s)&255)*t);return'#'+((1<<24)+(f(16)<<16)+(f(8)<<8)+f(0)).toString(16).slice(1);}
+let POLYS=[];
+// caja con vértices dados (8: 0-3 abajo, 4-7 arriba, orden x-z-, x+z-, x+z+, x-z+)
+const FACES=[[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7],[4,5,6,7]];
+function addBox(v,col,opt){opt=opt||{};const P=v.map(proj);
+FACES.forEach((f,fi)=>{if(fi===4&&opt.noTop)return;const a=v[f[0]],b=v[f[1]],c=v[f[3]];const e1=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],e2=[c[0]-a[0],c[1]-a[1],c[2]-a[2]];
+let n=[-(e1[1]*e2[2]-e1[2]*e2[1]),-(e1[2]*e2[0]-e1[0]*e2[2]),-(e1[0]*e2[1]-e1[1]*e2[0])];const nl=Math.hypot(...n)||1;n=n.map(x=>x/nl);
+const cx=(v[f[0]][0]+v[f[2]][0])/2,cy=(v[f[0]][1]+v[f[2]][1])/2,cz=(v[f[0]][2]+v[f[2]][2])/2;
+if((cx-camB.C[0])*n[0]+(cy-camB.C[1])*n[1]+(cz-camB.C[2])*n[2]>=0)return;
+const pts=f.map(i=>P[i]);if(pts.some(p=>p[2]<0.5))return;
+const depth=(pts[0][2]+pts[1][2]+pts[2][2]+pts[3][2])/4;const k=0.5+0.5*Math.max(0,n[0]*LIGHT[0]+n[1]*LIGHT[1]+n[2]*LIGHT[2]);
+POLYS.push({pts,depth:depth+(opt.bias||0),fill:shade(col,k),stroke:opt.stroke,lw:opt.lw,side:fi<4,deco:fi<4?opt.deco:null,top:fi===4?opt.topdeco:null,bid:opt.bid,alpha:opt.alpha});});}
+function boxV(x0,x1,y0,y1,z0,z1,tf){const v=[[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1],[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]];return tf?v.map(tf):v;}
+function bil(p,u,v){const a=p[0],b=p[1],c=p[2],d=p[3];return[(a[0]*(1-u)+b[0]*u)*(1-v)+(d[0]*(1-u)+c[0]*u)*v,(a[1]*(1-u)+b[1]*u)*(1-v)+(d[1]*(1-u)+c[1]*u)*v];}
+// p: [abajo-izq, abajo-der, arriba-der, arriba-izq] para las caras laterales
+function drawPoly(o){const p=o.pts;ctx.globalAlpha=o.alpha||1;ctx.beginPath();ctx.moveTo(p[0][0],p[0][1]);for(let i=1;i<p.length;i++)ctx.lineTo(p[i][0],p[i][1]);ctx.closePath();ctx.fillStyle=o.fill;ctx.fill();
+if(o.stroke){ctx.strokeStyle=o.stroke;ctx.lineWidth=o.lw||1;ctx.stroke();}
+if(o.deco)o.deco(p);if(o.top)o.top(p);ctx.globalAlpha=1;}
+
+// ---------- escena ----------
+const SP=22,FW=12,SH=3,EX=12,EG=10;
+const COL={c:'#a3abb2',a:'#7fa6c9',m:'#b7834f'};
+function bx(k,n){return(k-(n-1)/2)*SP;}
+function scene(){POLYS=[];camSetup();const n=S.blds.length,i=Math.min(NS-1,Math.floor(S.t/DT)),on=S.t>0;
+const gx=on&&RES.sdisp?RES.sdisp[i]*EG:0;const L=layers();const Ht=L.reduce((a,l)=>a+l.h,0);const dsc=0.45;
+const X0=-(n*SP)/2-8,X1=(n*SP)/2+8,Z0=-16,Z1=16;
+// estratos
+let y=0;L.forEach((l,j)=>{const hh=l.h*dsc;const sh=Ht?gx*Math.cos(Math.PI*(y/dsc+l.h/2)/(2*Ht)):0;addBox(boxV(X0+sh,X1+sh,-y-hh,-y,Z0,Z1),l.c,{noTop:j>0,stroke:'rgba(0,0,0,.25)',topdeco:j===0?topGrid:null,bias:2000});y+=hh;});
+addBox(boxV(X0,X1,-y-5,-y,Z0,Z1),ROCK.c,{noTop:L.length>0,stroke:'rgba(0,0,0,.25)',topdeco:L.length?null:topGrid,bias:2000});
+S.blds.forEach((b,k)=>building(b,bx(k,n),i,on,gx));}
+function topGrid(p){ctx.strokeStyle='rgba(255,255,255,.07)';ctx.lineWidth=1;for(let q=1;q<10;q++){let a=bil(p,q/10,0),b=bil(p,q/10,1);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();a=bil(p,0,q/10);b=bil(p,1,q/10);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();}}
+function building(b,X,i,on,gx){const r=RES.res&&RES.res[b.id];if(!r)return;const p=r.p,N=b.nf,phi=q=>N===1?q:Math.sin(Math.PI*q/2);
+const colE=on&&r.tc>=0&&S.t>=r.tc?S.t-r.tc:-1;const u=colE>=0?r.uc*0.35:(on?r.U[i]:0);
+const roof=clamp(p.gam*u/p.hn*EX*p.hn,-FW*0.8,FW*0.8);const off=[];for(let j=0;j<=N;j++)off.push(roof*phi(j/N));
+const ub=b.prot===1&&on?clamp(r.ub[i]*EX*0.6,-6,6):0;const y0=b.prot===1?1.3:0;
+const rub=0.35,cr=colE>=0?SH*(colE/0.35)**2:0;const yF=[y0];for(let k=1;k<=N;k++)yF.push(yF[k-1]+(SH-clamp(cr-(k-1)*SH,0,SH-rub)));
+const tilt=colE>=0?Math.sign(r.uc||1)*Math.min(0.14,0.07*colE):0;const piv=X+gx+ub+(tilt>0?FW/2:-FW/2);
+const rot=pt=>{if(!tilt)return pt;const dx=pt[0]-piv,dy=pt[1];return[piv+dx*Math.cos(tilt)+dy*Math.sin(tilt),-dx*Math.sin(tilt)+dy*Math.cos(tilt),pt[2]];};
+const sel=b.id===S.sel,stroke=sel?'#4fc3f7':'rgba(0,0,0,.35)',lw=sel?1.6:1;const base=X+gx;
+// cimentación y aisladores
+addBox(boxV(base-FW/2-0.8,base+FW/2+0.8,-0.4,0.02,-FW/2-0.8,FW/2+0.8),'#5b6268',{stroke:'rgba(0,0,0,.3)',bid:b.id});
+if(b.prot===1){for(let a=-1;a<=1;a++)for(let c=-1;c<=1;c++){const xx=base+a*FW*0.38,zz=c*FW*0.38;const s=ub;addBox(boxV(xx-0.7,xx+0.7,0,0.9,zz-0.7,zz+0.7,v=>[v[0]+s*(v[1]/0.9),v[1],v[2]]),'#2b2b2b',{stroke:'#111',bid:b.id});}
+addBox(boxV(base+ub-FW/2-0.5,base+ub+FW/2+0.5,0.9,1.3,-FW/2-0.5,FW/2+0.5),'#6f777e',{stroke:'rgba(0,0,0,.35)',bid:b.id});}
+const col=COL[b.mat],h=FW/2;
+for(let j=1;j<=N;j++){const ya=yF[j-1],yb=yF[j],hh=yb-ya;const oa=off[j-1],ob=off[j];
+const sdr=on&&colE<0?Math.abs(p.gam*u*r.dph[j]/3)/p.lim:0;let c0=col;if(colE>=0)c0=mix(col,'#3a2f2a',0.45);else if(sdr>1)c0=mix(col,'#e53935',0.55);else if(sdr>0.5)c0=mix(col,'#fdd835',0.35);
+const dmg=on&&r.td[j]>=0&&S.t>=r.td[j];
+const tf=v=>rot([v[0]+base+ub+oa+(ob-oa)*((v[1]-ya)/(hh||1)),v[1],v[2]]);
+addBox(boxV(-h,h,ya,yb,-h,h,tf),c0,{noTop:j<N,stroke,lw,bid:b.id,deco:pp=>storyDeco(pp,b,hh,dmg,j)});}
+if(colE>=0)debris(r,b,base,colE);
+// etiqueta
+const top=proj(rot([base+ub+off[N],yF[N]+2,0]));if(top[2]>0){POLYS.push({pts:[[top[0],top[1]]],depth:-1e9,label:`${S.blds.indexOf(b)+1}`,sel,st:r.state,lx:top[0],ly:top[1]});}}
+function storyDeco(p,b,hh,dmg,j){const hp=Math.abs(p[3][1]-p[0][1]);
+if(hp>6){const nw=b.mat==='m'&&b.sys===0?3:4;ctx.fillStyle=b.mat==='a'?'rgba(170,220,255,.55)':'rgba(25,45,70,.85)';
+for(let q=0;q<nw;q++){const u0=(q+0.18)/nw,u1=(q+0.82)/nw;const a=bil(p,u0,0.3),bb=bil(p,u1,0.3),c=bil(p,u1,0.8),d=bil(p,u0,0.8);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(bb[0],bb[1]);ctx.lineTo(c[0],c[1]);ctx.lineTo(d[0],d[1]);ctx.fill();}}
+if(b.prot===2){const a=bil(p,0.05,0.02),c=bil(p,0.95,0.98),m=bil(p,0.5,0.5);ctx.strokeStyle='#cfd8dc';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(c[0],c[1]);ctx.stroke();ctx.fillStyle='#e53935';ctx.beginPath();ctx.arc(m[0],m[1],Math.max(1.5,hp*0.12),0,7);ctx.fill();}
+if(b.mat==='a'&&b.sys===1&&b.prot!==2){const a=bil(p,0,0),c=bil(p,1,1),d=bil(p,1,0),e=bil(p,0,1);ctx.strokeStyle='#5d86b0';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(c[0],c[1]);ctx.moveTo(d[0],d[1]);ctx.lineTo(e[0],e[1]);ctx.stroke();}
+if(dmg&&hp>3){ctx.strokeStyle=b.mat==='a'?'rgba(255,140,90,.95)':'rgba(20,12,8,.9)';ctx.lineWidth=1.2;for(let q=0;q<3;q++){const x0=q/3,x1=(q+1)/3;let a=bil(p,x0+0.03,0.1),m=bil(p,(x0+x1)/2+0.02,0.55),c=bil(p,x1-0.03,0.9);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(m[0],m[1]);ctx.lineTo(c[0],c[1]);a=bil(p,x1-0.03,0.1);m=bil(p,(x0+x1)/2-0.02,0.5);c=bil(p,x0+0.03,0.9);ctx.moveTo(a[0],a[1]);ctx.lineTo(m[0],m[1]);ctx.lineTo(c[0],c[1]);ctx.stroke();}}}
+function debris(r,b,base,e){const g=9.8;r.deb.forEach(d=>{const tau=e-0.35*Math.sqrt(d.k-1);if(tau<0)return;let x=base+d.x+d.vx*tau,z=d.z+d.vz*tau,y=Math.min(b.nf,d.k)*0.35+d.vy*tau-0.5*g*tau*tau;
+const rest=d.rn*Math.max(0.6,b.nf*0.25)*Math.exp(-Math.hypot(x-base,z)/9);if(y<rest){const tl=(d.vy+Math.sqrt(Math.max(0,d.vy*d.vy+2*g*(Math.min(b.nf,d.k)*0.35-rest))))/g;x=base+d.x+d.vx*tl;z=d.z+d.vz*tl;y=rest;}
+const s=d.s;addBox(boxV(x-s,x+s,y,y+s,z-s,z+s),COL[b.mat]==='#b7834f'?'#8a5a2b':'#8f979e',{});});
+if(e<6){const P=proj([base,1,0]);if(P[2]>0){const rad=(8+30*e)*camB.F/P[2],al=0.4*Math.exp(-e/1.8);POLYS.push({dust:true,x:P[0],y:P[1],rad,al,depth:P[2]-30});}}}
+function render(){ctx.clearRect(0,0,W,H);const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0c1a2b');g.addColorStop(1,'#25415f');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+POLYS.sort((a,b)=>b.depth-a.depth);const labels=[];
+for(const o of POLYS){if(o.label){labels.push(o);continue;}if(o.dust){const gr=ctx.createRadialGradient(o.x,o.y,0,o.x,o.y,o.rad);gr.addColorStop(0,`rgba(190,180,165,${o.al})`);gr.addColorStop(1,'rgba(190,180,165,0)');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(o.x,o.y,o.rad,0,7);ctx.fill();continue;}drawPoly(o);}
+labels.forEach(o=>{const t=o.label;ctx.font='bold 13px system-ui';const w=ctx.measureText(t).width+12;ctx.fillStyle=o.sel?'#4fc3f7':o.st===2?'#ff5252':o.st===1?'#ffd54f':'rgba(0,0,0,.65)';ctx.beginPath();ctx.arc(o.lx,o.ly-8,11,0,7);ctx.fill();ctx.fillStyle=o.sel||o.st?'#06121c':'#fff';ctx.textAlign='center';ctx.fillText(t,o.lx,o.ly-3.5);});
+ctx.textAlign='left';
+const i=Math.min(NS-1,Math.floor(S.t/DT));const ag=RES.surf?RES.surf[i]:0;
+$('#hud').innerHTML=`M ${S.M.toFixed(1)} · ${S.R} km · PGA roca ${S.pga.toFixed(2)} g<br>t = ${S.t.toFixed(1)} s · suelo ${ag.toFixed(2)} g<br><span style="color:#93a4b5">deformación ×${EX}</span>`+(S.blds.some(b=>RES.res&&RES.res[b.id]&&RES.res[b.id].tc>=0&&S.t>=RES.res[b.id].tc&&S.t>0)?'<br><b style="color:#ff5252">💥 colapso</b>':'');}
+// cámara: arrastre, rueda, pellizco, toque para elegir
+const ptrs=new Map();let drag=null,pinch=null,moved=0;
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,[e.clientX,e.clientY]);moved=0;if(ptrs.size===1)drag={x:e.clientX,y:e.clientY,yaw:CAM.yaw,pitch:CAM.pitch};else if(ptrs.size===2){const a=[...ptrs.values()];pinch={d:Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]),dist:CAM.dist};drag=null;}cv.classList.add('drag');});
+cv.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;ptrs.set(e.pointerId,[e.clientX,e.clientY]);if(pinch&&ptrs.size===2){const a=[...ptrs.values()];const d=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]);CAM.dist=clamp(pinch.dist*pinch.d/d,40,420);moved=99;}
+else if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;moved=Math.max(moved,Math.hypot(dx,dy));CAM.yaw=drag.yaw-dx*0.008;CAM.pitch=clamp(drag.pitch+dy*0.006,0.05,1.35);}});
+function up(e){const was=ptrs.size===1&&drag&&moved<6;ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(!ptrs.size){drag=null;cv.classList.remove('drag');}
+if(was){const rc=cv.getBoundingClientRect();pick(e.clientX-rc.left,e.clientY-rc.top);}}
+cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+cv.addEventListener('wheel',e=>{e.preventDefault();CAM.dist=clamp(CAM.dist*(e.deltaY>0?1.1:0.9),40,420);},{passive:false});
+function inPoly(x,y,p){let c=false;for(let i=0,j=p.length-1;i<p.length;j=i++){if(((p[i][1]>y)!==(p[j][1]>y))&&(x<(p[j][0]-p[i][0])*(y-p[i][1])/(p[j][1]-p[i][1])+p[i][0]))c=!c;}return c;}
+function pick(x,y){let best=null;for(const o of POLYS){if(!o.bid||!o.pts||o.pts.length<3)continue;if(inPoly(x,y,o.pts)&&(!best||o.depth<best.depth))best=o;}if(best){S.sel=best.bid;renderUI();}}
+const VIEWS=[{yaw:-0.55,pitch:0.32},{yaw:0,pitch:0.12},{yaw:-1.2,pitch:0.55},{yaw:0.6,pitch:0.25}];let vi=0;
+$('#cam').onclick=()=>{vi=(vi+1)%VIEWS.length;Object.assign(CAM,VIEWS[vi]);};
+function fitCam(){const n=S.blds.length,hmax=Math.max(...S.blds.map(b=>b.nf))*SH;CAM.ty=Math.max(8,hmax*0.4);CAM.dist=clamp(Math.max(n*SP*1.25,hmax*1.7,70),60,380);}
+// teclado
+document.addEventListener('keydown',e=>{const tg=e.target;if(tg&&(tg.tagName==='SELECT'||(tg.tagName==='INPUT'&&tg.type!=='range')))return;if(tg&&tg.type==='range'&&e.key.startsWith('Arrow'))return;if(e.ctrlKey||e.metaKey||e.altKey)return;
+const k=e.key.toLowerCase();let h=true;
+if(k===' ')$('#play').click();else if(k==='r')$('#reset').click();else if(k==='v')$('#cam').click();
+else if(/^[1-6]$/.test(k)){const b=S.blds[+k-1];if(b){S.sel=b.id;renderUI();}}
+else if(k==='+'||k==='=')$('#fp').click();else if(k==='-'||k==='_')$('#fm').click();
+else if(k==='n'||k==='a'||k==='d'){const v={n:0,a:1,d:2}[k];setSel(b=>b.prot=v);}
+else if(k==='arrowup'||k==='arrowdown'){const m=$('#mag');m.value=String(Math.round((+m.value+(k==='arrowup'?0.1:-0.1))*10)/10);m.dispatchEvent(new Event('input'));}
+else if(k==='i')$('#infob').click();else if(k==='escape')$('#closem').click();else h=false;if(h)e.preventDefault();});
+// bucle
+let last=performance.now(),lastN=-1,lastH=-1;
+function loop(now){const dt=Math.min(0.05,(now-last)/1000);last=now;
+if(S.dirty){S.dirty=false;recompute();const n=S.blds.length,hm=Math.max(...S.blds.map(b=>b.nf));if(n!==lastN||Math.abs(hm-lastH)>4){fitCam();lastN=n;lastH=hm;}}
+if(S.play){S.t+=dt*S.spd;if(S.t>=NS*DT-0.1){S.t=NS*DT-0.1;S.play=false;$('#play').textContent='▶ Sismo';}drawTH();}
+if(cv.clientWidth!==W)resize();scene();render();requestAnimationFrame(loop);}
+addEventListener('resize',()=>{resize();drawTH();});
+newRock();resize();requestAnimationFrame(loop);
+</script>
+<!-- Botón volver a la biblioteca · Neptalí Agip -->
+<style id="nav-volver-css">#nav-volver{transition:padding .3s,opacity .3s;opacity:.92}#nav-volver #nav-volver-t{display:inline-block;max-width:160px;overflow:hidden;white-space:nowrap;vertical-align:bottom;transition:max-width .35s}#nav-volver.mini{padding:6px 9px!important;opacity:.7}#nav-volver.mini #nav-volver-t{max-width:0}#nav-volver.mini:hover,#nav-volver.mini:focus-visible{opacity:1;padding:6px 11px!important}#nav-volver.mini:hover #nav-volver-t,#nav-volver.mini:focus-visible #nav-volver-t{max-width:160px}</style>
+<a id="nav-volver" href="https://neptaliagiphoyos.github.io/Simuladores/" title="Volver a la biblioteca"
+ style="position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:8px;z-index:2147483000;display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:99px;background:rgba(15,17,21,.82);color:#fff;font:700 12px/1.2 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;text-decoration:none;border:1px solid rgba(255,255,255,.25);box-shadow:0 4px 14px rgba(0,0,0,.35);backdrop-filter:blur(4px)">⬅ <span id="nav-volver-t">🔬 Simuladores</span></a>
+<script>
+(function(){try{
+  var r=document.referrer,a=document.getElementById('nav-volver'),t=document.getElementById('nav-volver-t');
+  var L={'Programas-de-Ingenieria':'🛠️ Programas','Simuladores':'🔬 Simuladores','Juegos-ni-os/lego':'🧱 LEGO','Juegos-ni-os':'🎮 Juegos','El-Sastre-del-Grid/libros':'📖 Libros','Profe-Agip':'🏫 Profe Agip'};
+  if(r&&r.indexOf('https://neptaliagiphoyos.github.io/')===0&&r.split('#')[0]!==location.href.split('#')[0]){
+    var p=r.replace('https://neptaliagiphoyos.github.io/','').split(/[?#]/)[0];
+    if(/(^|\/)(index\.html)?$/.test(p)){for(var k in L){if(p.replace(/index\.html$/,'').replace(/\/$/,'')===k){a.href=r.split('#')[0];t.textContent=L[k];break;}}}
+  }
+  setTimeout(function(){a.classList.add('mini')},3500);
+}catch(e){}})();
+</script>
+<script>window.__tvgame=false;</script><script>/* Navegacion con control remoto (TV) - ES5 */
+(function(){
+  if (window.__tvnav) return; window.__tvnav = 1;
+  var GAME = !!window.__tvgame;
+  var st = document.createElement('style');
+  st.textContent = '.tvfoco{outline:6px solid #ffd400 !important;outline-offset:3px !important;box-shadow:0 0 0 10px rgba(0,0,0,.55) !important;position:relative;z-index:5}';
+  (document.head||document.documentElement).appendChild(st);
+  var SEL = 'a[href],button,input,select,textarea,[tabindex],[onclick],summary';
+  function visible(el){
+    if (el.disabled) return false;
+    var r = el.getBoundingClientRect();
+    if (r.width < 4 || r.height < 4) return false;
+    var cs = window.getComputedStyle(el);
+    return cs.visibility !== 'hidden' && cs.display !== 'none';
+  }
+  function items(){
+    var all = document.querySelectorAll(SEL), out = [];
+    for (var i=0;i<all.length;i++){ if (all[i].getAttribute('tabindex')==='-1') continue; if (visible(all[i])) out.push(all[i]); }
+    return out;
+  }
+  var cur = null;
+  function setFocus(el){
+    if (cur) cur.className = (' '+cur.className+' ').replace(' tvfoco ',' ').replace(/^\s+|\s+$/g,'');
+    cur = el; if (!el) return;
+    el.className += ' tvfoco';
+    if (!el.hasAttribute('tabindex') && !/^(A|BUTTON|INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) el.setAttribute('tabindex','0');
+    try { el.focus({preventScroll:true}); } catch(e){ try{el.focus();}catch(e2){} }
+    var r = el.getBoundingClientRect(), h = window.innerHeight;
+    if (r.top < 60 || r.bottom > h - 60) window.scrollBy(0, r.top - h/2 + r.height/2);
+  }
+  function center(r){ return {x:r.left+r.width/2, y:r.top+r.height/2}; }
+  function move(dir){
+    var list = items(); if (!list.length) return;
+    if (!cur || list.indexOf(cur) < 0){ setFocus(list[0]); return; }
+    var a = cur.getBoundingClientRect(), ca = center(a), best = null, bd = 1e12;
+    for (var i=0;i<list.length;i++){
+      var el = list[i]; if (el === cur) continue;
+      var b = el.getBoundingClientRect(), cb = center(b), dx = cb.x-ca.x, dy = cb.y-ca.y, main, side;
+      if (dir==='R'){ if (b.left < a.right-4 && dx <= 4) continue; main=dx; side=dy; }
+      else if (dir==='L'){ if (b.right > a.left+4 && dx >= -4) continue; main=-dx; side=dy; }
+      else if (dir==='D'){ if (b.top < a.bottom-4 && dy <= 4) continue; main=dy; side=dx; }
+      else { if (b.bottom > a.top+4 && dy >= -4) continue; main=-dy; side=dx; }
+      if (main <= 0) continue;
+      var d = main + Math.abs(side)*2.5;
+      if (d < bd){ bd = d; best = el; }
+    }
+    if (best) setFocus(best);
+    else if (dir==='D') window.scrollBy(0, window.innerHeight*0.6);
+    else if (dir==='U') window.scrollBy(0, -window.innerHeight*0.6);
+  }
+  window.addEventListener('keydown', function(e){
+    if (e.defaultPrevented) return;
+    var t = e.target && e.target.tagName;
+    if (t==='INPUT' || t==='TEXTAREA' || t==='SELECT') { if (e.keyCode!==38 && e.keyCode!==40) return; }
+    var k = e.keyCode || e.which, dir = null;
+    if (k===37) dir='L'; else if (k===38) dir='U'; else if (k===39) dir='R'; else if (k===40) dir='D';
+    if (dir){ if (GAME) return; e.preventDefault(); move(dir); return; }
+    if ((k===13 || k===23 || k===66) && cur && (!GAME || document.activeElement===cur)){ e.preventDefault(); if (cur.tagName==='INPUT'){cur.focus();return;} cur.click(); }
+  }, false);
+  document.addEventListener('focusin', function(e){ var el=e.target; if (el && el!==cur && el.matches && el.matches(SEL)) setFocus(el); });
+  setTimeout(function(){ if (!cur && !GAME){ var l = items(); for (var i=0;i<l.length;i++){ var r=l[i].getBoundingClientRect(); if (r.top>=0 && r.top < window.innerHeight){ setFocus(l[i]); break; } } } }, 900);
+})();
+</script>
+</body></html>

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Microcentral hidroeléctrica (computadora)</title>
+<style>
+:root{--bg:#0f1420;--card:#181f2e;--tx:#e8edf6;--mu:#93a0b8;--ac:#4cc3ff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:1500px;margin:0 auto;padding:14px 18px 40px}
+h1{font-size:18px;margin:2px 4px 0}
+.sub{margin:2px 4px 8px;color:var(--mu);font-size:13px}
+#cv{width:100%;display:block;background:radial-gradient(circle at 50% 30%,#1d2840,#0f1420 70%);border-radius:14px}
+.card{background:var(--card);border-radius:14px;padding:12px;margin-top:10px}
+.card h2{font-size:12px;margin:0 0 8px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em}
+.read{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.read div{background:#111827;border-radius:10px;padding:6px 8px}
+.read b{display:block;font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.read span{font-size:11px;color:var(--mu)}
+.ctl{margin:12px 0 4px}
+.ctl label{display:flex;justify-content:space-between;font-size:14px;gap:8px}
+.ctl output{color:var(--ac);font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+input[type=range]{width:100%;height:34px;accent-color:var(--ac)}
+input[disabled]{opacity:.35}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+button{font:inherit;color:var(--tx);background:#243049;border:1px solid #33415f;border-radius:12px;padding:10px 8px;min-height:48px;cursor:pointer}
+button small{display:block;color:var(--mu);font-size:11px}
+button.on{background:#1f6b45;border-color:#2e9a63}
+button.off{background:#5a2a2a;border-color:#8a3a3a}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:#111827;border-radius:12px;padding:3px;gap:3px;margin-top:8px}
+.seg button{border:0;background:transparent;min-height:40px;font-size:14px;padding:6px 4px}
+.seg button.sel{background:var(--ac);color:#06202e;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{min-height:36px;padding:6px 11px;border-radius:18px;font-size:13px}
+.chips button.sel{background:var(--ac);color:#06202e;border-color:var(--ac);font-weight:700}
+#info{margin-top:10px;font-size:14px;color:#cfd8e8;min-height:2.8em}
+#expl{font-size:14px;color:#cfd8e8;margin:0;padding-left:18px}
+#expl li{margin:4px 0}
+#alert{color:#ffb4a0;font-size:13px;margin-top:8px;min-height:1.2em}
+.chart{width:100%;height:120px;display:block}
+select{font:inherit;color:var(--tx);background:#111827;border:1px solid #33415f;border-radius:10px;padding:8px;width:100%;margin-top:4px}
+.lbl{font-size:14px;margin-top:12px}
+#fb{position:fixed;right:14px;bottom:14px;z-index:5;border-radius:24px;min-height:44px;padding:8px 14px;background:#1f6b8f;border-color:#2b8fbf;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+#fbp{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;z-index:6}
+#fbp .box{background:var(--card);border-radius:16px 16px 0 0;padding:16px;max-width:560px;width:100%}
+#fbp textarea{width:100%;min-height:80px;font:inherit;color:var(--tx);background:#111827;border:1px solid #33415f;border-radius:10px;padding:8px}
+.note{font-size:12px;color:var(--mu)}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:16px;align-items:start}
+.side{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow-y:auto;padding-right:4px}
+.side .card:first-child{margin-top:0}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.read{grid-template-columns:repeat(6,1fr)!important}
+kbd{display:inline-block;min-width:22px;padding:1px 6px;border:1px solid #4a5672;border-bottom-width:2px;border-radius:5px;background:#111827;font:12px ui-monospace,monospace;text-align:center;color:#e8edf6}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:5px 10px;font-size:13px;align-items:center}
+button{cursor:pointer}
+@media (max-width:900px){.app{grid-template-columns:1fr}.side{position:static;max-height:none}.read{grid-template-columns:repeat(3,1fr)!important}.charts{grid-template-columns:1fr}}
+</style><style id="tv-jvc">.tvfoco{outline:6px solid #ffd400!important;outline-offset:3px!important}button,select,input,a{min-height:40px}</style></head>
+<body><div class="wrap">
+<h1 style="font-size:20px">💧 Microcentral hidroeléctrica · versión computadora</h1>
+<p class="sub">Una caída de agua mueve una turbina Pelton; con una correa hace girar la bobina del generador dentro de imanes fijos. Haz clic en un componente para resaltarlo.</p>
+
+<div class="app"><div class="main">
+<canvas id="cv"></canvas>
+<div class="card" style="margin-top:6px"><h2>Componentes — haz clic en uno para resaltarlo en el dibujo</h2>
+ <div class="chips" id="chips"></div>
+ <div id="info">Haz clic en un componente para verlo resaltado en el dibujo.</div>
+</div>
+<div id="alert"></div>
+<div id="alert"></div>
+<div class="card"><h2>Lecturas</h2>
+<div class="read">
+ <div><b id="rQ">0</b><span>Caudal (L/s)</span></div>
+ <div><b id="rHn">0</b><span>Caída neta (m)</span></div>
+ <div><b id="rPh">0</b><span>P. hidráulica (W)</span></div>
+ <div><b id="rNt">0</b><span>Turbina (rpm)</span></div>
+ <div><b id="rN">0</b><span>Generador (rpm)</span></div>
+ <div><b id="rF">0</b><span id="lF">Frecuencia (Hz)</span></div>
+ <div><b id="rE">0</b><span>FEM inducida (V ef.)</span></div>
+ <div><b id="rV">0</b><span id="lV">Voltaje en el foco (V)</span></div>
+ <div><b id="rI">0</b><span>Intensidad (A)</span></div>
+ <div><b id="rPo">0</b><span>P. útil en el foco (W)</span></div>
+ <div><b id="rEf">—</b><span>Eficiencia agua→foco</span></div>
+ <div><b id="rUV">0</b><span>u/v cangilón/chorro</span></div>
+</div></div>
+<div class="charts"><div class="card"><h2>Forma de onda del voltaje (en cámara lenta)</h2><canvas id="wv" class="chart"></canvas></div>
+<div class="card"><h2>Potencia de la turbina vs. lo que pide el generador</h2><canvas id="cr" class="chart"></canvas>
+ <div style="font-size:12px;color:var(--mu);margin-top:4px">Celeste: potencia que da la turbina · Naranja: potencia que absorbe el generador con su carga · Se estabiliza donde se cruzan (punto blanco).</div></div></div>
+<div class="card"><h2>¿Qué está pasando?</h2><ul id="expl"></ul></div>
+</div>
+<div class="side">
+<div class="card"><h2>Caída de agua y turbina</h2>
+ <div class="ctl"><label>Altura de caída (bruta) <output id="oH"></output></label>
+  <input type="range" id="sH" min="2" max="60" step="1" value="20"></div>
+ <div class="ctl"><label>Caudal disponible del canal <output id="oQa"></output></label>
+  <input type="range" id="sQa" min="1" max="40" step="0.5" value="10"></div>
+ <div class="ctl"><label>Apertura de la válvula / inyector <output id="oOp"></output></label>
+  <input type="range" id="sOp" min="0" max="100" step="1" value="100"></div>
+ <div class="ctl"><label>Transmisión por correa (turbina → generador) <output id="oG"></output></label>
+  <input type="range" id="sG" min="1" max="8" step="0.25" value="3"></div>
+ <div style="font-size:12px;color:var(--mu)">Turbina Pelton de 30 cm de diámetro. Rinde más cuando el cangilón va a la mitad de la velocidad del chorro (u/v ≈ 0,5).</div>
+</div>
+<div class="card"><h2>Imanes fijos y bobina</h2>
+ <div class="lbl">Tipo de imán (estator)</div>
+ <select id="sMag"><option value="fer">Ferrita (cerámico, barato)</option><option value="n35" selected>Neodimio N35</option><option value="n52">Neodimio N52 (el más fuerte)</option></select>
+ <div class="lbl">Número de polos (imanes en la carcasa)</div>
+ <div class="seg"><button id="p1" class="sel">2 polos</button><button id="p2">4 polos</button></div>
+ <div class="ctl"><label>Entrehierro (separación bobina–imán) <output id="oGap"></output></label>
+  <input type="range" id="sGap" min="1" max="6" step="0.5" value="2"></div>
+ <div class="ctl"><label>Vueltas de alambre de la bobina <output id="oN"></output></label>
+  <input type="range" id="sN" min="20" max="400" step="10" value="200"></div>
+ <div class="btns"><button id="bFlip">🧲 Voltear imanes<small id="tFlip">N a la derecha</small></button><button id="bRst">↺ Reiniciar<small>volver al estado inicial</small></button></div>
+</div>
+<div class="card"><h2>Salida y carga</h2>
+ <div class="seg"><button id="oAC" class="sel">CA · anillos rozantes</button><button id="oDC">CC · conmutador</button></div>
+ <div class="ctl"><label>Resistencia del foco <output id="oRL"></output></label>
+  <input type="range" id="sRL" min="2" max="200" step="1" value="20"></div>
+ <div class="btns"><button id="bLoad" class="on">💡 Carga conectada<small>clic para desconectar</small></button>
+  <div><select id="sSl" aria-label="Cámara lenta"><option value="10">Cámara lenta 1/10</option><option value="30">Cámara lenta 1/30</option><option value="60" selected>Cámara lenta 1/60</option><option value="150">Cámara lenta 1/150</option><option value="400">Cámara lenta 1/400</option></select></div></div>
+</div>
+<div class="card"><h2>Atajos de teclado</h2><div class="keys">
+ <kbd>↑</kbd> <kbd>↓</kbd><span>Altura de caída ±1 m</span>
+ <kbd>←</kbd> <kbd>→</kbd><span>Caudal ±0,5 L/s</span>
+ <kbd>PgUp</kbd> <kbd>PgDn</kbd><span>Válvula ±5 %</span>
+ <kbd>[</kbd> <kbd>]</kbd><span>Transmisión de la correa ±0,25</span>
+ <kbd>+</kbd> <kbd>−</kbd><span>Resistencia del foco ±1 Ω</span>
+ <kbd>C</kbd><span>Conectar / desconectar la carga</span>
+ <kbd>M</kbd><span>Salida CA ↔ CC</span>
+ <kbd>P</kbd><span>2 ↔ 4 polos</span>
+ <kbd>F</kbd><span>Voltear imanes</span>
+ <kbd>Espacio</kbd><span>Pausa / continuar</span><kbd>R</kbd><span>Reiniciar</span>
+ <kbd>Esc</kbd><span>Quitar el resaltado</span>
+</div></div>
+</div></div>
+</div>
+
+<button id="fb">💬 Comentarios</button>
+<div id="fbp"><div class="box">
+ <h2 style="font-size:15px;margin:0 0 8px">Envía tus comentarios o sugerencias</h2>
+ <textarea id="fbt" placeholder="Escribe tu comentario sobre el simulador…"></textarea>
+ <div class="btns">
+  <a id="fbW" href="#" style="display:none!important;"><button style="width:100%">📱 Enviar por WhatsApp</button></a>
+  <a id="fbM" href="#"><button style="width:100%">✉️ Enviar por correo<small>neptaliagiphoyos@gmail.com</small></button></a>
+ </div>
+ <p class="note">Si el botón no abre la aplicación, escribe a <b>neptaliagiphoyos@gmail.com</b>. Neptalí Agip.</p>
+ <button id="fbC" style="width:100%;margin-top:6px">Cerrar</button>
+</div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const cv=$('cv'),ctx=cv.getContext('2d'),W=360,H=780,OY=235,CW=1080,CH=630;let DPR=1,paused=false;
+const wv=$('wv'),wc=wv.getContext('2d'),cr=$('cr'),rc=cr.getContext('2d');
+function fit(){const d=window.devicePixelRatio||1;DPR=d;cv.width=CW*d;cv.height=CH*d;ctx.setTransform(d,0,0,d,0,0);
+ for(const [c,x] of [[wv,wc],[cr,rc]]){const r=c.getBoundingClientRect();c.width=r.width*d;c.height=r.height*d;x.setTransform(d,0,0,d,0,0);}}
+window.addEventListener('resize',fit);
+
+/* ---------- modelo ---------- */
+const MAG={fer:[0.35,'Ferrita'],n35:[1.0,'N35'],n52:[1.18,'N52']};
+const P={b:0.0003,fr:0.03,r:0.15,kf:6000,Jg:0.03,Jt:0.4,g:9.81};
+const S0={H:20,Qa:10,op:100,G:3,p:2,mag:'n35',gap:2,N:200,ac:true,RL:6,load:true,m:1,slow:60,w:0,th:0.3,sel:null};
+let S={...S0},R={};
+function elec(w){
+ const bf=MAG[S.mag][0],gf=1/(1+0.2*(S.gap-2)),k=0.16*S.p*(S.N/100)*bf*gf;
+ const aw=Math.abs(w),E=k*aw,Ra=0.1+0.5*(S.N/100)**2,L=0.002*(S.N/100)**2,fe=S.p*aw/(2*Math.PI),X=2*Math.PI*fe*L;
+ const drop=S.ac?0.5:2;let V,I=0;
+ if(S.ac){V=E;if(S.load){I=Math.max(0,E-drop)/Math.hypot(Ra+S.RL,X);V=I*S.RL;}}
+ else{V=0.9*E;if(S.load){I=Math.max(0,0.9*E-drop)/(Ra+S.RL);V=I*S.RL;}}
+ const Po=I*I*S.RL,Pcu=I*I*Ra,Pbr=drop*I,Pe=Po+Pcu+Pbr,Te=aw>1e-3?Pe/aw:0;
+ return{k,E,V,I,Po,Pcu,Pbr,Pe,Te,fe,Ra};
+}
+function turb(wg){
+ const Q=S.Qa*S.op/100/1000,Hn=Math.max(0,S.H-P.kf*Q*Q),v=0.97*Math.sqrt(2*P.g*Hn),u=wg/S.G*P.r;
+ const T=1000*Q*P.r*(v-u)*1.85;return{Q,Hn,v,u,T,Ph:1000*P.g*Q*S.H,Pt:T*wg/S.G};
+}
+function step(dt){
+ const n=12,h=dt/n,J=P.Jg+P.Jt/(S.G*S.G);
+ for(let i=0;i<n;i++){const t=turb(S.w),e=elec(S.w);
+  S.w=Math.max(0,S.w+(t.T/S.G-e.Te-P.b*S.w-(S.w>0.05?P.fr:0))/J*h);}
+ R=elec(S.w);R.Tm=R.Te+P.b*S.w+(S.w>0.05?P.fr:0);R.Pm=R.Tm*S.w;Object.assign(R,{T:turb(S.w)});
+}
+
+/* ---------- dibujo ---------- */
+const gx=180,gy=192;
+function pt(r,a,x=gx,y=gy){return[x+r*Math.cos(a),y-r*Math.sin(a)];}
+function sector(r1,r2,a1,a2,x=gx,y=gy){ctx.beginPath();ctx.arc(x,y,r2,-a1,-a2,true);ctx.arc(x,y,r1,-a2,-a1,false);ctx.closePath();}
+function mark(id){if(S.sel!==id)return;ctx.save();ctx.shadowColor='#4cc3ff';ctx.shadowBlur=16;ctx.strokeStyle='#4cc3ff';ctx.lineWidth=3;ctx.stroke();ctx.restore();}
+function arrow(x1,y1,x2,y2,col,w=3){ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+ const a=Math.atan2(y2-y1,x2-x1),s=6+w;ctx.beginPath();ctx.moveTo(x2+Math.cos(a)*3,y2+Math.sin(a)*3);
+ ctx.lineTo(x2-s*Math.cos(a-0.45),y2-s*Math.sin(a-0.45));ctx.lineTo(x2-s*Math.cos(a+0.45),y2-s*Math.sin(a+0.45));ctx.closePath();ctx.fill();}
+function txt(t,x,y,col='#fff',f='bold 14px system-ui',al='center'){ctx.font=f;ctx.fillStyle=col;ctx.textAlign=al;ctx.textBaseline='middle';ctx.fillText(t,x,y);}
+function poly(p,col='#c9a36b',w=2.2){ctx.strokeStyle=col;ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(...p[0]);for(const v of p.slice(1))ctx.lineTo(...v);ctx.stroke();}
+const dph={};
+function dots(key,path,i,dt){if(Math.abs(i)<0.03)return;dph[key]=(dph[key]||0)+Math.max(-150,Math.min(150,i*14))*dt;
+ const sg=[];let L=0;for(let k=1;k<path.length;k++){const l=Math.hypot(path[k][0]-path[k-1][0],path[k][1]-path[k-1][1]);sg.push(l);L+=l;}
+ ctx.fillStyle='#ffe066';for(let k=0;k<L/15;k++){let s=((k*15+dph[key])%L+L)%L,j=0;while(s>sg[j]&&j<sg.length-1){s-=sg[j];j++;}
+  const t=Math.min(1,s/sg[j]);ctx.beginPath();ctx.arc(path[j][0]+(path[j+1][0]-path[j][0])*t,path[j][1]+(path[j+1][1]-path[j][1])*t,2.4,0,7);ctx.fill();}}
+function bulb(x,y,g){
+ if(g>0.01){const gr=ctx.createRadialGradient(x,y-8,2,x,y-8,44);gr.addColorStop(0,`rgba(255,230,120,${0.9*g})`);gr.addColorStop(1,'rgba(255,230,120,0)');ctx.fillStyle=gr;ctx.fillRect(x-46,y-54,92,92);}
+ ctx.beginPath();ctx.arc(x,y-8,14,0,7);ctx.fillStyle=`rgb(${80+175*g},${80+150*g},${90+30*g})`;ctx.fill();ctx.strokeStyle='#cfd8e8';ctx.lineWidth=1.5;ctx.stroke();
+ ctx.fillStyle='#8892a8';ctx.fillRect(x-6,y+5,12,8);ctx.beginPath();ctx.rect(x-16,y-24,32,38);mark('carga');}
+function brush(x,y,w,h){ctx.beginPath();ctx.rect(x,y,w,h);ctx.fillStyle='#3b3c44';ctx.fill();ctx.strokeStyle='#80828f';ctx.lineWidth=1;ctx.stroke();ctx.beginPath();ctx.rect(x,y,w,h);mark('esc');}
+function openSw(x,y){ctx.fillStyle='#0f1420';ctx.fillRect(x-5,y-6,10,12);ctx.strokeStyle='#ff9a7a';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(x,y+6);ctx.lineTo(x+12,y-8);ctx.stroke();txt('abierto',x+16,y-12,'#ff9a7a','10px system-ui','left');}
+
+let vInst=0,tt=0,flow=0;const spl=[];
+function drawHydro(dt){
+ const T=R.T||turb(0),Q=T.Q*1000,qn=Math.min(1,Q/40);flow+=dt*(10+T.v*4);
+ txt('Caída de agua → turbina Pelton → correa → generador',180,10,'#93a0b8','11px system-ui');
+ // reservorio / canal
+ ctx.beginPath();ctx.rect(8,24,84,32);ctx.fillStyle='#24609f';ctx.fill();ctx.strokeStyle='#6b7690';ctx.lineWidth=2;ctx.stroke();mark('agua');
+ ctx.strokeStyle='rgba(180,220,255,.6)';ctx.lineWidth=1.2;ctx.beginPath();for(let x=10;x<=90;x+=2){const y=30+1.5*Math.sin(x/6+flow/8);x===10?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();
+ txt('canal',50,44,'#cfe6ff','10px system-ui');
+ // tubería forzada
+ const pipe=[[80,52],[160,160],[190,182]];
+ poly(pipe,'#6b7690',12);ctx.beginPath();ctx.moveTo(...pipe[0]);ctx.lineTo(...pipe[1]);ctx.lineTo(...pipe[2]);mark('tuberia');
+ if(Q>0.05){ctx.save();ctx.setLineDash([6,6]);ctx.lineDashOffset=-flow;poly(pipe,'#3a8fe0',6);ctx.restore();}
+ txt('tubería forzada',150,120,'#93a0b8','9px system-ui','left');
+ // válvula
+ const vx=120,vy=106;ctx.beginPath();ctx.arc(vx,vy,9,0,7);ctx.fillStyle='#2a3348';ctx.fill();ctx.strokeStyle='#cfd8e8';ctx.lineWidth=1.5;ctx.stroke();mark('valvula');
+ const va=(1-S.op/100)*Math.PI/2+0.92;ctx.strokeStyle='#ffd84a';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(vx-8*Math.cos(va),vy+8*Math.sin(va));ctx.lineTo(vx+8*Math.cos(va),vy-8*Math.sin(va));ctx.stroke();
+ txt('válvula '+S.op+'%',vx-12,vy+2,'#ffd84a','9px system-ui','right');
+ // inyector
+ ctx.beginPath();ctx.moveTo(186,175);ctx.lineTo(206,179);ctx.lineTo(206,185);ctx.lineTo(186,189);ctx.closePath();ctx.fillStyle='#8892a8';ctx.fill();mark('inyector');
+ // altura
+ ctx.strokeStyle='#9fe3ff';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(4,28);ctx.lineTo(4,182);ctx.lineTo(186,182);ctx.stroke();ctx.setLineDash([]);
+ arrow(4,100,4,30,'#9fe3ff',1.2);arrow(4,110,4,180,'#9fe3ff',1.2);
+ ctx.save();ctx.translate(14,140);ctx.rotate(-Math.PI/2);txt('H = '+S.H+' m',0,0,'#9fe3ff','bold 10px system-ui');ctx.restore();
+ // rueda Pelton
+ const wx=262,wy=134,wr=48;tt+=(S.w/S.G)*dt/S.slow;
+ ctx.beginPath();ctx.arc(wx,wy,wr-8,0,7);ctx.fillStyle='#4a5266';ctx.fill();ctx.strokeStyle='#6b7690';ctx.lineWidth=1.5;ctx.stroke();mark('pelton');
+ for(let k=0;k<16;k++){const a=tt+k*Math.PI/8,c=pt(wr,a,wx,wy);ctx.save();ctx.translate(c[0],c[1]);ctx.rotate(-a);
+  ctx.beginPath();ctx.ellipse(0,0,8,6,0,0,7);ctx.fillStyle='#b9c2d3';ctx.fill();ctx.beginPath();ctx.ellipse(2,0,5,4,0,0,7);ctx.fillStyle='#6b7690';ctx.fill();ctx.restore();}
+ ctx.beginPath();ctx.arc(wx,wy,14,0,7);ctx.fillStyle='#c9a36b';ctx.fill();ctx.strokeStyle='#7a5a2a';ctx.stroke();
+ ctx.beginPath();ctx.arc(wx,wy,5,0,7);ctx.fillStyle='#2a3142';ctx.fill();
+ ctx.strokeStyle='#2a3142';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(wx,wy);ctx.lineTo(...pt(14,tt,wx,wy));ctx.stroke();
+ if(S.w>0.3){ctx.strokeStyle='#7dffb0';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(wx,wy,66,-(Math.PI/2+0.5),-(Math.PI/2-0.5),false);ctx.stroke();
+  const a1=Math.PI/2+0.5,pe=pt(66,a1,wx,wy);arrow(pe[0]+Math.sin(a1)*5,pe[1]+Math.cos(a1)*5,pe[0]-Math.sin(a1)*2,pe[1]-Math.cos(a1)*2,'#7dffb0',2.5);}
+ txt('turbina Pelton',wx+40,wy-60,'#93a0b8','9px system-ui');
+ // chorro
+ if(Q>0.05&&T.v>0.3){ctx.save();ctx.strokeStyle='#6fc3ff';ctx.lineWidth=2+7*Math.sqrt(qn);ctx.setLineDash([10,4]);ctx.lineDashOffset=-flow*2;
+  ctx.beginPath();ctx.moveTo(206,182);ctx.lineTo(232,182);ctx.stroke();ctx.restore();
+  for(let k=0;k<Math.round(2+qn*6);k++)spl.push({x:234,y:182,vx:(Math.random()-0.6)*60,vy:-20-Math.random()*40,l:1});}
+ ctx.fillStyle='#9fd6ff';for(let i=spl.length-1;i>=0;i--){const d=spl[i];d.vy+=300*dt;d.x+=d.vx*dt;d.y+=d.vy*dt;d.l-=dt;
+  if(d.y>214||d.l<0){spl.splice(i,1);continue;}ctx.beginPath();ctx.arc(d.x,d.y,1.6,0,7);ctx.fill();}
+ // descarga
+ ctx.beginPath();ctx.rect(170,214,190,18);ctx.fillStyle='#1f5f9e';ctx.fill();mark('agua');txt('descarga al río',300,223,'#cfe6ff','9px system-ui');
+ // correa
+ ctx.strokeStyle='#3b2f25';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(wx,wy-14);ctx.lineTo(360,wy-10);ctx.moveTo(wx,wy+14);ctx.lineTo(360,wy+10);ctx.stroke();
+ ctx.beginPath();ctx.moveTo(wx,wy-14);ctx.lineTo(360,wy-10);ctx.moveTo(wx,wy+14);ctx.lineTo(360,wy+10);mark('correa');txt('→ al generador',330,wy+24,'#e8c47a','9px system-ui');
+ txt('correa 1 : '+S.G,wx+30,206,'#e8c47a','bold 10px system-ui','left');
+}
+function draw(dt){
+ ctx.save();
+ const th=S.th,p=S.p,mag=MAG[S.mag][0],ri=92+S.gap*2,run=S.w>0.3,I=R.I,on=S.load&&I>0.02;
+ const e1=S.m*Math.sin(p*th);            // fem unitaria de la bobina
+ txt('Generador: imanes fijos (estator) · bobina que gira (rotor)',gx,6,'#93a0b8','11px system-ui');
+ // carcasa
+ ctx.beginPath();ctx.arc(gx,gy,158,0,7);ctx.moveTo(gx+140,gy);ctx.arc(gx,gy,140,0,7,true);ctx.fillStyle='#4a5266';ctx.fill('evenodd');mark('carcasa');
+ // imanes fijos
+ const span=Math.PI/p;
+ for(let j=0;j<2*p;j++){const c=j*span,isN=(j%2===0)===(S.m>0),hw=span*0.36;
+  sector(ri,141,c-hw,c+hw);ctx.fillStyle=isN?'#d24b4b':'#3d6fd6';ctx.fill();ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=1;ctx.stroke();
+  sector(ri,141,c-hw,c+hw);mark('imanes');
+  const q=pt((ri+141)/2,c);txt(isN?'N':'S',q[0],q[1]);
+  // líneas de campo en el entrehierro (N: hacia el rotor, S: desde el rotor)
+  ctx.save();ctx.globalAlpha=0.35+0.45*Math.min(1,mag);
+  for(const o of[-0.6,0,0.6]){const aa=c+o*hw,r1=isN?ri:91,r2=isN?91:ri,p1=pt(r1,aa),p2=pt(r2,aa);
+   arrow(...p1,...p2,S.sel==='campo'?'#c8f2ff':'#9fe3ff',S.sel==='campo'?2:1.2);}
+  ctx.restore();}
+ if(S.sel==='gap'){ctx.beginPath();ctx.arc(gx,gy,(90+ri)/2,0,7);ctx.strokeStyle='rgba(76,195,255,.6)';ctx.lineWidth=Math.max(2,ri-90);ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);}
+ // rotor (núcleo)
+ ctx.beginPath();ctx.arc(gx,gy,90,0,7);ctx.fillStyle='#2f374a';ctx.fill();ctx.strokeStyle='#56607a';ctx.lineWidth=2;ctx.stroke();mark('rotor');
+ ctx.strokeStyle='#46506a';for(let k=0;k<10;k++){const a=th+k*Math.PI/5+0.3;ctx.beginPath();ctx.moveTo(...pt(82,a));ctx.lineTo(...pt(90,a));ctx.stroke();}
+ // bobina: lados A y B separados π/p
+ const fA=th-Math.PI/(2*p),fB=fA+Math.PI/p,A=pt(74,fA),B=pt(74,fB);
+ ctx.save();ctx.setLineDash([5,4]);ctx.strokeStyle='#d98c3a';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(...A);ctx.quadraticCurveTo(...pt(p===1?0:40,(fA+fB)/2),...B);ctx.stroke();ctx.restore();
+ [[A,fA,1,'A'],[B,fB,-1,'B']].forEach(([q,f,sg,l])=>{
+  ctx.beginPath();ctx.arc(q[0],q[1],11,0,7);ctx.fillStyle='#d98c3a';ctx.fill();ctx.strokeStyle='#6b3d10';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.beginPath();ctx.arc(q[0],q[1],11,0,7);mark('bobina');
+  const e=sg*S.m*Math.cos(p*f);ctx.fillStyle='#1a0f05';ctx.strokeStyle='#1a0f05';ctx.lineWidth=2.2;
+  if(run&&Math.abs(e)>0.12){if(e>0){ctx.beginPath();ctx.arc(q[0],q[1],3.5,0,7);ctx.fill();}
+   else{ctx.beginPath();ctx.moveTo(q[0]-5.5,q[1]-5.5);ctx.lineTo(q[0]+5.5,q[1]+5.5);ctx.moveTo(q[0]+5.5,q[1]-5.5);ctx.lineTo(q[0]-5.5,q[1]+5.5);ctx.stroke();}}
+  const lp=pt(56,f);txt(l,lp[0],lp[1],'#ffd9a8','bold 11px system-ui');
+  // fuerza de Lenz: tangencial, contra el giro
+  const fz=Math.abs(Math.cos(p*f))*mag*I;
+  if(on&&fz>0.05){const len=8+30*Math.min(1,fz/4),t=[Math.sin(f),Math.cos(f)];
+   arrow(q[0]+t[0]*12,q[1]+t[1]*12,q[0]+t[0]*(12+len),q[1]+t[1]*(12+len),'#ffd84a',2.5);}
+ });
+ // eje
+ ctx.beginPath();ctx.arc(gx,gy,12,0,7);ctx.fillStyle='#9aa4ba';ctx.fill();mark('eje');
+ ctx.strokeStyle='#2a3142';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(gx,gy);ctx.lineTo(...pt(12,th));ctx.stroke();
+ // giro y par de Lenz
+ if(run){ctx.strokeStyle='#7dffb0';ctx.lineWidth=3;ctx.beginPath();ctx.arc(gx,gy,166,-(Math.PI/2+0.55),-(Math.PI/2-0.55),false);ctx.stroke();
+  const a1=Math.PI/2+0.55,pe=pt(166,a1);arrow(pe[0]+Math.sin(a1)*6,pe[1]+Math.cos(a1)*6,pe[0]-Math.sin(a1)*2,pe[1]-Math.cos(a1)*2,'#7dffb0',3);
+  txt('la mueve el agua',gx+96,gy-160,'#7dffb0','10px system-ui');
+  if(R.Te>0.02){ctx.strokeStyle='#ffa347';ctx.lineWidth=1.5+Math.min(6,R.Te*2);ctx.beginPath();ctx.arc(gx,gy,166,(Math.PI/2-0.5),(Math.PI/2+0.5),false);ctx.stroke();
+   const a2=-Math.PI/2+0.5,p2=pt(166,a2);arrow(p2[0]-Math.sin(a2)*6,p2[1]-Math.cos(a2)*6,p2[0]+Math.sin(a2)*2,p2[1]+Math.cos(a2)*2,'#ffa347',2.5);
+   txt('frenado de Lenz',gx-96,gy+164,'#ffa347','10px system-ui');}}
+ // ----- salida -----
+ const ky=440,bx=300,by=462,glow=S.load?Math.min(1,R.Po/120):0;
+ txt(S.ac?'Anillos rozantes (vista lateral del eje)':'Conmutador (vista desde el eje)',gx,372,'#93a0b8','11px system-ui');
+ let path;
+ if(S.ac){
+  ctx.beginPath();ctx.rect(36,ky-5,170,10);ctx.fillStyle='#8892a8';ctx.fill();mark('eje');
+  [[110,'A','#e0a050'],[155,'B','#a8641f']].forEach(([x,l,c])=>{ctx.beginPath();ctx.rect(x-8,ky-20,16,40);ctx.fillStyle=c;ctx.fill();
+   ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=1;for(let k=0;k<3;k++){const yy=ky-20+((th*40/Math.PI+k*13.3)%40+40)%40;ctx.beginPath();ctx.moveTo(x-8,yy);ctx.lineTo(x+8,yy);ctx.stroke();}
+   ctx.beginPath();ctx.rect(x-8,ky-20,16,40);mark('anillos');txt(l,x,ky,'#2a1500','bold 10px system-ui');});
+  txt('a la bobina →',58,ky-14,'#93a0b8','9px system-ui');
+  brush(103,ky-34,14,13);brush(148,ky+21,14,13);
+  const a=[[110,ky-34],[110,ky-48],[bx,ky-48],[bx,by-24]],b=[[bx,by+13],[bx,ky+62],[155,ky+62],[155,ky+34]];
+  poly(a);poly(b);path=a.concat(b);
+  vInst=Math.SQRT2*R.V*e1;
+  if(on)dots('ac',path,Math.SQRT2*I*e1,dt);
+ }else{
+  const kx=130,KR=24,g=0.1,np=2*p;
+  for(let j=0;j<np;j++){const isA=j%2===0,c=th-Math.PI/(2*p)+j*Math.PI/p;
+   sector(8,KR,c-Math.PI/(2*p)+g,c+Math.PI/(2*p)-g,kx,ky);ctx.fillStyle=isA?'#e0a050':'#a8641f';ctx.fill();mark('conm');
+   const q=pt(16,c,kx,ky);txt(isA?'A':'B',q[0],q[1],isA?'#3a1d00':'#ffe6c4','bold 10px system-ui');}
+  ctx.beginPath();ctx.arc(kx,ky,7,0,7);ctx.fillStyle='#9aa4ba';ctx.fill();
+  const sg=Math.sign(S.m);
+  brush(kx+KR-2,ky-7,14,14);
+  let b2;
+  if(p===1){brush(kx-KR-12,ky-7,14,14);b2=[[bx,by+13],[bx,ky+62],[70,ky+62],[70,ky],[kx-KR-12,ky]];}
+  else{brush(kx-7,ky-KR-12,14,14);b2=[[bx,by+13],[bx,ky+62],[60,ky+62],[60,ky-52],[kx,ky-52],[kx,ky-KR-12]];}
+  const a=[[kx+KR+12,ky],[214,ky],[214,ky-48],[bx,ky-48],[bx,by-24]];
+  poly(a,sg>0?'#ff9090':'#9fbaff');poly(b2,sg>0?'#9fbaff':'#ff9090');path=a.concat(b2);
+  txt(sg>0?'+':'−',kx+KR+18,ky-16,sg>0?'#ff8080':'#8fb3ff','bold 14px system-ui');
+  if(on&&Math.abs(Math.sin(p*th))<0.13){const pts=[[kx+KR,ky],p===1?[kx-KR,ky]:[kx,ky-KR]];pts.forEach(([x,y])=>{ctx.strokeStyle='#fff6a0';ctx.lineWidth=1.4;for(let k=0;k<5;k++){const r=3+Math.random()*6,aa=Math.random()*6.28;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+r*Math.cos(aa),y+r*Math.sin(aa));ctx.stroke();}});}
+  vInst=sg*R.V*Math.PI/2*Math.abs(Math.sin(p*th));
+  if(on)dots('dc',path,sg*I,dt);
+ }
+ bulb(bx,by,glow);if(!S.load)openSw(bx,ky-30);
+ txt(`${R.V.toFixed(1)} V · ${I.toFixed(2)} A · ${R.Po.toFixed(0)} W`,gx-20,530,'#ffe9a8','bold 12px system-ui');
+ ctx.restore();
+}
+
+const wave=[];
+function drawWave(){
+ const w=wv.getBoundingClientRect().width,h=120;wc.clearRect(0,0,w,h);
+ let mx=5;for(const v of wave)mx=Math.max(mx,Math.abs(v));mx=Math.ceil(mx/10)*10;
+ const z=h/2;wc.strokeStyle='#2a3348';wc.lineWidth=1;wc.beginPath();wc.moveTo(0,z);wc.lineTo(w,z);wc.stroke();
+ wc.fillStyle='#93a0b8';wc.font='10px system-ui';wc.textBaseline='top';wc.fillText('+'+mx+' V',4,2);wc.textBaseline='bottom';wc.fillText('−'+mx+' V',4,h-2);
+ wc.strokeStyle='#ffd84a';wc.lineWidth=2;wc.beginPath();wave.forEach((v,i)=>{const x=w*i/239,y=z-v/mx*(z-6);i?wc.lineTo(x,y):wc.moveTo(x,y);});wc.stroke();
+ wc.fillStyle='#cfd8e8';wc.textAlign='right';wc.textBaseline='top';wc.fillText(S.ac?'CA: senoidal':'CC: pulsante (una sola bobina)',w-4,2);wc.textAlign='left';
+}
+function drawCurve(){
+ const w=cr.getBoundingClientRect().width,h=120,m=26;
+ const t0=turb(0),wmax=Math.max(10,1.1*t0.v/P.r*S.G),nmax=wmax*60/(2*Math.PI),X=n=>m+(w-m-6)*n/nmax;
+ rc.clearRect(0,0,w,h);const pts=[];let pm=10;
+ for(let i=0;i<=40;i++){const wg=wmax*i/40,t=turb(wg),e=elec(wg),pd=e.Pe+(P.b*wg+P.fr)*wg;pts.push([wg*60/(2*Math.PI),Math.max(0,t.Pt),pd]);pm=Math.max(pm,t.Pt);}
+ const Y=v=>h-16-(h-26)*Math.min(v,pm*1.05)/(pm*1.05);
+ rc.strokeStyle='#2a3348';rc.lineWidth=1;rc.beginPath();rc.moveTo(m,4);rc.lineTo(m,h-16);rc.lineTo(w-4,h-16);rc.stroke();
+ rc.fillStyle='#93a0b8';rc.font='10px system-ui';rc.fillText(pm.toFixed(0)+' W',2,10);rc.textAlign='right';rc.fillText(Math.round(nmax)+' rpm gen.',w-4,h-4);rc.textAlign='left';rc.fillText('0',m-2,h-4);
+ [[1,'#6fc3ff'],[2,'#ffa347']].forEach(([k,c])=>{rc.strokeStyle=c;rc.lineWidth=2;rc.beginPath();pts.forEach((q,i)=>i?rc.lineTo(X(q[0]),Y(q[k])):rc.moveTo(X(q[0]),Y(q[k])));rc.stroke();});
+ const n=S.w*60/(2*Math.PI);rc.fillStyle='#fff';rc.beginPath();rc.arc(X(Math.min(nmax,n)),Y(Math.max(0,R.T.Pt)),4,0,7);rc.fill();
+}
+
+/* ---------- interfaz ---------- */
+const comps=[
+ ['agua','Agua (canal y descarga)','Agua: la energía viene de su caída. Potencia hidráulica P = ρ·g·Q·H = 1000 × 9,81 × caudal (m³/s) × altura (m).'],
+ ['tuberia','Tubería forzada','Tubería forzada: baja el agua a presión desde el canal hasta la turbina. Su rozamiento resta altura (pérdida de carga), más cuanto mayor es el caudal.'],
+ ['valvula','Válvula','Válvula: regula el caudal que llega al inyector. Cerrarla reduce la potencia y la velocidad.'],
+ ['inyector','Inyector (tobera)','Inyector: convierte la presión en un chorro rápido, v ≈ 0,97·√(2·g·H).'],
+ ['pelton','Turbina Pelton','Turbina Pelton: rueda con cangilones en forma de doble cuchara. El chorro los empuja y el agua sale casi sin velocidad. Rinde al máximo cuando el cangilón va a la mitad de la velocidad del chorro.'],
+ ['correa','Correa y poleas','Correa: multiplica la velocidad de la turbina para que el generador gire más rápido (más voltaje y frecuencia).'],
+ ['imanes','Imanes fijos','Imanes permanentes pegados a la carcasa, alternando N y S. No se mueven ni necesitan corriente; crean un campo constante que atraviesa la bobina.'],
+ ['carcasa','Carcasa (yugo)','Carcasa de hierro: sostiene los imanes y cierra el camino del flujo por fuera, de un imán al siguiente.'],
+ ['campo','Campo magnético','Campo magnético: sale del imán N, cruza el entrehierro y el núcleo del rotor, y entra al imán S.'],
+ ['gap','Entrehierro','Entrehierro: separación entre la bobina giratoria y los imanes. Más pequeño → más flujo → más voltaje; necesita holgura para que el rotor no roce.'],
+ ['rotor','Núcleo del rotor','Núcleo de chapas de hierro que gira; lleva la bobina y concentra el flujo de los imanes.'],
+ ['bobina','Bobina giratoria','Bobina (inducido) que gira dentro del campo. Sus lados A y B cortan las líneas de campo y se induce voltaje (⊙ saliendo, ⊗ entrando). Las flechas amarillas son la fuerza de Lenz, que frena el giro cuando hay corriente.'],
+ ['anillos','Anillos rozantes','Anillos rozantes (CA): cada extremo de la bobina va a su anillo. La conexión nunca se invierte, por eso la salida es alterna.'],
+ ['conm','Conmutador','Conmutador (CC): anillo partido en delgas. Cada vez que la fem cambia de signo, las escobillas pasan a la otra delga y la salida queda siempre en el mismo sentido.'],
+ ['esc','Escobillas','Escobillas de grafito: contactos fijos que rozan los anillos o el conmutador y sacan la corriente de la bobina que gira. Se gastan y producen chispas.'],
+ ['eje','Eje del generador','Eje del generador: lo hace girar la correa desde la turbina; la bobina gira con él.'],
+ ['carga','Foco (carga)','Foco: consume la energía. Menos resistencia → más corriente → más frenado en el eje.']
+];
+const chips=$('chips');
+comps.forEach(([id,n,t])=>{const b=document.createElement('button');b.textContent=n;b.onclick=()=>{
+ S.sel=S.sel===id?null:id;[...chips.children].forEach(c=>c.classList.remove('sel'));
+ if(S.sel){b.classList.add('sel');$('info').textContent=t;}else $('info').textContent='Haz clic en un componente para verlo resaltado en el dibujo.';};chips.appendChild(b);});
+const binds=[['sH','H',v=>v+' m'],['sQa','Qa',v=>v.toFixed(1)+' L/s'],['sOp','op',v=>v+' %'],['sG','G',v=>'1 : '+v],['sGap','gap',v=>v.toFixed(1)+' mm'],['sN','N',v=>v+' vueltas'],['sRL','RL',v=>v+' Ω']];
+function syncUI(){binds.forEach(([id,key,fmt])=>{$(id).value=S[key];$('o'+id.slice(1)).textContent=fmt(S[key]);});
+ $('sMag').value=S.mag;$('p1').classList.toggle('sel',S.p===1);$('p2').classList.toggle('sel',S.p===2);
+ $('oAC').classList.toggle('sel',S.ac);$('oDC').classList.toggle('sel',!S.ac);
+ const b=$('bLoad');b.className=S.load?'on':'off';b.innerHTML=S.load?'💡 Carga conectada<small>clic para desconectar</small>':'💡 Carga desconectada<small>clic para conectar</small>';
+ $('tFlip').textContent=S.m>0?'N a la derecha':'S a la derecha';$('sSl').value=S.slow;}
+binds.forEach(([id,key,fmt])=>{$(id).oninput=e=>{S[key]=+e.target.value;$('o'+id.slice(1)).textContent=fmt(S[key]);};});
+$('sMag').onchange=e=>S.mag=e.target.value;$('sSl').onchange=e=>S.slow=+e.target.value;
+$('p1').onclick=()=>{S.p=1;syncUI();};$('p2').onclick=()=>{S.p=2;syncUI();};
+$('oAC').onclick=()=>{S.ac=true;syncUI();};$('oDC').onclick=()=>{S.ac=false;syncUI();};
+$('bLoad').onclick=()=>{S.load=!S.load;syncUI();};$('bFlip').onclick=()=>{S.m*=-1;syncUI();};
+$('bRst').onclick=()=>{const sel=S.sel;S={...S0,sel};wave.length=0;syncUI();};
+
+function ui(){
+ const n=S.w*60/(2*Math.PI),T=R.T,uv=T.v>0.1?T.u/T.v:0;
+ $('rQ').textContent=(T.Q*1000).toFixed(1);$('rHn').textContent=T.Hn.toFixed(1);$('rPh').textContent=T.Ph.toFixed(0);
+ $('rNt').textContent=Math.round(n/S.G);$('rN').textContent=Math.round(n);
+ $('lF').textContent=S.ac?'Frecuencia (Hz)':'Pulsos por segundo';$('rF').textContent=S.ac?R.fe.toFixed(1):(2*R.fe).toFixed(0);
+ $('rE').textContent=R.E.toFixed(1);$('rV').textContent=R.V.toFixed(1);$('lV').textContent=S.ac?'Voltaje en el foco (V ef.)':'Voltaje CC medio (V)';
+ $('rI').textContent=R.I.toFixed(2);$('rPo').textContent=R.Po.toFixed(0);
+ $('rEf').textContent=T.Ph>5?(R.Po/T.Ph*100).toFixed(0)+' %':'—';$('rUV').textContent=uv.toFixed(2);
+ const al=[];
+ if(uv>0.8)al.push('⚠ Embalamiento: la turbina casi alcanza la velocidad del chorro. Conecta más carga, cierra la válvula o baja la transmisión.');
+ if(R.I>8)al.push('🔥 Corriente alta en la bobina: sube la resistencia del foco.');
+ if(T.Q===0)al.push('Válvula cerrada: no llega agua a la turbina.');
+ if(T.Ph>0&&T.Hn<0.7*S.H)al.push('Mucha pérdida en la tubería: el caudal es alto para su diámetro.');
+ if(S.ac&&Math.abs(R.fe-60)>3&&R.fe>5)al.push(`Frecuencia ${R.fe.toFixed(0)} Hz (la red del Perú es de 60 Hz).`);
+ $('alert').textContent=al.join(' ');
+ const ex=[];
+ ex.push(`Potencia del agua: P = 1000 × 9,81 × ${(T.Q).toFixed(4)} m³/s × ${S.H} m = ${T.Ph.toFixed(0)} W.`);
+ ex.push(`El inyector lanza el chorro a ${T.v.toFixed(1)} m/s (caída neta ${T.Hn.toFixed(1)} m). Los cangilones van a ${T.u.toFixed(1)} m/s → u/v = ${uv.toFixed(2)}; lo ideal es ≈ 0,5.`);
+ ex.push(`La correa 1:${S.G} lleva la turbina de ${Math.round(n/S.G)} rpm a ${Math.round(n)} rpm en el generador.`);
+ ex.push(`En el generador la bobina gira dentro de los imanes fijos e induce ${R.E.toFixed(1)} V (Faraday). La corriente del foco la frena (Lenz) y ese frenado equilibra el empuje del agua.`);
+ ex.push('Si quitas carga, la turbina se acelera y suben el voltaje y la frecuencia; si pones más carga, baja. En una microcentral real se usa un regulador de velocidad o un controlador electrónico de carga para mantener 60 Hz.');
+ ex.push(S.ac?'Salida alterna por anillos rozantes.':'Salida continua por conmutador (pulsante con una sola bobina).');
+ $('expl').innerHTML=ex.map(t=>'<li>'+t+'</li>').join('');
+}
+
+$('fb').onclick=()=>{$('fbp').style.display='flex';upFb();};$('fbC').onclick=()=>{$('fbp').style.display='none';};
+function upFb(){const t=encodeURIComponent('Comentario sobre el simulador Microcentral hidroeléctrica: '+($('fbt').value||''));
+ $('fbW').href='#?text='+t;$('fbM').href='mailto:neptaliagiphoyos@gmail.com?subject='+encodeURIComponent('Simulador Microcentral hidroeléctrica')+'&body='+t;}
+$('fbt').oninput=upFb;
+let last=performance.now(),uit=0;
+function sect(fn,sc,ox,oy,sy,ch){ctx.save();ctx.translate(ox,oy);ctx.scale(sc,sc);ctx.beginPath();ctx.rect(0,0,360,ch);ctx.clip();ctx.translate(0,-sy);fn();ctx.restore();}
+function drawStats(){
+ const x0=548,y0=552,w=524,h=74;ctx.fillStyle='#141c2c';ctx.beginPath();ctx.roundRect(x0,y0,w,h,12);ctx.fill();
+ const T=R.T||{u:0,v:1},it=[['P. útil',R.Po.toFixed(0),'W','#ffd84a'],[S.ac?'Frecuencia':'Pulsos/s',S.ac?R.fe.toFixed(1):(2*R.fe).toFixed(0),S.ac?'Hz':'',S.ac&&Math.abs(R.fe-60)<2?'#7dffb0':'#e8edf6'],
+  ['Generador',Math.round(S.w*60/(2*Math.PI)),'rpm','#e8edf6'],['u/v',(T.v>0.1?T.u/T.v:0).toFixed(2),'','#6fc3ff']];
+ ctx.textAlign='left';ctx.textBaseline='top';
+ it.forEach((v,i)=>{const cx=x0+10+i*128;ctx.fillStyle='#93a0b8';ctx.font='11px system-ui';ctx.fillText(v[0]+(paused&&i===0?'  ⏸':''),cx,y0+10);
+  ctx.fillStyle=v[3];ctx.font='bold 28px system-ui';ctx.fillText(v[1],cx,y0+28);const tw=ctx.measureText(v[1]).width;ctx.font='12px system-ui';ctx.fillStyle='#cfd8e8';ctx.fillText(v[2],cx+tw+5,y0+44);});
+ ctx.textBaseline='middle';
+}
+function loop(t){const dt=paused?0:Math.min(0.05,(t-last)/1000);last=t;
+ step(dt);S.th+=S.w*dt/S.slow;
+ ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle='#0f1420';ctx.fillRect(0,0,CW,CH);
+ sect(()=>drawHydro(dt),1.5,0,0,0,234);
+ ctx.fillStyle='#121a2a';ctx.fillRect(540,0,540,CH);
+ sect(()=>draw(dt),1.5,540,0,0,364);
+ ctx.strokeStyle='#2a3348';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,354);ctx.lineTo(540,354);ctx.stroke();
+ sect(()=>draw(0),1.5,0,356,364,184);
+ drawStats();
+ wave.push(vInst);if(wave.length>240)wave.shift();
+ drawWave();uit+=dt;if(uit>0.15){uit=0;ui();drawCurve();}
+ requestAnimationFrame(loop);}
+document.addEventListener('keydown',e=>{
+ const tg=e.target;if(tg&&(tg.tagName==='TEXTAREA'||tg.tagName==='SELECT'||(tg.tagName==='INPUT'&&tg.type!=='range')))return;
+ if(tg&&tg.tagName==='INPUT'&&tg.type==='range'&&e.key.startsWith('Arrow'))return;
+ const k=e.key,cl=(v,a,b)=>Math.max(a,Math.min(b,v));let h=true;
+ if(k==='ArrowUp'||k==='ArrowDown')S.H=cl(S.H+(k==='ArrowUp'?1:-1),2,60);
+ else if(k==='ArrowRight'||k==='ArrowLeft')S.Qa=cl(S.Qa+(k==='ArrowRight'?0.5:-0.5),1,40);
+ else if(k==='PageUp'||k==='PageDown')S.op=cl(S.op+(k==='PageUp'?5:-5),0,100);
+ else if(k===']'||k==='[')S.G=cl(S.G+(k===']'?0.25:-0.25),1,8);
+ else if(k==='+'||k==='=')S.RL=cl(S.RL+1,2,200);else if(k==='-'||k==='_')S.RL=cl(S.RL-1,2,200);
+ else if(k==='c'||k==='C')S.load=!S.load;else if(k==='m'||k==='M')S.ac=!S.ac;
+ else if(k==='p'||k==='P')S.p=S.p===1?2:1;else if(k==='f'||k==='F')S.m*=-1;
+ else if(k===' ')paused=!paused;else if(k==='r'||k==='R')$('bRst').click();
+ else if(k==='Escape'){S.sel=null;[...chips.children].forEach(c=>c.classList.remove('sel'));$('info').textContent='Haz clic en un componente para verlo resaltado en el dibujo.';}
+ else h=false;
+ if(h){e.preventDefault();syncUI();}
+});
+fit();syncUI();step(0);requestAnimationFrame(loop);
+</script>
+<!-- Botón volver a la biblioteca · Neptalí Agip -->
+<style id="nav-volver-css">#nav-volver{transition:padding .3s,opacity .3s;opacity:.92}#nav-volver #nav-volver-t{display:inline-block;max-width:160px;overflow:hidden;white-space:nowrap;vertical-align:bottom;transition:max-width .35s}#nav-volver.mini{padding:6px 9px!important;opacity:.7}#nav-volver.mini #nav-volver-t{max-width:0}#nav-volver.mini:hover,#nav-volver.mini:focus-visible{opacity:1;padding:6px 11px!important}#nav-volver.mini:hover #nav-volver-t,#nav-volver.mini:focus-visible #nav-volver-t{max-width:160px}</style>
+<a id="nav-volver" href="https://neptaliagiphoyos.github.io/Simuladores/" title="Volver a la biblioteca"
+ style="position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:8px;z-index:2147483000;display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:99px;background:rgba(15,17,21,.82);color:#fff;font:700 12px/1.2 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;text-decoration:none;border:1px solid rgba(255,255,255,.25);box-shadow:0 4px 14px rgba(0,0,0,.35);backdrop-filter:blur(4px)">⬅ <span id="nav-volver-t">🔬 Simuladores</span></a>
+<script>
+(function(){try{
+  var r=document.referrer,a=document.getElementById('nav-volver'),t=document.getElementById('nav-volver-t');
+  var L={'Programas-de-Ingenieria':'🛠️ Programas','Simuladores':'🔬 Simuladores','Juegos-ni-os/lego':'🧱 LEGO','Juegos-ni-os':'🎮 Juegos','El-Sastre-del-Grid/libros':'📖 Libros','Profe-Agip':'🏫 Profe Agip'};
+  if(r&&r.indexOf('https://neptaliagiphoyos.github.io/')===0&&r.split('#')[0]!==location.href.split('#')[0]){
+    var p=r.replace('https://neptaliagiphoyos.github.io/','').split(/[?#]/)[0];
+    if(/(^|\/)(index\.html)?$/.test(p)){for(var k in L){if(p.replace(/index\.html$/,'').replace(/\/$/,'')===k){a.href=r.split('#')[0];t.textContent=L[k];break;}}}
+  }
+  setTimeout(function(){a.classList.add('mini')},3500);
+}catch(e){}})();
+</script>
+<script>window.__tvgame=true;</script><script>/* Navegacion con control remoto (TV) - ES5 */
+(function(){
+  if (window.__tvnav) return; window.__tvnav = 1;
+  var GAME = !!window.__tvgame;
+  var st = document.createElement('style');
+  st.textContent = '.tvfoco{outline:6px solid #ffd400 !important;outline-offset:3px !important;box-shadow:0 0 0 10px rgba(0,0,0,.55) !important;position:relative;z-index:5}';
+  (document.head||document.documentElement).appendChild(st);
+  var SEL = 'a[href],button,input,select,textarea,[tabindex],[onclick],summary';
+  function visible(el){
+    if (el.disabled) return false;
+    var r = el.getBoundingClientRect();
+    if (r.width < 4 || r.height < 4) return false;
+    var cs = window.getComputedStyle(el);
+    return cs.visibility !== 'hidden' && cs.display !== 'none';
+  }
+  function items(){
+    var all = document.querySelectorAll(SEL), out = [];
+    for (var i=0;i<all.length;i++){ if (all[i].getAttribute('tabindex')==='-1') continue; if (visible(all[i])) out.push(all[i]); }
+    return out;
+  }
+  var cur = null;
+  function setFocus(el){
+    if (cur) cur.className = (' '+cur.className+' ').replace(' tvfoco ',' ').replace(/^\s+|\s+$/g,'');
+    cur = el; if (!el) return;
+    el.className += ' tvfoco';
+    if (!el.hasAttribute('tabindex') && !/^(A|BUTTON|INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) el.setAttribute('tabindex','0');
+    try { el.focus({preventScroll:true}); } catch(e){ try{el.focus();}catch(e2){} }
+    var r = el.getBoundingClientRect(), h = window.innerHeight;
+    if (r.top < 60 || r.bottom > h - 60) window.scrollBy(0, r.top - h/2 + r.height/2);
+  }
+  function center(r){ return {x:r.left+r.width/2, y:r.top+r.height/2}; }
+  function move(dir){
+    var list = items(); if (!list.length) return;
+    if (!cur || list.indexOf(cur) < 0){ setFocus(list[0]); return; }
+    var a = cur.getBoundingClientRect(), ca = center(a), best = null, bd = 1e12;
+    for (var i=0;i<list.length;i++){
+      var el = list[i]; if (el === cur) continue;
+      var b = el.getBoundingClientRect(), cb = center(b), dx = cb.x-ca.x, dy = cb.y-ca.y, main, side;
+      if (dir==='R'){ if (b.left < a.right-4 && dx <= 4) continue; main=dx; side=dy; }
+      else if (dir==='L'){ if (b.right > a.left+4 && dx >= -4) continue; main=-dx; side=dy; }
+      else if (dir==='D'){ if (b.top < a.bottom-4 && dy <= 4) continue; main=dy; side=dx; }
+      else { if (b.bottom > a.top+4 && dy >= -4) continue; main=-dy; side=dx; }
+      if (main <= 0) continue;
+      var d = main + Math.abs(side)*2.5;
+      if (d < bd){ bd = d; best = el; }
+    }
+    if (best) setFocus(best);
+    else if (dir==='D') window.scrollBy(0, window.innerHeight*0.6);
+    else if (dir==='U') window.scrollBy(0, -window.innerHeight*0.6);
+  }
+  window.addEventListener('keydown', function(e){
+    if (e.defaultPrevented) return;
+    var t = e.target && e.target.tagName;
+    if (t==='INPUT' || t==='TEXTAREA' || t==='SELECT') { if (e.keyCode!==38 && e.keyCode!==40) return; }
+    var k = e.keyCode || e.which, dir = null;
+    if (k===37) dir='L'; else if (k===38) dir='U'; else if (k===39) dir='R'; else if (k===40) dir='D';
+    if (dir){ if (GAME) return; e.preventDefault(); move(dir); return; }
+    if ((k===13 || k===23 || k===66) && cur && (!GAME || document.activeElement===cur)){ e.preventDefault(); if (cur.tagName==='INPUT'){cur.focus();return;} cur.click(); }
+  }, false);
+  document.addEventListener('focusin', function(e){ var el=e.target; if (el && el!==cur && el.matches && el.matches(SEL)) setFocus(el); });
+  setTimeout(function(){ if (!cur && !GAME){ var l = items(); for (var i=0;i<l.length;i++){ var r=l[i].getBoundingClientRect(); if (r.top>=0 && r.top < window.innerHeight){ setFocus(l[i]); break; } } } }, 900);
+})();
+</script>
+</body></html>
