@@ -44,13 +44,19 @@ button.on{background:var(--accent);border-color:var(--accent)}
     <option value="w15" selected>2 octavas (blancas)</option>
     <option value="c13">1 octava con negras</option>
     <option value="c25">2 octavas con negras</option>
+    <option value="esc">🎼 Escalas (altura de la mano)</option>
+  </select>
+  <select id="sTon" aria-label="Tónica" hidden></select>
+  <select id="sEsc" aria-label="Escala" hidden>
+    <option value="pM">Pentatónica mayor</option><option value="M">Mayor</option><option value="m">Menor natural</option>
+    <option value="pm">Pentatónica menor</option><option value="bl">Blues</option>
   </select>
   <select id="sTimbre" aria-label="Timbre">
     <option value="0">Piano</option><option value="4">Piano eléctrico</option><option value="11">Vibráfono</option>
     <option value="16">Órgano</option><option value="48">Cuerdas</option><option value="73">Flauta</option><option value="80">Sintetizador</option>
   </select>
   <div class="grp"><button id="oD" aria-label="Bajar octava">Oct −</button><span id="oV">Do4</span><button id="oU" aria-label="Subir octava">Oct +</button></div>
-  <div class="grp"><button id="lU" aria-label="Subir la línea">Línea ↑</button><button id="lD" aria-label="Bajar la línea">Línea ↓</button></div>
+  <div class="grp" id="gLin"><button id="lU" aria-label="Subir la línea">Línea ↑</button><button id="lD" aria-label="Bajar la línea">Línea ↓</button></div>
 </header>
 <div id="stage">
   <video id="video" playsinline muted></video>
@@ -67,6 +73,7 @@ button.on{background:var(--accent);border-color:var(--accent)}
       <li>Toca <b>Calibrar mesa</b> y deja los dedos apoyados en la mesa 3 segundos. Eso marca la línea del teclado.</li>
       <li>Levanta los dedos y bájalos para tocar: cuando la yema cruza la línea, suena la tecla que está debajo. Al levantar, se apaga.</li>
     </ol>
+    <p id="msgEsc" hidden><b>Modo Escalas:</b> no hay teclado ni línea. Cada dedo tiene su nota y suena mientras está estirado. Sube la mano y las notas suben por la escala; bájala y bajan. Cierra el puño para callar.</p>
     <div id="msgErr" class="err"></div>
   </div>
 </div>
@@ -90,12 +97,12 @@ async function ensure(p){if(bufs[p]===undefined){try{const P=await pack("f"+Stri
     const B=bufs[p];if(B&&!PERC.includes(p))[48,72].forEach(k=>{if(B[k])try{loopBuf(B[k],k)}catch(e){}})}return bufs[p]}
 const PERC=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
 function audioMs(){const c=ctx;if(!c)return 0;return Math.round(((c.baseLatency||0)+(c.outputLatency||0))*1000)}
-function noteOn(midi){if(window.__onNote)window.__onNote(performance.now());const c=AC();const p=prog;const B=bufs[p];const t=c.currentTime;const g=c.createGain();g.connect(master);
+function noteOn(midi,vol=1){if(window.__onNote)window.__onNote(performance.now());const c=AC();const p=prog;const B=bufs[p];const t=c.currentTime;const g=c.createGain();g.connect(master);
   if(!B){const o=c.createOscillator();o.type=p===16?"square":p===80?"sawtooth":"triangle";o.frequency.value=440*Math.pow(2,(midi-69)/12);const f=c.createBiquadFilter();f.type="lowpass";f.frequency.value=2400;o.connect(f);f.connect(g);
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.35,t+0.008);if(PERC.includes(p))g.gain.setTargetAtTime(0.02,t+0.05,0.7);o.start(t);return{s:o,g}}
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.35*vol,t+0.008);if(PERC.includes(p))g.gain.setTargetAtTime(0.02,t+0.05,0.7);o.start(t);return{s:o,g}}
   const base=midi<60?48:72;const bu=B[base]?base:(B[48]?48:72);const s=c.createBufferSource();const L=PERC.includes(p)?null:loopBuf(B[bu],bu);s.buffer=L?L.buf:B[bu];s.playbackRate.value=Math.pow(2,(midi-bu)/12);
   if(L&&L.le){s.loop=true;s.loopStart=L.ls;s.loopEnd=L.le}
-  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.85,t+0.006);s.connect(g);s.start(t);return{s,g}}
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.85*vol,t+0.006);s.connect(g);s.start(t);return{s,g}}
 const LOOPS=new Map();
 function loopBuf(buf,bu){let L=LOOPS.get(buf);if(L)return L;const f=440*Math.pow(2,(bu-69)/12),ls=1.4,le=ls+Math.max(1,Math.round(1.2*f))/f;
   if(buf.duration<le+0.05){L={buf,ls:0,le:0};LOOPS.set(buf,L);return L}
@@ -114,13 +121,27 @@ $("sTimbre").onchange=async()=>{prog=+$("sTimbre").value;LS.set("aire-prog",prog
 let keyMode=LS.get("aire-keys","w15");$("sKeys").value=keyMode;
 let base=LS.get("aire-base",60);
 let lineY=LS.get("aire-line",0.62);
-function layout(){const k=[];const chrom=keyMode[0]==="c";const n=+keyMode.slice(1);
+function layout(){const k=[];if(keyMode==="esc")return k;const chrom=keyMode[0]==="c";const n=+keyMode.slice(1);
   if(chrom){for(let i=0;i<n;i++)k.push({off:i,blk:BLK.includes(i%12)})}
   else{const W=[0,2,4,5,7,9,11];for(let i=0;i<n;i++)k.push({off:Math.floor(i/7)*12+W[i%7],blk:false})}return k}
 let keys=layout();
 function showOct(){$("oV").textContent="Do"+(Math.floor(base/12)-1)}
 showOct();
-$("sKeys").onchange=()=>{keyMode=$("sKeys").value;LS.set("aire-keys",keyMode);keys=layout();releaseAll()};
+$("sKeys").onchange=()=>{keyMode=$("sKeys").value;LS.set("aire-keys",keyMode);keys=layout();releaseAll();showMode()};
+/* ===== Modo Escalas: cada dedo = una nota de la escala; la altura de la mano sube o baja por la escala ===== */
+const ESC={pM:[0,2,4,7,9],M:[0,2,4,5,7,9,11],m:[0,2,3,5,7,8,10],pm:[0,3,5,7,10],bl:[0,3,5,6,7,10]};
+let escK=LS.get("aire-esc","pM"),ton=LS.get("aire-ton",0);
+NOM.forEach((n,i)=>{const o=document.createElement("option");o.value=i;o.textContent=n;$("sTon").appendChild(o)});
+$("sEsc").value=escK;$("sTon").value=ton;
+$("sEsc").onchange=()=>{escK=$("sEsc").value;LS.set("aire-esc",escK);releaseAll()};
+$("sTon").onchange=()=>{ton=+$("sTon").value;LS.set("aire-ton",ton);releaseAll()};
+const NB=8;// franjas de altura en la pantalla
+const isEsc=()=>keyMode==="esc";
+/* Paso entre dedos: en escalas de 5-6 notas, notas seguidas; en las de 7, de por medio (terceras) para que suene a acorde */
+const fStep=()=>ESC[escK].length>=7?2:1;
+function escMidi(deg){const S=ESC[escK],n=S.length;return base+ton+Math.floor(deg/n)*12+S[((deg%n)+n)%n]}
+function showMode(){const e=isEsc();$("sTon").hidden=!e;$("sEsc").hidden=!e;$("gLin").hidden=e;$("bCal").hidden=e;$("msgEsc").hidden=!e}
+showMode();
 $("oD").onclick=()=>{base=Math.max(36,base-12);LS.set("aire-base",base);showOct();releaseAll()};
 $("oU").onclick=()=>{base=Math.min(84,base+12);LS.set("aire-base",base);showOct();releaseAll()};
 $("lU").onclick=()=>{lineY=Math.max(0.15,lineY-0.03);LS.set("aire-line",lineY)};
@@ -136,7 +157,30 @@ function releaseAll(){for(const id in fing){if(fing[id].v)noteOff(fing[id].v);de
 /* Filtro adaptativo: con el dedo quieto se suaviza (quita el temblor); en movimiento pasa casi directo,
    así la nota sale en la misma detección en que la yema cruza la línea (antes tardaba 1 a 2 detecciones más).
    Se probó además predecir el cruce, pero daba notas falsas cuando el dedo frenaba justo encima de la línea. */
-function process(hands){// hands: arrays of 21 {x,y} already in screen coords 0..1 (mirrored if needed)
+const ESCV=0.42;// volumen por nota en Escalas (suenan hasta 10 a la vez)
+const PIP={4:3,8:6,12:10,16:14,20:18};
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+/* Dedo estirado: la yema más lejos de la muñeca que la articulación media (pulgar: comparado con la base del meñique). Con margen para que no parpadee. */
+function stretched(lm,ti,was){const ref=ti===4?lm[17]:lm[0];const r=dist(lm[ti],ref)/Math.max(1e-6,dist(lm[PIP[ti]],ref));return was?r>1.02:r>1.12}
+const hand={};// h -> {pos, band}
+function processEsc(hands){const seen=new Set(),hs=new Set();
+  hands.forEach((lm,h)=>{hs.add(h);
+    const py=(lm[0].y+lm[5].y+lm[9].y+lm[13].y+lm[17].y)/5;const pos=(1-py)*NB;let H=hand[h];
+    if(!H)H=hand[h]={band:Math.max(0,Math.min(NB-1,Math.floor(pos)))};
+    /* Histéresis: cambia de franja solo al pasar 25 % más allá del borde, así el temblor no da notas falsas */
+    if(pos>H.band+1.25||pos<H.band-0.25)H.band=Math.max(0,Math.min(NB-1,Math.floor(pos)));
+    TIPS.forEach((ti,j)=>{const id=h+"-"+ti;seen.add(id);const p=lm[ti];let f=fing[id];if(!f)f=fing[id]={y:p.y,x:p.x,d:0,key:-1,v:null,on:false,st:false};
+      f.x+=(p.x-f.x)*0.6;f.y+=(p.y-f.y)*0.6;
+      f.st=stretched(lm,ti,f.st);
+      /* Como en un piano: el dedo más a la izquierda en pantalla es el más grave (mano derecha: pulgar; izquierda: meñique) */
+      const jj=lm[2].x>lm[17].x?4-j:j;
+      const m=escMidi(H.band+jj*fStep());f.note=m;
+      if(f.st&&!f.on){f.on=true;f.key=m;f.v=noteOn(m,ESCV)}
+      else if(!f.st&&f.on){f.on=false;noteOff(f.v);f.v=null;f.key=-1}
+      else if(f.on&&m!==f.key){noteOff(f.v);f.key=m;f.v=noteOn(m,ESCV)}})});
+  for(const id in fing)if(!seen.has(id)){if(fing[id].v)noteOff(fing[id].v);delete fing[id]}
+  for(const h in hand)if(!hs.has(+h))delete hand[h]}
+function process(hands){if(isEsc())return processEsc(hands);// hands: arrays of 21 {x,y} already in screen coords 0..1 (mirrored if needed)
   const seen=new Set();
   hands.forEach((lm,h)=>TIPS.forEach(ti=>{const id=h+"-"+ti;seen.add(id);const p=lm[ti];let f=fing[id];if(!f)f=fing[id]={y:p.y,x:p.x,d:0,key:-1,v:null,on:false};
     const dy=p.y-f.y;f.d=f.d*0.5+dy*0.5;f.y+=Math.min(1,0.4+Math.abs(f.d)/0.025)*dy;
@@ -145,7 +189,7 @@ function process(hands){// hands: arrays of 21 {x,y} already in screen coords 0.
     else if(f.on&&(f.y<lineY-HY||k<0)){f.on=false;noteOff(f.v);f.v=null;f.key=-1}
     else if(f.on&&k!==f.key){noteOff(f.v);f.key=k;f.v=noteOn(base+keys[k].off)}}));
   for(const id in fing)if(!seen.has(id)){if(fing[id].v)noteOff(fing[id].v);delete fing[id]}}
-window.__test={process,keys:()=>keys,setLine:v=>lineY=v,fing,unlock,ensure};
+window.__test={process,hand,escMidi,keys:()=>keys,setLine:v=>lineY=v,fing,unlock,ensure};
 
 /* ===== Dibujo ===== */
 const cv=$("cv"),g2=cv.getContext("2d");
@@ -156,6 +200,7 @@ addEventListener("resize",fit);
 let lastHands=[];
 function draw(){const r=$("stage").getBoundingClientRect();g2.clearRect(0,0,r.width,r.height);
   const X=x=>vr.x+x*vr.w,Y=y=>vr.y+y*vr.h;
+  if(isEsc()){drawEsc(X,Y);return}
   const ly=Y(lineY),bh=Math.min(vr.h*0.22,90);const kw=(X1-X0)*vr.w/keys.length;
   const down=new Set(Object.values(fing).filter(f=>f.on).map(f=>f.key));
   keys.forEach((k,i)=>{const x=X(X0)+i*kw;g2.fillStyle=down.has(i)?"rgba(51,80,255,.85)":k.blk?"rgba(15,17,30,.72)":"rgba(255,255,255,.42)";g2.fillRect(x+1,ly,kw-2,bh);
@@ -163,6 +208,17 @@ function draw(){const r=$("stage").getBoundingClientRect();g2.clearRect(0,0,r.wi
   g2.strokeStyle="#ff4d6d";g2.lineWidth=3;g2.beginPath();g2.moveTo(X(0),ly);g2.lineTo(X(1),ly);g2.stroke();
   lastHands.forEach(lm=>{g2.strokeStyle="rgba(61,220,132,.55)";g2.lineWidth=2;[[0,1,2,3,4],[0,5,6,7,8],[9,10,11,12],[13,14,15,16],[0,17,18,19,20],[5,9,13,17]].forEach(ch=>{g2.beginPath();ch.forEach((j,n)=>{const p=lm[j];n?g2.lineTo(X(p.x),Y(p.y)):g2.moveTo(X(p.x),Y(p.y))});g2.stroke()})});
   Object.values(fing).forEach(f=>{g2.fillStyle=f.on?"#ff4d6d":"#3ddc84";g2.beginPath();g2.arc(X(f.x),Y(f.y),f.on?9:6,0,7);g2.fill()})}
+
+function drawHands(X,Y){lastHands.forEach(lm=>{g2.strokeStyle="rgba(61,220,132,.55)";g2.lineWidth=2;[[0,1,2,3,4],[0,5,6,7,8],[9,10,11,12],[13,14,15,16],[0,17,18,19,20],[5,9,13,17]].forEach(ch=>{g2.beginPath();ch.forEach((j,n)=>{const p=lm[j];n?g2.lineTo(X(p.x),Y(p.y)):g2.moveTo(X(p.x),Y(p.y))});g2.stroke()})})}
+function drawEsc(X,Y){
+  /* Guías de altura: franjas tenues con la nota del pulgar en cada una */
+  const act=new Set(Object.values(hand).map(H=>H.band));
+  for(let b=0;b<NB;b++){const y0=Y(1-(b+1)/NB),y1=Y(1-b/NB);g2.fillStyle=act.has(b)?"rgba(51,80,255,.18)":b%2?"rgba(255,255,255,.04)":"rgba(255,255,255,.0)";g2.fillRect(X(0),y0,vr.w,y1-y0);
+    g2.strokeStyle="rgba(255,255,255,.12)";g2.lineWidth=1;g2.beginPath();g2.moveTo(X(0),y1);g2.lineTo(X(1),y1);g2.stroke();
+    const m=escMidi(b);g2.fillStyle=act.has(b)?"#fff":"rgba(255,255,255,.5)";g2.font="600 12px system-ui";g2.textAlign="left";g2.fillText(NOM[m%12]+(Math.floor(m/12)-1),X(0)+6,(y0+y1)/2+4)}
+  drawHands(X,Y);
+  Object.values(fing).forEach(f=>{const x=X(f.x),y=Y(f.y);g2.fillStyle=f.on?"#ff4d6d":"rgba(61,220,132,.8)";g2.beginPath();g2.arc(x,y,f.on?11:6,0,7);g2.fill();
+    if(f.on&&f.note!=null){g2.fillStyle="#fff";g2.font="700 13px system-ui";g2.textAlign="center";g2.lineWidth=3;g2.strokeStyle="rgba(0,0,0,.7)";const t=NOM[f.note%12];g2.strokeText(t,x,y-15);g2.fillText(t,x,y-15)}})}
 
 /* ===== Cámara y detección ===== */
 const video=$("video");let stream=null,facing=LS.get("aire-facing","user"),landmarker=null,running=false,fpsT=0,fpsN=0,fps=0,lastVT=-1,lastDT=0;
@@ -210,7 +266,7 @@ $("bStart").onclick=async()=>{unlock();ensure(prog);$("bStart").disabled=true;$(
     err(e.message==="NOCAM"?"Este navegador no deja usar la cámara. Abre esta página en <b>Chrome</b> (no dentro de WhatsApp, Facebook u otra app).":"No pude abrir la cámara ("+(e.name||e.message)+"). Revisa que diste permiso a la cámara y que la página está abierta en Chrome.");return}
   try{await loadModel()}catch(e){$("bStart").disabled=false;$("bStart").textContent="▶ Iniciar cámara";err("No pude cargar el detector de manos ("+(e.message||e)+").");return}
   $("msg").hidden=true;$("hud").hidden=false;$("bCal").disabled=false;$("bStart").textContent="■ Detener";$("bStart").disabled=false;running=true;loop();if(VFC)video.requestVideoFrameCallback(onFrame);
-  tip("Toca 📏 Calibrar mesa con los dedos apoyados, o mueve la línea roja con Línea ↑ ↓");
+  tip(isEsc()?"Estira los dedos para que suenen; sube o baja la mano para recorrer la escala. Puño cerrado = silencio":"Toca 📏 Calibrar mesa con los dedos apoyados, o mueve la línea roja con Línea ↑ ↓");
   $("bStart").onclick=()=>location.reload()};
 $("bFlip").onclick=async()=>{facing=facing==="user"?"environment":"user";LS.set("aire-facing",facing);releaseAll();if(stream){try{await startCam()}catch(e){err("No pude cambiar de cámara.")}}else tip(facing==="user"?"Usará la cámara de la pantalla":"Usará la cámara trasera")};
 let noteFound=false;$("bDel").onclick=()=>{switchDel(deleg==="GPU"?"CPU":"GPU");tip("Detector en modo "+deleg)};
