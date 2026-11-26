@@ -39,6 +39,7 @@ button.on{background:var(--accent);border-color:var(--accent)}
   <button id="bCal" disabled>📏 Calibrar mesa</button>
   <button id="bFlip">🔄 Cámara</button>
   <button id="bDel" title="Motor del detector de manos">⚙ CPU</button>
+  <button id="bEsc" title="Modo Escalas: la altura de la mano recorre la escala">🎼 Escalas</button>
   <select id="sKeys" aria-label="Teclas">
     <option value="w8">1 octava (blancas)</option>
     <option value="w15" selected>2 octavas (blancas)</option>
@@ -140,7 +141,9 @@ const isEsc=()=>keyMode==="esc";
 /* Paso entre dedos: en escalas de 5-6 notas, notas seguidas; en las de 7, de por medio (terceras) para que suene a acorde */
 const fStep=()=>ESC[escK].length>=7?2:1;
 function escMidi(deg){const S=ESC[escK],n=S.length;return base+ton+Math.floor(deg/n)*12+S[((deg%n)+n)%n]}
-function showMode(){const e=isEsc();$("sTon").hidden=!e;$("sEsc").hidden=!e;$("gLin").hidden=e;$("bCal").hidden=e;$("msgEsc").hidden=!e}
+let lastKeys=LS.get("aire-keys-prev","w15");
+$("bEsc").onclick=()=>{if(isEsc()){keyMode=lastKeys}else{lastKeys=keyMode;LS.set("aire-keys-prev",keyMode);keyMode="esc"}$("sKeys").value=keyMode;$("sKeys").onchange();tip(isEsc()?"Modo Escalas: estira los dedos y sube o baja la mano":"Volviste al teclado con línea")};
+function showMode(){const e=isEsc();$("bEsc").classList.toggle("on",e);$("sTon").hidden=!e;$("sEsc").hidden=!e;$("gLin").hidden=e;$("bCal").hidden=e;$("msgEsc").hidden=!e}
 showMode();
 $("oD").onclick=()=>{base=Math.max(36,base-12);LS.set("aire-base",base);showOct();releaseAll()};
 $("oU").onclick=()=>{base=Math.min(84,base+12);LS.set("aire-base",base);showOct();releaseAll()};
