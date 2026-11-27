@@ -40,13 +40,14 @@ button.on{background:var(--accent);border-color:var(--accent)}
   <button id="bFlip">🔄 Cámara</button>
   <button id="bDel" title="Motor del detector de manos">⚙ CPU</button>
   <button id="bNH" title="Con 1 mano el detector trabaja menos y responde más rápido">✋ 1 mano</button>
-  <button id="bEsc" title="Modo Escalas: la altura de la mano recorre la escala">🎼 Escalas</button>
+  <button id="bEsc" title="Escalas a dos manos: la derecha toca, la izquierda elige la escala">🎼 Escalas</button>
   <select id="sKeys" aria-label="Teclas">
     <option value="w8">1 octava (blancas)</option>
     <option value="w15" selected>2 octavas (blancas)</option>
     <option value="c13">1 octava con negras</option>
     <option value="c25">2 octavas con negras</option>
     <option value="esc">🎼 Escalas (altura de la mano)</option>
+    <option value="esc2">🎹 Escalas a dos manos</option>
   </select>
   <select id="sTon" aria-label="Tónica" hidden></select>
   <select id="sEsc" aria-label="Escala" hidden>
@@ -76,6 +77,7 @@ button.on{background:var(--accent);border-color:var(--accent)}
       <li>Levanta los dedos y bájalos para tocar: cuando la yema cruza la línea, suena la tecla que está debajo. Al levantar, se apaga.</li>
     </ol>
     <p id="msgEsc" hidden><b>Modo Escalas:</b> no hay teclado ni línea. Cada dedo tiene su nota y suena mientras está estirado. Sube la mano y las notas suben por la escala; bájala y bajan. Cierra el puño para callar.</p>
+    <p id="msgEsc2" hidden><b>Escalas a dos manos:</b> la mano <b>derecha</b> toca 5 notas: dobla un dedo y suena su nota. La mano <b>izquierda</b> elige la escala: dobla el pulgar (Mayor), índice (Menor), medio (Pentatónica mayor), anular (Pentatónica menor) o meñique (Blues); queda puesta hasta que dobles otro. Cada mano tiene 5 franjas de altura: subir una franja la izquierda corre la escala un semitono; subir una franja la derecha sube las notas un semitono.</p>
     <div id="msgErr" class="err"></div>
   </div>
 </div>
@@ -123,7 +125,7 @@ $("sTimbre").onchange=async()=>{prog=+$("sTimbre").value;LS.set("aire-prog",prog
 let keyMode=LS.get("aire-keys","w15");$("sKeys").value=keyMode;
 let base=LS.get("aire-base",60);
 let lineY=LS.get("aire-line",0.62);
-function layout(){const k=[];if(keyMode==="esc")return k;const chrom=keyMode[0]==="c";const n=+keyMode.slice(1);
+function layout(){const k=[];if(keyMode.startsWith("esc"))return k;const chrom=keyMode[0]==="c";const n=+keyMode.slice(1);
   if(chrom){for(let i=0;i<n;i++)k.push({off:i,blk:BLK.includes(i%12)})}
   else{const W=[0,2,4,5,7,9,11];for(let i=0;i<n;i++)k.push({off:Math.floor(i/7)*12+W[i%7],blk:false})}return k}
 let keys=layout();
@@ -139,12 +141,14 @@ $("sEsc").onchange=()=>{escK=$("sEsc").value;LS.set("aire-esc",escK);releaseAll(
 $("sTon").onchange=()=>{ton=+$("sTon").value;LS.set("aire-ton",ton);releaseAll()};
 const NB=8;// franjas de altura en la pantalla
 const isEsc=()=>keyMode==="esc";
+const isEsc2=()=>keyMode==="esc2";
 /* Paso entre dedos: en escalas de 5-6 notas, notas seguidas; en las de 7, de por medio (terceras) para que suene a acorde */
 const fStep=()=>ESC[escK].length>=7?2:1;
 function escMidi(deg){const S=ESC[escK],n=S.length;return base+ton+Math.floor(deg/n)*12+S[((deg%n)+n)%n]}
 let lastKeys=LS.get("aire-keys-prev","w15");
-$("bEsc").onclick=()=>{if(isEsc()){keyMode=lastKeys}else{lastKeys=keyMode;LS.set("aire-keys-prev",keyMode);keyMode="esc"}$("sKeys").value=keyMode;$("sKeys").onchange();tip(isEsc()?"Modo Escalas: estira los dedos y sube o baja la mano":"Volviste al teclado con línea")};
-function showMode(){const e=isEsc();$("bEsc").classList.toggle("on",e);$("sTon").hidden=!e;$("sEsc").hidden=!e;$("gLin").hidden=e;$("bCal").hidden=e;$("msgEsc").hidden=!e}
+$("bEsc").onclick=()=>{if(isEsc()||isEsc2()){keyMode=lastKeys.startsWith("esc")?"w15":lastKeys}else{lastKeys=keyMode;LS.set("aire-keys-prev",keyMode);keyMode="esc2"}$("sKeys").value=keyMode;$("sKeys").onchange();tip(isEsc2()?"Escalas a dos manos: dobla dedos de la derecha para tocar; con la izquierda eliges la escala":"Volviste al teclado con línea")};
+function showMode(){const e1=isEsc(),e2=isEsc2(),e=e1||e2;$("bEsc").classList.toggle("on",e2);$("sTon").hidden=!e;$("sEsc").hidden=!e1;$("gLin").hidden=e;$("bCal").hidden=e;$("msgEsc").hidden=!e1;$("msgEsc2").hidden=!e2;
+  if(window.$NH)window.$NH()}
 showMode();
 $("oD").onclick=()=>{base=Math.max(36,base-12);LS.set("aire-base",base);showOct();releaseAll()};
 $("oU").onclick=()=>{base=Math.min(84,base+12);LS.set("aire-base",base);showOct();releaseAll()};
@@ -184,7 +188,32 @@ function processEsc(hands){const seen=new Set(),hs=new Set();
       else if(f.on&&m!==f.key){noteOff(f.v);f.key=m;f.v=noteOn(m,ESCV)}})});
   for(const id in fing)if(!seen.has(id)){if(fing[id].v)noteOff(fing[id].v);delete fing[id]}
   for(const h in hand)if(!hs.has(+h))delete hand[h]}
-function process(hands){if(isEsc())return processEsc(hands);// hands: arrays of 21 {x,y} already in screen coords 0..1 (mirrored if needed)
+/* ===== Escalas a dos manos =====
+   Derecha: 5 dedos = 5 notas de la escala; suena el dedo que se DOBLA (como apretar una tecla).
+   Izquierda: doblar un dedo elige una de 5 escalas y queda puesta.
+   Cada mano tiene 5 franjas de altura; cada franja = un semitono (izquierda corre la escala, derecha sube las notas). */
+const SC2=[{n:"Mayor",c:"May",s:[0,2,4,5,7]},{n:"Menor",c:"Men",s:[0,2,3,5,7]},{n:"Pentatónica mayor",c:"PM",s:[0,2,4,7,9]},{n:"Pentatónica menor",c:"Pm",s:[0,3,5,7,10]},{n:"Blues",c:"Blu",s:[0,3,5,6,7]}];
+const NB2=5;let sc2=LS.get("aire-sc2",0);const hb={};// "L"/"R" -> {band}
+function band2(role,py){const pos=(1-py)*NB2;let H=hb[role];if(!H)H=hb[role]={band:Math.max(0,Math.min(NB2-1,Math.floor(pos)))};
+  if(pos>H.band+1.15||pos<H.band-0.15)H.band=Math.max(0,Math.min(NB2-1,Math.floor(pos)));return H.band}
+const root2=()=>base+ton+(hb.L?hb.L.band:0);// tónica: la izquierda la corre un semitono por franja
+function processEsc2(hands){const seen=new Set();
+  /* Quién es quién: con 2 manos, la de la derecha de la pantalla es la que toca; con 1, según el lado en que esté */
+  let roles;if(hands.length>=2){const o=hands.slice(0,2).map((lm,i)=>({lm,x:lm[0].x})).sort((a,b)=>a.x-b.x);roles=[["L",o[0].lm],["R",o[1].lm]]}
+  else roles=hands.map(lm=>[lm[0].x>=0.5?"R":"L",lm]);
+  roles.sort((a,b)=>a[0]<b[0]?-1:1);// primero la izquierda, para que la escala nueva ya valga en este mismo cuadro
+  const rs=new Set();
+  roles.forEach(([role,lm])=>{rs.add(role);const py=(lm[0].y+lm[5].y+lm[9].y+lm[13].y+lm[17].y)/5;const b=band2(role,py);
+    TIPS.forEach((ti,j)=>{const id=role+"-"+ti;seen.add(id);const p=lm[ti];let f=fing[id];if(!f)f=fing[id]={x:p.x,y:p.y,key:-1,v:null,on:false,st:true,role,j};
+      f.x+=(p.x-f.x)*0.6;f.y+=(p.y-f.y)*0.6;f.st=stretched(lm,ti,f.st);const down=!f.st;
+      if(role==="L"){if(down&&!f.on&&sc2!==j){sc2=j;LS.set("aire-sc2",sc2)}f.on=down;return}
+      const m=root2()+b+SC2[sc2].s[j];f.note=m;
+      if(down&&!f.on){f.on=true;f.key=m;f.v=noteOn(m,ESCV)}
+      else if(!down&&f.on){f.on=false;noteOff(f.v);f.v=null;f.key=-1}
+      else if(f.on&&m!==f.key){noteOff(f.v);f.key=m;f.v=noteOn(m,ESCV)}})});
+  for(const id in fing)if(!seen.has(id)){if(fing[id].v)noteOff(fing[id].v);delete fing[id]}
+  /* La franja de la izquierda queda puesta aunque la mano salga de cuadro (la escala se sostiene) */}
+function process(hands){if(isEsc2())return processEsc2(hands);if(isEsc())return processEsc(hands);// hands: arrays of 21 {x,y} already in screen coords 0..1 (mirrored if needed)
   const seen=new Set();
   hands.forEach((lm,h)=>TIPS.forEach(ti=>{const id=h+"-"+ti;seen.add(id);const p=lm[ti];let f=fing[id];if(!f)f=fing[id]={y:p.y,x:p.x,d:0,key:-1,v:null,on:false};
     const dy=p.y-f.y;f.d=f.d*0.5+dy*0.5;f.y+=Math.min(1,0.4+Math.abs(f.d)/0.025)*dy;
@@ -193,7 +222,7 @@ function process(hands){if(isEsc())return processEsc(hands);// hands: arrays of 
     else if(f.on&&(f.y<lineY-HY||k<0)){f.on=false;noteOff(f.v);f.v=null;f.key=-1}
     else if(f.on&&k!==f.key){noteOff(f.v);f.key=k;f.v=noteOn(base+keys[k].off)}}));
   for(const id in fing)if(!seen.has(id)){if(fing[id].v)noteOff(fing[id].v);delete fing[id]}}
-window.__test={process,hand,escMidi,keys:()=>keys,setLine:v=>lineY=v,fing,unlock,ensure};
+window.__test={process,hand,hb,sc2:()=>sc2,escMidi,keys:()=>keys,setLine:v=>lineY=v,fing,unlock,ensure};
 
 /* ===== Dibujo ===== */
 const cv=$("cv"),g2=cv.getContext("2d");
@@ -204,6 +233,7 @@ addEventListener("resize",fit);
 let lastHands=[];
 function draw(){const r=$("stage").getBoundingClientRect();g2.clearRect(0,0,r.width,r.height);
   const X=x=>vr.x+x*vr.w,Y=y=>vr.y+y*vr.h;
+  if(isEsc2()){drawEsc2(X,Y);return}
   if(isEsc()){drawEsc(X,Y);return}
   const ly=Y(lineY),bh=Math.min(vr.h*0.22,90);const kw=(X1-X0)*vr.w/keys.length;
   const down=new Set(Object.values(fing).filter(f=>f.on).map(f=>f.key));
@@ -224,20 +254,35 @@ function drawEsc(X,Y){
   Object.values(fing).forEach(f=>{const x=X(f.x),y=Y(f.y);g2.fillStyle=f.on?"#ff4d6d":"rgba(61,220,132,.8)";g2.beginPath();g2.arc(x,y,f.on?11:6,0,7);g2.fill();
     if(f.on&&f.note!=null){g2.fillStyle="#fff";g2.font="700 13px system-ui";g2.textAlign="center";g2.lineWidth=3;g2.strokeStyle="rgba(0,0,0,.7)";const t=NOM[f.note%12];g2.strokeText(t,x,y-15);g2.fillText(t,x,y-15)}})}
 
+function drawEsc2(X,Y){const xm=X(0.5);
+  for(let b=0;b<NB2;b++){const y0=Y(1-(b+1)/NB2),y1=Y(1-b/NB2);
+    [["L",X(0),xm],["R",xm,X(1)]].forEach(([r,a,z])=>{const on=hb[r]&&hb[r].band===b;g2.fillStyle=on?"rgba(51,80,255,.2)":b%2?"rgba(255,255,255,.05)":"rgba(0,0,0,0)";g2.fillRect(a,y0,z-a,y1-y0);
+      g2.strokeStyle="rgba(255,255,255,.14)";g2.lineWidth=1;g2.beginPath();g2.moveTo(a,y1);g2.lineTo(z,y1);g2.stroke();
+      const lab=r==="L"?NOM[(ton+b)%12]:"+"+b;g2.fillStyle=on?"#fff":"rgba(255,255,255,.5)";g2.font="600 12px system-ui";g2.textAlign=r==="L"?"left":"right";g2.fillText(lab,r==="L"?a+6:z-6,(y0+y1)/2+4)})}
+  g2.strokeStyle="rgba(255,255,255,.35)";g2.lineWidth=2;g2.setLineDash([6,6]);g2.beginPath();g2.moveTo(xm,Y(0));g2.lineTo(xm,Y(1));g2.stroke();g2.setLineDash([]);
+  const t=SC2[sc2].n+" de "+NOM[root2()%12];g2.font="800 20px system-ui";g2.textAlign="center";g2.lineWidth=4;g2.strokeStyle="rgba(0,0,0,.7)";g2.strokeText(t,xm,Y(0)+58);g2.fillStyle="#ffd84d";g2.fillText(t,xm,Y(0)+58);
+  g2.font="600 12px system-ui";g2.fillStyle="rgba(255,255,255,.7)";g2.fillText("izquierda: escala   ·   derecha: notas",xm,Y(0)+76);
+  drawHands(X,Y);
+  Object.values(fing).forEach(f=>{const x=X(f.x),y=Y(f.y);let lab;
+    if(f.role==="L"){const sel=f.j===sc2;g2.fillStyle=sel?"#ffd84d":"rgba(255,216,77,.45)";g2.beginPath();g2.arc(x,y,sel?10:6,0,7);g2.fill();lab=SC2[f.j].c}
+    else{g2.fillStyle=f.on?"#ff4d6d":"rgba(61,220,132,.8)";g2.beginPath();g2.arc(x,y,f.on?11:6,0,7);g2.fill();lab=f.note!=null?NOM[f.note%12]:""}
+    g2.fillStyle="#fff";g2.font="700 12px system-ui";g2.textAlign="center";g2.lineWidth=3;g2.strokeStyle="rgba(0,0,0,.7)";g2.strokeText(lab,x,y-14);g2.fillText(lab,x,y-14)})}
+
 /* ===== Cámara y detección ===== */
 const video=$("video");let stream=null,facing=LS.get("aire-facing","user"),landmarker=null,running=false,fpsT=0,fpsN=0,fps=0,lastVT=-1,lastDT=0;
 /* En Android (p. ej. Galaxy S25 Ultra) el modo GPU de MediaPipe puede abrir sin error pero no devolver manos: por defecto CPU, que en celulares nuevos va rápido. */
 const ANDROID=/Android/i.test(navigator.userAgent);
 /* 1 mano por defecto: el detector solo busca manos nuevas cuando pierde la que sigue, y responde ~35 % más rápido (medido: 76→51 ms por cuadro) */
-let nh=LS.get("aire-nh",1);function showNH(){$("bNH").textContent=nh===1?"✋ 1 mano":"🙌 2 manos"}
+let nh=LS.get("aire-nh",1);const wantNH=()=>isEsc2()?2:nh;function showNH(){$("bNH").textContent=nh===1?"✋ 1 mano":"🙌 2 manos"}
 let deleg=LS.get("aire-deleg",ANDROID?"CPU":"GPU"),detErr="",errN=0,noHandT=0;
 function showDel(){$("bDel").textContent="⚙ "+deleg}showDel();showNH();
-$("bNH").onclick=async()=>{nh=nh===1?2:1;LS.set("aire-nh",nh);showNH();releaseAll();if(landmarker){try{await landmarker.setOptions({numHands:nh})}catch(e){}}tip(nh===1?"1 mano: responde más rápido":"2 manos: un poco más lento")};
+window.$NH=()=>{$("bNH").hidden=isEsc2();releaseAll();if(landmarker){try{landmarker.setOptions({numHands:wantNH()})}catch(e){}}};window.$NH();
+$("bNH").onclick=async()=>{nh=nh===1?2:1;LS.set("aire-nh",nh);showNH();releaseAll();if(landmarker){try{await landmarker.setOptions({numHands:wantNH()})}catch(e){}}tip(nh===1?"1 mano: responde más rápido":"2 manos: un poco más lento")};
 function err(m){$("msg").hidden=false;$("msgErr").innerHTML=m}
 async function loadModel(){if(landmarker)return landmarker;$("bStart").textContent="Cargando detector…";
   const {FilesetResolver,HandLandmarker}=await import("./aire-mp/vision_bundle.mjs");
   const files=await FilesetResolver.forVisionTasks(new URL("aire-mp/wasm",location.href).href);
-  const opts=d=>({baseOptions:{modelAssetPath:new URL("aire-mp/hand_landmarker.task",location.href).href,delegate:d},runningMode:"VIDEO",numHands:nh,minHandDetectionConfidence:0.35,minHandPresenceConfidence:0.35,minTrackingConfidence:0.35});
+  const opts=d=>({baseOptions:{modelAssetPath:new URL("aire-mp/hand_landmarker.task",location.href).href,delegate:d},runningMode:"VIDEO",numHands:wantNH(),minHandDetectionConfidence:0.35,minHandPresenceConfidence:0.35,minTrackingConfidence:0.35});
   if(deleg==="GPU"){try{landmarker=await HandLandmarker.createFromOptions(files,opts("GPU"))}catch(e){deleg="CPU";showDel()}}
   if(!landmarker)landmarker=await HandLandmarker.createFromOptions(files,opts("CPU"));
   errN=0;detErr="";return landmarker}
@@ -273,7 +318,7 @@ $("bStart").onclick=async()=>{unlock();ensure(prog);$("bStart").disabled=true;$(
     err(e.message==="NOCAM"?"Este navegador no deja usar la cámara. Abre esta página en <b>Chrome</b> (no dentro de WhatsApp, Facebook u otra app).":"No pude abrir la cámara ("+(e.name||e.message)+"). Revisa que diste permiso a la cámara y que la página está abierta en Chrome.");return}
   try{await loadModel()}catch(e){$("bStart").disabled=false;$("bStart").textContent="▶ Iniciar cámara";err("No pude cargar el detector de manos ("+(e.message||e)+").");return}
   $("msg").hidden=true;$("hud").hidden=false;$("bCal").disabled=false;$("bStart").textContent="■ Detener";$("bStart").disabled=false;running=true;loop();if(VFC)video.requestVideoFrameCallback(onFrame);
-  tip(isEsc()?"Estira los dedos para que suenen; sube o baja la mano para recorrer la escala. Puño cerrado = silencio":"Toca 📏 Calibrar mesa con los dedos apoyados, o mueve la línea roja con Línea ↑ ↓");
+  tip(isEsc2()?"Mano derecha: dobla un dedo para tocar. Mano izquierda: dobla un dedo para elegir la escala. Sube o baja cada mano para correr un semitono":isEsc()?"Estira los dedos para que suenen; sube o baja la mano para recorrer la escala. Puño cerrado = silencio":"Toca 📏 Calibrar mesa con los dedos apoyados, o mueve la línea roja con Línea ↑ ↓");
   $("bStart").onclick=()=>location.reload()};
 $("bFlip").onclick=async()=>{facing=facing==="user"?"environment":"user";LS.set("aire-facing",facing);releaseAll();if(stream){try{await startCam()}catch(e){err("No pude cambiar de cámara.")}}else tip(facing==="user"?"Usará la cámara de la pantalla":"Usará la cámara trasera")};
 let noteFound=false;$("bDel").onclick=()=>{switchDel(deleg==="GPU"?"CPU":"GPU");tip("Detector en modo "+deleg)};
